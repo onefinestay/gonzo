@@ -3,53 +3,18 @@
 """
 
 
-import os
-from ConfigParser import NoSectionError
-
-import git
-
-from gonzo.settings import CONFIG
-
-
-class CommandError(Exception):
-    pass
-
-
-def get_git_config(key, default=None):
-    cwd = os.getcwd()
-
-    repo = git.Repo(cwd)
-    config_reader = repo.config_reader()
-    try:
-        return config_reader.get_value('gonzo', key, default)
-    except NoSectionError:
-        return None
-
-
-def set_git_config(key, value):
-    cwd = os.getcwd()
-
-    repo = git.Repo(cwd)
-    config_writer = repo.config_writer()
-    config_writer.set_value('gonzo', key, value)
-
-
-def get_mode_config():
-    mode = get_git_config('mode')
-    try:
-        return CONFIG[mode]
-    except KeyError:
-        raise CommandError('Invalid mode: {}'.format(mode))
+from gonzo.config import get_option, set_option, get_config, get_global_config
+from gonzo.exceptions import CommandError
 
 
 def set_mode(mode):
     if not mode:
         return
 
-    set_git_config('mode', mode)
+    set_option('mode', mode)
 
     # set the default region
-    mode_config = get_mode_config()
+    mode_config = get_config()
     supported_regions = mode_config['REGIONS']
 
     try:
@@ -63,21 +28,21 @@ def set_region(region):
     if not region:
         return
 
-    mode = get_git_config('mode')
+    mode = get_option('mode')
 
-    mode_config = get_mode_config()
+    mode_config = get_config()
     supported_regions = mode_config['REGIONS']
 
     if region not in supported_regions:
         raise CommandError(
             'Region "{}" not supported for mode "{}"'.format(region, mode))
 
-    set_git_config('region', region)
+    set_option('region', region)
 
 
 def print_config():
-    print 'mode:', get_git_config('mode')
-    print 'region:', get_git_config('region')
+    print 'mode:', get_option('mode')
+    print 'region:', get_option('region')
 
 
 def main(args):
@@ -94,7 +59,7 @@ def main(args):
 def init_parser(parser):
     parser.add_argument(
         '--mode', dest='mode', metavar='MODE', nargs='?',
-        choices=CONFIG.keys(), help='set the mode')
+        choices=get_global_config().keys(), help='set the mode')
     parser.add_argument(
         '--region', dest='region', metavar='REGION', nargs='?',
         help='set the region')
