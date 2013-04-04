@@ -47,7 +47,7 @@ setup(
         "Topic :: Utilities",
         "Environment :: Console",
     ],
-    description='A release and deployment environment management utility.',
+    description='Instance and release management made easy',
     long_description=open('README.md').read(),
     include_package_data=True,
     entry_points={
