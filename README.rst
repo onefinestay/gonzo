@@ -64,3 +64,7 @@ CLI::
     apache.maintenance_mode = task(maintenance_mode)
 
 
+License
+-------
+
+Apache 2.0 - see LICENSE for details
