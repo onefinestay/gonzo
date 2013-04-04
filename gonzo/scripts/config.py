@@ -3,7 +3,7 @@
 """
 
 
-from gonzo.config import get_option, set_option, get_config, get_global_config
+from gonzo.config import get_option, set_option, get_cloud, get_clouds
 from gonzo.exceptions import CommandError
 
 
@@ -14,7 +14,7 @@ def set_mode(mode):
     set_option('mode', mode)
 
     # set the default region
-    mode_config = get_config()
+    mode_config = get_cloud()
     supported_regions = mode_config['REGIONS']
 
     try:
@@ -30,7 +30,7 @@ def set_region(region):
 
     mode = get_option('mode')
 
-    mode_config = get_config()
+    mode_config = get_cloud()
     supported_regions = mode_config['REGIONS']
 
     if region not in supported_regions:
@@ -49,8 +49,8 @@ def main(args):
     try:
         set_mode(args.mode)
         set_region(args.region)
-    except CommandError as e:
-        print e
+    except CommandError as ex:
+        print ex
         print
 
     print_config()
@@ -59,8 +59,7 @@ def main(args):
 def init_parser(parser):
     parser.add_argument(
         '--mode', dest='mode', metavar='MODE', nargs='?',
-        choices=get_global_config().keys(), help='set the mode')
+        choices=get_clouds().keys(), help='set the mode')
     parser.add_argument(
         '--region', dest='region', metavar='REGION', nargs='?',
         help='set the region')
-

@@ -4,6 +4,3 @@ class ConfigurationError(Exception):
 
 class CommandError(Exception):
     pass
-
-
-

@@ -1,2 +1,5 @@
-GitPython==0.3.2.RC1
+boto==2.8.0
 fabric==1.6
+gitpython==0.3.2.RC1
+prettytable==0.7.1
+python-novaclient==2.13.0

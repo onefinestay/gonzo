@@ -1,6 +1,6 @@
-import os
-import os
+from functools import wraps
 import imp
+import os
 from ConfigParser import NoSectionError
 
 import git
@@ -8,7 +8,7 @@ import git
 from gonzo.exceptions import ConfigurationError
 
 
-def get_global_config():
+def get_clouds():
     """ returns a configuration dict """
     gonzo_home = os.path.join(os.path.expanduser("~"), '.gonzo/')
     gonzo_conf = 'config'
@@ -19,11 +19,12 @@ def get_global_config():
     try:
         fp, pathname, description = imp.find_module(gonzo_conf, [gonzo_home])
     except ImportError:
-        raise ConfigurationError("gonzo config does not exist. Please see README")
+        raise ConfigurationError(
+            "gonzo config does not exist. Please see README")
 
-    config_module =  imp.load_module(gonzo_conf, fp, pathname, description)
+    config_module = imp.load_module(gonzo_conf, fp, pathname, description)
 
-    return config_module.CONFIG
+    return config_module.CLOUDS
 
 
 def get_option(key, default=None):
@@ -45,11 +46,38 @@ def set_option(key, value):
     config_writer.set_value('gonzo', key, value)
 
 
-def get_config():
+def get_cloud():
     mode = get_option('mode')
-    config = get_global_config()
+    clouds = get_clouds()
     try:
-        return config[mode]
+        return clouds[mode]
     except KeyError:
         raise ConfigurationError('Invalid mode: {}'.format(mode))
 
+
+def lazy(func):
+    @wraps(func)
+    def wrapper(self):
+        if not hasattr(func, 'value'):
+            func.value = func(self)
+        return func.value
+    return wrapper
+
+
+class ConfigProxy(object):
+    """ Proxy that can be imported without causing `get_config` to be
+        imported at import time
+    """
+
+    @property
+    @lazy
+    def CLOUD(self):
+        return get_cloud()
+
+    @property
+    @lazy
+    def REGION(self):
+        return get_option('region')
+
+
+config_proxy = ConfigProxy()
