@@ -100,7 +100,7 @@ class Cloud(BaseCloud):
 
     @property
     def connection(self):
-        if not hasattr(self, '_connection'):
+        if self._connection is None:
             acces_key_id = config.CLOUD['AWS_ACCESS_KEY_ID']
             secret_access_key = config.CLOUD['AWS_SECRET_ACCESS_KEY']
             region = self._region()
