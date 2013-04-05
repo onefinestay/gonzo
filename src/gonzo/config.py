@@ -44,10 +44,14 @@ def get_sizes():
 def get_option(key, default=None):
     cwd = os.getcwd()
 
-    repo = git.Repo(cwd)
-    config_reader = repo.config_reader()
     try:
-        return config_reader.get_value('gonzo', key, default)
+        reader = git.Repo(cwd).config_reader()
+    except git.exc.InvalidGitRepositoryError:
+        # we're not in a git directory so check the global config
+        user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
+        reader = git.config.GitConfigParser([user_config], read_only=True)
+    try:
+        return reader.get_value('gonzo', key, default)
     except (NoSectionError, NoOptionError):
         return None
 
@@ -55,9 +59,13 @@ def get_option(key, default=None):
 def set_option(key, value, config_level='global'):
     cwd = os.getcwd()
 
-    repo = git.Repo(cwd)
-    config_writer = repo.config_writer(config_level=config_level)
-    config_writer.set_value('gonzo', key, value)
+    try:
+        writer = git.Repo(cwd).config_writer(config_level=config_level)
+    except git.exc.InvalidGitRepositoryError:
+        # we're not in a git directory so check the global config
+        user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
+        writer = git.config.GitConfigParser(user_config, read_only=False)
+    writer.set_value('gonzo', key, value)
 
 
 def get_cloud():
