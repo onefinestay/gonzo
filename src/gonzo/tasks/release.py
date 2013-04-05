@@ -14,12 +14,15 @@ def activate_command():
             'cd releases/%s/%s'.format(env.project, env.commit))
 
 
+def history_path(project, project_root='/srv'):
+    return os.path.join(project_root, project, 'releases/.history')
+
+
 def get_releases(project_root, project):
-    history_path = os.path.join(project_root, project, 'releases/.history')
-    if not exists(history_path):
+    if not exists(history_path(project)):
         raise Exception("No history!")
 
-    releases = run('cat {}'.format(history_path))
+    releases = run('cat {}'.format(history_path(project)))
     return [l.strip() for l in releases.splitlines()]
 
 
@@ -110,13 +113,12 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     return (tarfile, True)
 
 
-def set_history(project_root, project, release):
+def set_history(project, release):
     """ Append the release to the .history file unless it already exists in
         there.
     """
-    history_path = os.path.join(project_root, project, 'releases/.history')
     # this fabric command does what we want here
-    append(history_path, '{}\n'.format(release), use_sudo=True)
+    append(history_path(project), '{}\n'.format(release), use_sudo=True)
 
 
 def register_release(project_root, project, release, chown_dirs='www-data'):
@@ -132,7 +134,7 @@ def register_release(project_root, project, release, chown_dirs='www-data'):
     if chown_dirs:
         sudo("chown -R {} {}".format(chown_dirs, target_release))
 
-    set_history(project_root, project, release)
+    set_history(project, release)
 
 
 def get_active_branch():
