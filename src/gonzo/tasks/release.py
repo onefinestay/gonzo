@@ -9,6 +9,11 @@ NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 
 
+def activate_command():
+    return ('cd /srv/%s/; source bin/activate; '
+            'cd releases/%s/%s'.format(env.project, env.commit))
+
+
 def get_releases(project_root, project):
     history_path = os.path.join(project_root, project, 'releases/.history')
     if not exists(history_path):
@@ -237,8 +242,6 @@ def push_release():
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    activate_command = ('cd /srv/%s/; source bin/activate; '
-                        'cd releases/%s/%s'.format(env.project, env.commit))
     register_release(project_root='/srv',
                      project=env.project,
                      release=env.commit)
@@ -254,7 +257,7 @@ def push_release():
         else:
             quiet_flag = ""
         sudo("%s ; pip install %s -r requirements.txt %s" %
-            (activate_command, upgrade_flag, quiet_flag))
+            (activate_command(), upgrade_flag, quiet_flag))
 
 
 @task
