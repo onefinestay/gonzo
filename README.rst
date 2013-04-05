@@ -21,11 +21,6 @@ and manage your code deployments using included fabric tasks::
     $ fab gonzo.group:production-ecommerce-web push_release rollforward
 
 
-Documentation
--------------
-
-`Documentation on Read the Docs <http://gonzo.readthedocs.org/en/latest/>`_
-
 
 Configuration
 -------------
@@ -150,3 +145,9 @@ License
 -------
 
 Apache 2.0 - see LICENSE for details
+
+
+More Docs
+---------
+
+`Full documentation on Read the Docs <http://gonzo.readthedocs.org/en/latest/>`_
