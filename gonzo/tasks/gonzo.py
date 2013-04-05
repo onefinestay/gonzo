@@ -3,7 +3,7 @@ from __future__ import absolute_import  # otherwise we find ourself
 import envoy
 from fabric.api import env, task
 
-from gonzo.backends import cloud
+from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
 
 
@@ -41,6 +41,7 @@ def instance(*names):
         arguments. Takes multiple names.
     """
 
+    cloud = get_current_cloud()
     for name in names:
         instance = cloud.get_instance_by_name(name)
         dns_name = get_hostname(instance)
@@ -53,6 +54,7 @@ def instance(*names):
 def group(*env_type_pairs):
     """ Set hosts by group (environment-server_type) """
 
+    cloud = get_current_cloud()
     for env_type_pair in env_type_pairs:
         # mode_environment is e.g. produiction-platform-app
         # we want production, and platform-app
