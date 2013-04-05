@@ -98,6 +98,7 @@ TODO
 * project based stuff
     * project name [for ``/srv/project_name``] (git setting?)
 * tests
+* tidy release project root ``/srv/*`` targetting
 
 
 License
