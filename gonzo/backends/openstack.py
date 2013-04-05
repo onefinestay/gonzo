@@ -114,7 +114,7 @@ class Cloud(BaseCloud):
 
     @property
     def connection(self):
-        if not hasattr(self, '_connection'):
+        if self._connection is None:
 
             client = nova_client.Client(
                 config.CLOUD['USERNAME'],
