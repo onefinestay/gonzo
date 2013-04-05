@@ -1,5 +1,7 @@
 import argparse
 
+import argcomplete
+
 from gonzo.scripts import config, list_
 
 
@@ -16,6 +18,7 @@ def main():
         module.init_parser(module_parser)
         module_parser.set_defaults(main=module.main)
 
+    argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
     args.main(args)

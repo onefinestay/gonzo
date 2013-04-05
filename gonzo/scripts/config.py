@@ -2,7 +2,6 @@
 """ Set the account and region for subsequent gonzo commands
 """
 
-
 from gonzo.config import get_option, set_option, get_cloud, get_clouds
 from gonzo.exceptions import CommandError
 
@@ -24,18 +23,14 @@ def set_mode(mode):
         raise CommandError('Mode "{}" has no supported regions'.format(mode))
 
 
+def available_regions():
+    mode_config = get_cloud()
+    return mode_config['REGIONS']
+
+
 def set_region(region):
     if not region:
         return
-
-    mode = get_option('mode')
-
-    mode_config = get_cloud()
-    supported_regions = mode_config['REGIONS']
-
-    if region not in supported_regions:
-        raise CommandError(
-            'Region "{}" not supported for mode "{}"'.format(region, mode))
 
     set_option('region', region)
 
@@ -58,8 +53,10 @@ def main(args):
 
 def init_parser(parser):
     parser.add_argument(
-        '--mode', dest='mode', metavar='MODE', nargs='?',
-        choices=get_clouds().keys(), help='set the mode')
+        '--mode', dest='mode', metavar='MODE', choices=get_clouds().keys(),
+        help='set the mode'
+    )
     parser.add_argument(
-        '--region', dest='region', metavar='REGION', nargs='?',
-        help='set the region')
+        '--region', dest='region', metavar='REGION',
+        choices=available_regions(), help='set the region'
+    )
