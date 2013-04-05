@@ -160,6 +160,34 @@ def commit_by_name(project, name):
         raise Exception("Invalid name: %s " % name)
 
 
+def purge(project_root, project, release):
+    """ Purge package file for the particular release.
+
+        Removes the cached file in ``project_root/project/packages`` and remove
+        the untarred directory and remove history entry only if this is not the
+        target of the 'current' pointer
+    """
+    package_name = os.path.join(
+        project_root, project, 'packages', '%s.tgz' % release)
+    released_dir = os.path.join(project_root, project, 'releases', release)
+    history_file = os.path.join(project_root, project, 'releases', '.history')
+    current_pointer = current()
+
+    if exists(package_name):
+        sudo('rm {}'.format(package_name))
+
+    if current_pointer == release:
+        raise Exception(
+            "Cannot remove checked out directory as it is the current release")
+
+    sudo('rm -rf {}'.format(released_dir))
+
+    # remove history entry
+    releases = get_releases(project_root, project)
+    releases = [v for v in releases if v.strip()]
+    sudo('cat << EOF > {}\n{}\nEOF'.format(history_file, '\n'.join(releases)))
+
+
 @task
 def set_project(project):
     env.project = project
@@ -228,3 +256,24 @@ def push_release():
         sudo("%s ; pip install %s -r requirements.txt %s" %
             (activate_command, upgrade_flag, quiet_flag))
 
+
+@task
+def prune_releases(releases='4'):
+    """ Orders the project directory and then will keep the last 4 releases
+        and delete any previous releases present to minimise the disk space, this uses the
+        already built purge release within the ofs_release
+
+        Arguments:
+
+            releases (str): a string representation of the number of releases
+                            to be left.
+    """
+    releases = int(releases)  # fabric params always come through as strings
+    require("project", provided_by=["set_project"])
+    release_list = get_releases('/srv', env.project)
+    current_release = current()
+    index = release_list.index(current_release)
+    if index > releases:
+        delete_release_list = release_list[:index-releases]
+        for release in delete_release_list:
+            purge('/srv', env.project, release)
