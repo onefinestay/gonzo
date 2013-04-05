@@ -2,7 +2,10 @@ from abc import abstractmethod, abstractproperty
 
 
 class BaseInstance(object):
-    """ Wrapper for ec2 or openstack instances """
+    """ Wrapper for cloud instances
+
+        Interrogate these for name, tags and other properties
+    """
     running_state = abstractproperty
 
     def __init__(self, parent):
@@ -18,10 +21,12 @@ class BaseInstance(object):
 
     @abstractproperty
     def name(self):
+        """ Instance name """
         pass
 
     @abstractproperty
     def tags(self):
+        """ Instance tags """
         pass
 
     @abstractproperty
@@ -91,6 +96,13 @@ class BaseInstance(object):
 
 
 class BaseCloud(object):
+    """ Wrapper for cloud providers
+
+        provides methods for listing, adding or deleting instances,
+        as well as for interacting with security groups, roles and
+        availability zones
+    """
+
     instance_class = abstractproperty
 
     @abstractproperty
