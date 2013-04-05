@@ -14,12 +14,15 @@ def activate_command():
             'cd releases/%s/%s'.format(env.project, env.commit))
 
 
+def history_path(project, project_root='/srv'):
+    return os.path.join(project_root, project, 'releases/.history')
+
+
 def get_releases(project_root, project):
-    history_path = os.path.join(project_root, project, 'releases/.history')
-    if not exists(history_path):
+    if not exists(history_path(project)):
         raise Exception("No history!")
 
-    releases = run('cat {}'.format(history_path))
+    releases = run('cat {}'.format(history_path(project)))
     return [l.strip() for l in releases.splitlines()]
 
 
@@ -110,13 +113,12 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     return (tarfile, True)
 
 
-def set_history(project_root, project, release):
+def set_history(project, release):
     """ Append the release to the .history file unless it already exists in
         there.
     """
-    history_path = os.path.join(project_root, project, 'releases/.history')
     # this fabric command does what we want here
-    append(history_path, '{}\n'.format(release), use_sudo=True)
+    append(history_path(project), '{}\n'.format(release), use_sudo=True)
 
 
 def register_release(project_root, project, release, chown_dirs='www-data'):
@@ -132,7 +134,7 @@ def register_release(project_root, project, release, chown_dirs='www-data'):
     if chown_dirs:
         sudo("chown -R {} {}".format(chown_dirs, target_release))
 
-    set_history(project_root, project, release)
+    set_history(project, release)
 
 
 def get_active_branch():
@@ -193,9 +195,53 @@ def purge(project_root, project, release):
     sudo('cat << EOF > {}\n{}\nEOF'.format(history_file, '\n'.join(releases)))
 
 
+def roll_history(project, project_root='/srv', direction=NEXT):
+    """ Roll the current release back or forward to the adjacent one in the
+        history file. if no current pointer exists, it is assumed that the last
+        (most recent) entry in the history file is the one to link if rolling
+        forward, and the first (earliest) entry is the one to link if rolling
+        backwards.
+
+        Rolling forward is the key step to make a release live after
+        registering a release. Restarting any processes running the old code is
+        also required.
+    """
+    FIRST_TIME = True
+    current = os.path.join(project_root, project, "releases", "current")
+
+    if exists(current):
+        FIRST_TIME = False
+        current_release = current()
+    else:
+        current_release = None
+
+    next_release = get_adjacent_release(
+        project_root, project, current_release, direction)
+
+    if not next_release:
+        raise Exception("No release to which to roll %s" %
+                        {PREVIOUS: "back", NEXT: "forward"}[direction])
+
+    next_release = os.path.join(project_root, project, "releases", next_release)
+    if not FIRST_TIME:
+        sudo('rm {}'.format(current))
+    sudo('ln -s {0} {1}'.format(next_release, current))
+
+
 @task
 def set_project(project):
     env.project = project
+
+
+@task
+def show_history(full=False):
+    """ Cat the release history on remote hosts for the specified project. """
+    require("project", provided_by=["set_project"])
+    if full:
+        run("cat {}".format(history_path(env.project)))
+    else:
+        run("tail -n 3 {}".format(history_path(env.project)))
+    print current()
 
 
 @task
@@ -304,5 +350,19 @@ def purge_release():
     require("project", provided_by=["set_project"])
 
     purge('/srv', env.project, env.commit)
+
+
+@task
+def rollback():
+    """ Roll back a release to the previous, if available """
+    require("project", provided_by=["set_project"])
+    roll_history(env.project, PREVIOUS)
+
+
+@task
+def rollforward():
+    """ Roll forward a release to a newer one, if available """
+    require("project", provided_by=["set_project"])
+    roll_history(env.project, NEXT)
 
 
