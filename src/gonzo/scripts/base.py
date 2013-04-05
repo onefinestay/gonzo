@@ -2,11 +2,14 @@ import argparse
 
 import argcomplete
 
+import gonzo
 from gonzo.scripts import config, launch, list_, terminate
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--version', action='version',
+        version='%(prog)s {}'.format(gonzo.VERSION))
     subparsers = parser.add_subparsers(help='subcommand help')
 
     for module in [config, launch, list_, terminate]:
