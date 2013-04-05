@@ -3,6 +3,21 @@ gonzo
 
 Instance and release management made easy
 
+Manage instances running in *Amazon Web Services* or using *Openstack* using
+a single consistent interface::
+
+    $ gonzo list
+
+    fullstack-hq-uat-064          m1.small   ACTIVE   david    20d 20h 4m 23s
+    fullstack-hq-uat-069          m1.small   ACTIVE   fergus   7d 23h 45m 3s
+    staging-jenkins-slave-003     m1.large   ACTIVE   matthew  60d 4h 18m 40s
+
+
+Easily target instances or groups of instances with ``fab`` commands
+and manage your code deployments using included fabric tasks::
+
+    $ fab gonzo.group:prouction-ecommerce-web push_release rollforward
+
 
 Documentation
 -------------
@@ -92,9 +107,6 @@ CLI::
 TODO
 ----
 
-* tidy up config
-* document config
-* releasing
 * project based stuff
     * project name [for ``/srv/project_name``] (git setting?)
 * tests

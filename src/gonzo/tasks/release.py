@@ -9,6 +9,11 @@ NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 
 
+def activate_command():
+    return ('cd /srv/%s/; source bin/activate; '
+            'cd releases/%s/%s'.format(env.project, env.commit))
+
+
 def get_releases(project_root, project):
     history_path = os.path.join(project_root, project, 'releases/.history')
     if not exists(history_path):
@@ -130,28 +135,28 @@ def register_release(project_root, project, release, chown_dirs='www-data'):
     set_history(project_root, project, release)
 
 
-def get_active_branch(project):
+def get_active_branch():
     """ Return active branch for the specified repo """
-    return get_repo(project).active_branch.name
+    return get_repo().active_branch.name
 
 
-def last_commit(project, branch=None):
+def last_commit(branch=None):
     """ Return the last commit ID for the named branch, or the currently active
         branch if not specified
     """
 
     if not branch:
-        branch = get_active_branch(project)
+        branch = get_active_branch()
 
-    return commit_by_name(project, branch)
+    return commit_by_name(branch)
 
 
-def commit_by_name(project, name):
+def commit_by_name(name):
     """ Will check to see if name is a branch, and if so return the last commit
         ID on that branch, or if a commit ID in which case will return the full
         commit ID. If neither, raises exception.
     """
-    repo = get_repo(project)
+    repo = get_repo()
 
     try:
         commit = repo.commit(name)
@@ -199,19 +204,20 @@ def set_release(name):
         commit ID or None in which case it defaults to HEAD. Sets env.commit
         which is used by, amongst others, push_release.
     """
-    require("project", provided_by=["set_project"])
     if name:
-        env.commit = commit_by_name(env.project, name)
+        env.commit = commit_by_name(name)
     else:
-        env.commit = last_commit(env.project)
+        env.commit = last_commit()
 
 
 @task
 def current(project_root='/srv'):
     """ Return release ID (SHA) of the current release for the project """
-    current = os.path.join(project_root, env.project, "releases", "current")
+    require("project", provided_by=["set_project"])
+    current_path = os.path.join(
+        project_root, env.project, "releases", "current")
 
-    current_release = run('readlink {}'.format(current))
+    current_release = run('readlink {}'.format(current_path))
     current_release_id = os.path.split(current_release)[-1]
 
     return current_release_id
@@ -237,8 +243,6 @@ def push_release():
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    activate_command = ('cd /srv/%s/; source bin/activate; '
-                        'cd releases/%s/%s'.format(env.project, env.commit))
     register_release(project_root='/srv',
                      project=env.project,
                      release=env.commit)
@@ -254,14 +258,14 @@ def push_release():
         else:
             quiet_flag = ""
         sudo("%s ; pip install %s -r requirements.txt %s" %
-            (activate_command, upgrade_flag, quiet_flag))
+            (activate_command(), upgrade_flag, quiet_flag))
 
 
 @task
 def prune_releases(releases='4'):
-    """ Orders the project directory and then will keep the last 4 releases
-        and delete any previous releases present to minimise the disk space, this uses the
-        already built purge release within the ofs_release
+    """ Orders the project directory and then will keep the number of specified
+        releases and delete any previous releases present to minimise the disk
+        space.
 
         Arguments:
 
@@ -277,3 +281,28 @@ def prune_releases(releases='4'):
         delete_release_list = release_list[:index-releases]
         for release in delete_release_list:
             purge('/srv', env.project, release)
+
+
+@task
+def purge_local_package(package):
+    """ Purge a pip installed package from a project virtualenv. """
+    require("project", provided_by=["set_project"])
+    sudo("{0} ; yes y | /srv/{1}/bin/pip uninstall {2}".format(
+        activate_command(), env.project, package))
+
+
+@task
+def purge_release():
+    """ USE WITH CARE! This removes:
+
+            * the package file from local cache
+            * the package file from the remote package cache
+            * the unpacked directory will be removed as long as it is not the
+              current release.
+    """
+    require("commit", provided_by=["set_release"])
+    require("project", provided_by=["set_project"])
+
+    purge('/srv', env.project, env.commit)
+
+
