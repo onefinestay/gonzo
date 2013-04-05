@@ -5,16 +5,30 @@ from fabric.api import task, require, env, sudo, put, run
 from fabric.contrib.files import exists, append
 import git
 
-from gonzo.config import PROJECT_ROOT
+from gonzo.config import PROJECT_ROOT, get_option
 
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 
 
+def get_project():
+    """ Try to return the intended project name for this repository. Otherwise
+        raise an acceptable error.
+
+        1) it was specified on the command line
+        2) it was specified in the git repo
+    """
+    project = env.project or get_option('project')
+    if project is None:
+        raise Exception('No project specified. Cannot continue')
+    return project
+
+
 def activate_command():
-    project_env = os.path.join(PROJECT_ROOT, env.project)
+    project = get_project()
+    project_env = os.path.join(PROJECT_ROOT, project)
     release_env = os.path.join(
-        project_env, 'releases', env.commit, env.project)
+        project_env, 'releases', env.commit, project)
     return 'cd {}; source bin/activate; cd {}'.format(project_env, release_env)
 
 
@@ -241,11 +255,11 @@ def set_project(project):
 @task
 def show_history(full=False):
     """ Cat the release history on remote hosts for the specified project. """
-    require("project", provided_by=["set_project"])
+    project = get_project()
     if full:
-        run("cat {}".format(history_path(env.project)))
+        run("cat {}".format(history_path(project)))
     else:
-        run("tail -n 3 {}".format(history_path(env.project)))
+        run("tail -n 3 {}".format(history_path(project)))
     print current()
 
 
@@ -266,7 +280,7 @@ def current():
     """ Return release ID (SHA) of the current release for the project """
     require("project", provided_by=["set_project"])
     current_path = os.path.join(
-        PROJECT_ROOT, env.project, "releases", "current")
+        PROJECT_ROOT, get_project(), "releases", "current")
 
     current_release = run('readlink {}'.format(current_path))
     current_release_id = os.path.split(current_release)[-1]
@@ -282,20 +296,20 @@ def push_release():
         is slow.
     """
     require("commit", provided_by=["set_release"])
-    require("project", provided_by=["set_project"])
-    zipfile, _ = create_archive(env.project, env.commit)
+    project = get_project()
+    zipfile, _ = create_archive(project, env.commit)
     zfname = os.path.split(zipfile)[-1]
 
     # based on whether the archive is on the remote system or not, push our
     # archive
-    packages_dir = os.path.join(PROJECT_ROOT, env.project, 'packages')
+    packages_dir = os.path.join(PROJECT_ROOT, project, 'packages')
     target_file = os.path.join(packages_dir, zfname)
     if not exists(target_file):
         sudo("mkdir -p {}".format(packages_dir))
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    register_release(project=env.project, release=env.commit)
+    register_release(project=project, release=env.commit)
 
     if getattr(env, "install_requirements", True):
         if getattr(env, "pip_upgrade", False):
@@ -323,14 +337,14 @@ def prune_releases(releases='4'):
                             to be left.
     """
     releases = int(releases)  # fabric params always come through as strings
-    require("project", provided_by=["set_project"])
-    release_list = get_releases(env.project)
+    project = get_project()
+    release_list = get_releases(project)
     current_release = current()
     index = release_list.index(current_release)
     if index > releases:
         delete_release_list = release_list[:index-releases]
         for release in delete_release_list:
-            purge(env.project, release)
+            purge(project, release)
 
 
 @task
@@ -350,22 +364,19 @@ def purge_release():
               current release.
     """
     require("commit", provided_by=["set_release"])
-    require("project", provided_by=["set_project"])
 
-    purge(env.project, env.commit)
+    purge(get_project(), env.commit)
 
 
 @task
 def rollback():
     """ Roll back a release to the previous, if available """
-    require("project", provided_by=["set_project"])
-    roll_history(env.project, PREVIOUS)
+    roll_history(get_project(), PREVIOUS)
 
 
 @task
 def rollforward():
     """ Roll forward a release to a newer one, if available """
-    require("project", provided_by=["set_project"])
-    roll_history(env.project, NEXT)
+    roll_history(get_project(), NEXT)
 
 
