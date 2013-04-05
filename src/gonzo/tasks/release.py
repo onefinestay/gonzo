@@ -162,12 +162,12 @@ def commit_by_name(project, name):
 
 
 @task
-def set_project(project="onefinestay"):
+def set_project(project):
     env.project = project
 
 
 @task
-def set_release(name=None):
+def set_release(name):
     """ Finds the commit ID mapping to 'name' which can be a branch name, a
         commit ID or None in which case it defaults to HEAD. Sets env.commit
         which is used by, amongst others, push_release.
