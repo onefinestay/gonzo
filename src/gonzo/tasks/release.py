@@ -259,9 +259,9 @@ def push_release():
 
 @task
 def prune_releases(releases='4'):
-    """ Orders the project directory and then will keep the last 4 releases
-        and delete any previous releases present to minimise the disk space, this uses the
-        already built purge release within the ofs_release
+    """ Orders the project directory and then will keep the number of specified
+        releases and delete any previous releases present to minimise the disk
+        space.
 
         Arguments:
 
