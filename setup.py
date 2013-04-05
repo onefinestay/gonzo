@@ -48,7 +48,7 @@ setup(
         "Environment :: Console",
     ],
     description='Instance and release management made easy',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     include_package_data=True,
     entry_points={
         'console_scripts': [
