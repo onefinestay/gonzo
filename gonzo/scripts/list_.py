@@ -7,7 +7,7 @@ from datetime import datetime
 from prettytable import PrettyTable
 
 from gonzo.exceptions import CommandError
-from gonzo.backends import cloud
+from gonzo.backends import get_current_cloud
 
 
 def _print_table(headers, output_list, show_header=False):
@@ -91,6 +91,7 @@ def list_(args):
 
     """
 
+    cloud = get_current_cloud()
     instances = cloud.list_instances(only_running=args.only_running)
 
     if args.order == 'name':
