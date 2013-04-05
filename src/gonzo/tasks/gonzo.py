@@ -56,7 +56,7 @@ def group(*env_type_pairs):
 
     cloud = get_current_cloud()
     for env_type_pair in env_type_pairs:
-        # mode_environment is e.g. produiction-platform-app
+        # env_type_pair is e.g. produiction-platform-app
         # we want production, and platform-app
         environment, server_type = env_type_pair.split("-", 1)
 
@@ -65,4 +65,3 @@ def group(*env_type_pairs):
         env.hosts.extend([get_hostname(instance) for instance in instances])
 
     print env.hosts
-

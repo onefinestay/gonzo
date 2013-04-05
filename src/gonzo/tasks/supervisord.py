@@ -25,4 +25,3 @@ def restart(service):
     """ Restarts the sevice """
     sudo("supervisorctl restart %s" % service)
     status()
-

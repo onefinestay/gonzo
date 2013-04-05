@@ -219,4 +219,5 @@ class BaseCloud(object):
     def launch(
             self, name, image_name, instance_type, zone, security_groups,
             key_name, tags=None):
+        """ Launch an instance """
         pass
