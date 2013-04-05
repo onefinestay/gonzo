@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 def parse_requirments(fn, dependency_links):
@@ -31,7 +31,7 @@ test_requirements, dependency_links = parse_requirments(
 
 setup(
     name='gonzo',
-    packages=['gonzo', ],
+    packages=find_packages('src'),
     version='0.1',
     author='onefinestay',
     author_email='engineering@onefinestay.com',
