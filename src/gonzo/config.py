@@ -8,8 +8,9 @@ import git
 from gonzo.exceptions import ConfigurationError
 
 
-def get_clouds():
-    """ returns a configuration dict """
+def get_config_module():
+    """ returns the global configuration module """
+
     gonzo_home = os.path.join(os.path.expanduser("~"), '.gonzo/')
     gonzo_conf = 'config'
 
@@ -23,8 +24,19 @@ def get_clouds():
             "gonzo config does not exist. Please see README")
 
     config_module = imp.load_module(gonzo_conf, fp, pathname, description)
+    return config_module
 
+
+def get_clouds():
+    """ returns a configuration dict """
+    config_module = get_config_module()
     return config_module.CLOUDS
+
+
+def get_sizes():
+    """ returns the host group instance size map """
+    config_module = get_config_module()
+    return config_module.SIZES
 
 
 def get_option(key, default=None):
@@ -78,6 +90,11 @@ class ConfigProxy(object):
     @lazy
     def REGION(self):
         return get_option('region')
+
+    @property
+    @lazy
+    def SIZES(self):
+        return get_sizes()
 
 
 config_proxy = ConfigProxy()

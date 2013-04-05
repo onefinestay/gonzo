@@ -2,14 +2,14 @@ import argparse
 
 import argcomplete
 
-from gonzo.scripts import config, list_
+from gonzo.scripts import config, launch, list_
 
 
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='subcommand help')
 
-    for module in [config, list_]:
+    for module in [config, launch, list_]:
         module_name = module.__name__.rsplit('.', 1)[-1]
         module_alias = module_name.strip('_')
         module_parser = subparsers.add_parser(
