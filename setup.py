@@ -31,6 +31,7 @@ test_requirements, dependency_links = parse_requirments(
 
 setup(
     name='gonzo',
+    package_dir={'': 'src'},
     packages=find_packages('src'),
     version='0.1',
     author='onefinestay',
