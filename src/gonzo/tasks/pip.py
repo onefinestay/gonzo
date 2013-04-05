@@ -12,13 +12,13 @@ def no_requirements():
 
 @task
 def upgrade():
-    """ Cause pip to use the --upgrade flag
+    """ Cause pip to use the --upgrade flag when pushing new releases
     """
     env.pip_upgrade = True
 
 
 @task
 def pip_quiet():
-    """ Cause pip to use the --quiet flag
+    """ Cause pip to use the --quiet flag when pushing new releases
     """
     env.pip_quiet = True
