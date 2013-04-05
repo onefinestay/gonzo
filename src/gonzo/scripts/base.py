@@ -3,6 +3,7 @@ import argparse
 import argcomplete
 
 import gonzo
+from gonzo.exceptions import ConfigurationError
 from gonzo.scripts import config, launch, list_, terminate
 
 
@@ -24,7 +25,10 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    args.main(args)
+    try:
+        args.main(args)
+    except ConfigurationError as ex:
+        print "Configuration error: {}".format(ex)
 
 if __name__ == '__main__':
     main()
