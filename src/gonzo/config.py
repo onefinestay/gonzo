@@ -63,8 +63,13 @@ def set_option(key, value, config_level='global'):
         writer = git.Repo(cwd).config_writer(config_level=config_level)
     except git.exc.InvalidGitRepositoryError:
         # we're not in a git directory so check the global config
-        user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
-        writer = git.config.GitConfigParser(user_config, read_only=False)
+        if config_level == 'repository':
+            raise Exception(
+                'Tried to write local config outside a git repository: '
+                '{}'.format(cwd))
+        else:
+            user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
+            writer = git.config.GitConfigParser(user_config, read_only=False)
     writer.set_value('gonzo', key, value)
 
 

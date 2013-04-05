@@ -38,15 +38,28 @@ def set_region(region):
     set_option('region', region)
 
 
+def set_project(project):
+    """ Sets the project name for the local git repository. This will not write
+        to the global / system git environments.
+    """
+
+    if not project:
+        return
+
+    set_option('project', project, config_level='repository')
+
+
 def print_config():
     print 'cloud:', get_option('cloud')
     print 'region:', get_option('region')
+    print 'project:', get_option('project')
 
 
 def main(args):
     try:
         set_cloud(args.cloud)
         set_region(args.region)
+        set_project(args.project)
     except CommandError as ex:
         print ex
         print
@@ -62,4 +75,8 @@ def init_parser(parser):
     parser.add_argument(
         '--region', dest='region', metavar='REGION',
         choices=available_regions(), help='set the region'
+    )
+    parser.add_argument(
+        '--project', dest='project', metavar='PROJECT',
+        help='set the project name to the local git config'
     )
