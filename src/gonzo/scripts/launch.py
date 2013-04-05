@@ -90,8 +90,7 @@ e.g. produiction-platform-app, which is interpreted as
 
 def init_parser(parser):
     parser.add_argument(
-        'env_type', metavar='environment-server_type', default='name',
-        help=env_type_pair_help)
+        'env_type', metavar='environment-server_type', help=env_type_pair_help)
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
