@@ -25,12 +25,6 @@ Documentation
 `Documentation on Read the Docs <http://gonzo.readthedocs.org/en/latest/>`_
 
 
-Configuration
--------------
-
-TODO...
-
-
 Command Line Interface
 ----------------------
 
