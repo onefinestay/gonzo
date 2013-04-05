@@ -1,7 +1,7 @@
 from functools import wraps
 import imp
 import os
-from ConfigParser import NoSectionError
+from ConfigParser import NoSectionError, NoOptionError
 
 import git
 
@@ -34,7 +34,7 @@ def get_option(key, default=None):
     config_reader = repo.config_reader()
     try:
         return config_reader.get_value('gonzo', key, default)
-    except NoSectionError:
+    except (NoSectionError, NoOptionError):
         return None
 
 
@@ -47,12 +47,12 @@ def set_option(key, value):
 
 
 def get_cloud():
-    mode = get_option('mode')
+    cloud = get_option('cloud')
     clouds = get_clouds()
     try:
-        return clouds[mode]
+        return clouds[cloud]
     except KeyError:
-        raise ConfigurationError('Invalid mode: {}'.format(mode))
+        raise ConfigurationError('Invalid cloud: {}'.format(cloud))
 
 
 def lazy(func):

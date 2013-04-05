@@ -6,26 +6,26 @@ from gonzo.config import get_option, set_option, get_cloud, get_clouds
 from gonzo.exceptions import CommandError
 
 
-def set_mode(mode):
-    if not mode:
+def set_cloud(cloud):
+    if not cloud:
         return
 
-    set_option('mode', mode)
+    set_option('cloud', cloud)
 
     # set the default region
-    mode_config = get_cloud()
-    supported_regions = mode_config['REGIONS']
+    cloud_config = get_cloud()
+    supported_regions = cloud_config['REGIONS']
 
     try:
         default_region = supported_regions[0]
         set_region(default_region)
     except IndexError:
-        raise CommandError('Mode "{}" has no supported regions'.format(mode))
+        raise CommandError('Cloud "{}" has no supported regions'.format(cloud))
 
 
 def available_regions():
-    mode_config = get_cloud()
-    return mode_config['REGIONS']
+    cloud_config = get_cloud()
+    return cloud_config['REGIONS']
 
 
 def set_region(region):
@@ -36,13 +36,13 @@ def set_region(region):
 
 
 def print_config():
-    print 'mode:', get_option('mode')
+    print 'cloud:', get_option('cloud')
     print 'region:', get_option('region')
 
 
 def main(args):
     try:
-        set_mode(args.mode)
+        set_cloud(args.cloud)
         set_region(args.region)
     except CommandError as ex:
         print ex
@@ -53,8 +53,8 @@ def main(args):
 
 def init_parser(parser):
     parser.add_argument(
-        '--mode', dest='mode', metavar='MODE', choices=get_clouds().keys(),
-        help='set the mode'
+        '--cloud', dest='cloud', metavar='CLOUD', choices=get_clouds().keys(),
+        help='set the active cloud configuration'
     )
     parser.add_argument(
         '--region', dest='region', metavar='REGION',
