@@ -89,6 +89,17 @@ CLI::
     apache.maintenance_mode = task(maintenance_mode)
 
 
+TODO
+----
+
+* tidy up config
+* document config
+* releasing
+* project based stuff
+    * project name [for ``/srv/project_name``] (git setting?)
+* tests
+
+
 License
 -------
 
