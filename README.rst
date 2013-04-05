@@ -4,6 +4,12 @@ gonzo
 Instance and release management made easy
 
 
+Documentation
+-------------
+
+`Documentation on Read the Docs <http://gonzo.readthedocs.org/en/latest/>`_
+
+
 Configuration
 -------------
 
