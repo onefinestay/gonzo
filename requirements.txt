@@ -1,6 +1,6 @@
 argcomplete==0.4.0
 boto==2.8.0
-envoy=0.0.2
+envoy==0.0.2
 fabric==1.6
 gitpython==0.3.2.RC1
 prettytable==0.7.1
