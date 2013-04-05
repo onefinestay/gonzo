@@ -173,15 +173,6 @@ class BaseCloud(object):
 
         return instance[0]
 
-    def get_instances_by_env(self, env):
-        """ Return a list of instances matching the environment specified """
-        try:
-            instances = self.get_instance_by_tags(env=env)
-        except:
-            raise KeyError("%s not found in instance list" % env)
-
-        return instances
-
     @abstractmethod
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
@@ -208,7 +199,7 @@ class BaseCloud(object):
         return self.get_instance_by_id(name_or_id)
 
     @abstractmethod
-    def next_az(self, env):
+    def next_az(self, server_type):
         """ Returns the next AZ to use, keeping the use of AZs balanced """
         pass
 

@@ -31,6 +31,25 @@ To set project environment configuration use ``gonzo config``::
     mode: aws
     region: us-west-1
 
+You can then use ``gonzo`` to set targets for fabric commands
+
+Add the ``gonzo`` tasks to your fabfile::
+
+    $ cat fabfile.py
+
+    from gonzo.tasks import gonzo
+    __all__ = ['gonzo']
+
+You can then run::
+
+    $ fab gonzo.instance:production-ecommerce-web-003 run_comand
+
+to target an inividual instance, and::
+
+    $ fab gonzo.group:production-ecommerce-web run_comand
+
+to target an entire host group
+
 
 Fabric task library
 -------------------
