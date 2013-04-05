@@ -7,6 +7,8 @@ import git
 
 from gonzo.exceptions import ConfigurationError
 
+PROJECT_ROOT = '/srv'
+
 
 def get_config_module():
     """ returns the global configuration module """

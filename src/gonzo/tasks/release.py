@@ -5,9 +5,10 @@ from fabric.api import task, require, env, sudo, put, run
 from fabric.contrib.files import exists, append
 import git
 
+from gonzo.config import PROJECT_ROOT
+
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
-PROJECT_ROOT = '/srv'
 
 
 def activate_command():
