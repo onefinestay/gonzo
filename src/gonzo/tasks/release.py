@@ -319,3 +319,50 @@ def purge_release():
     purge('/srv', env.project, env.commit)
 
 
+def roll_history(project, project_root='/srv', direction=NEXT):
+    """ Roll the current release back or forward to the adjacent one in the
+        history file. if no current pointer exists, it is assumed that the last
+        (most recent) entry in the history file is the one to link if rolling
+        forward, and the first (earliest) entry is the one to link if rolling
+        backwards.
+
+        Rolling forward is the key step to make a release live after
+        registering a release. Restarting any processes running the old code is
+        also required.
+    """
+    FIRST_TIME = True
+    current = os.path.join(project_root, project, "releases", "current")
+
+    if exists(current):
+        FIRST_TIME = False
+        current_release = current()
+    else:
+        current_release = None
+
+    next_release = get_adjacent_release(
+        project_root, project, current_release, direction)
+
+    if not next_release:
+        raise Exception("No release to which to roll %s" %
+                        {PREVIOUS: "back", NEXT: "forward"}[direction])
+
+    next_release = os.path.join(project_root, project, "releases", next_release)
+    if not FIRST_TIME:
+        sudo('rm {}'.format(current))
+    sudo('ln -s {0} {1}'.format(next_release, current))
+
+
+@task
+def rollback():
+    """ Roll back a release to the previous, if available """
+    require("project", provided_by=["set_project"])
+    roll_history(env.project, PREVIOUS)
+
+
+@task
+def rollforward():
+    """ Roll forward a release to a newer one, if available """
+    require("project", provided_by=["set_project"])
+    roll_history(env.project, NEXT)
+
+
