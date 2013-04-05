@@ -105,7 +105,8 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     _git = get_repo().git
     try:
         # the prefix used on the remote server for releases to live
-        prefix = '/srv/{0}/releases/{1}/{0}/'.format(project, commit_id)
+        prefix = os.path.join(
+            PROJECT_ROOT, project, 'releases', commit_id, project)
         with gzip.open(tarfile, "wb") as outfile:
             outfile.write(_git.archive(commit_id, format="tar", prefix=prefix))
     except git.exc.GitCommandError:
@@ -286,9 +287,10 @@ def push_release():
 
     # based on whether the archive is on the remote system or not, push our
     # archive
-    target_file = "/srv/%s/packages/%s" % (env.project, zfname)
+    packages_dir = os.path.join(PROJECT_ROOT, env.project, 'packages')
+    target_file = os.path.join(packages_dir, zfname)
     if not exists(target_file):
-        sudo("mkdir -p /srv/%s/packages/" % env.project)
+        sudo("mkdir -p {}".format(packages_dir))
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
@@ -327,15 +329,14 @@ def prune_releases(releases='4'):
     if index > releases:
         delete_release_list = release_list[:index-releases]
         for release in delete_release_list:
-            purge('/srv', env.project, release)
+            purge(env.project, release)
 
 
 @task
 def purge_local_package(package):
     """ Purge a pip installed package from a project virtualenv. """
     require("project", provided_by=["set_project"])
-    sudo("{0} ; yes y | /srv/{1}/bin/pip uninstall {2}".format(
-        activate_command(), env.project, package))
+    sudo("{0} ; yes y | pip uninstall {2}".format(activate_command(), package))
 
 
 @task
@@ -350,7 +351,7 @@ def purge_release():
     require("commit", provided_by=["set_release"])
     require("project", provided_by=["set_project"])
 
-    purge('/srv', env.project, env.commit)
+    purge(env.project, env.commit)
 
 
 @task
