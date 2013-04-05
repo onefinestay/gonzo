@@ -45,7 +45,7 @@ def get_option(key, default=None):
     cwd = os.getcwd()
 
     repo = git.Repo(cwd)
-    config_reader = repo.config_reader()
+    config_reader = repo.config_reader(config_level='global')
     try:
         return config_reader.get_value('gonzo', key, default)
     except (NoSectionError, NoOptionError):
@@ -56,7 +56,7 @@ def set_option(key, value):
     cwd = os.getcwd()
 
     repo = git.Repo(cwd)
-    config_writer = repo.config_writer()
+    config_writer = repo.config_writer(config_level='global')
     config_writer.set_value('gonzo', key, value)
 
 
