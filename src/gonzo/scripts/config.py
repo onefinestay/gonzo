@@ -3,7 +3,7 @@
 """
 
 from gonzo.config import get_option, set_option, get_cloud, get_clouds
-from gonzo.exceptions import CommandError
+from gonzo.exceptions import CommandError, ConfigurationError
 
 
 def set_cloud(cloud):
@@ -24,8 +24,11 @@ def set_cloud(cloud):
 
 
 def available_regions():
-    cloud_config = get_cloud()
-    return cloud_config['REGIONS']
+    try:
+        cloud_config = get_cloud()
+        return cloud_config['REGIONS']
+    except ConfigurationError:
+        return None
 
 
 def set_region(region):
