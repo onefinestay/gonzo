@@ -135,28 +135,28 @@ def register_release(project_root, project, release, chown_dirs='www-data'):
     set_history(project_root, project, release)
 
 
-def get_active_branch(project):
+def get_active_branch():
     """ Return active branch for the specified repo """
-    return get_repo(project).active_branch.name
+    return get_repo().active_branch.name
 
 
-def last_commit(project, branch=None):
+def last_commit(branch=None):
     """ Return the last commit ID for the named branch, or the currently active
         branch if not specified
     """
 
     if not branch:
-        branch = get_active_branch(project)
+        branch = get_active_branch()
 
-    return commit_by_name(project, branch)
+    return commit_by_name(branch)
 
 
-def commit_by_name(project, name):
+def commit_by_name(name):
     """ Will check to see if name is a branch, and if so return the last commit
         ID on that branch, or if a commit ID in which case will return the full
         commit ID. If neither, raises exception.
     """
-    repo = get_repo(project)
+    repo = get_repo()
 
     try:
         commit = repo.commit(name)
@@ -204,19 +204,20 @@ def set_release(name):
         commit ID or None in which case it defaults to HEAD. Sets env.commit
         which is used by, amongst others, push_release.
     """
-    require("project", provided_by=["set_project"])
     if name:
-        env.commit = commit_by_name(env.project, name)
+        env.commit = commit_by_name(name)
     else:
-        env.commit = last_commit(env.project)
+        env.commit = last_commit()
 
 
 @task
 def current(project_root='/srv'):
     """ Return release ID (SHA) of the current release for the project """
-    current = os.path.join(project_root, env.project, "releases", "current")
+    require("project", provided_by=["set_project"])
+    current_path = os.path.join(
+        project_root, env.project, "releases", "current")
 
-    current_release = run('readlink {}'.format(current))
+    current_release = run('readlink {}'.format(current_path))
     current_release_id = os.path.split(current_release)[-1]
 
     return current_release_id
