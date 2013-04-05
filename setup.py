@@ -8,7 +8,7 @@ def parse_requirments(fn, dependency_links):
     if not os.path.exists(fn):
         return requirements, dependency_links
 
-    with open(fn, 'rb') as f:
+    with open(fn, 'r') as f:
         for dep in f:
             dep = dep.strip()
             # need to make github requirements work with
