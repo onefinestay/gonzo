@@ -103,7 +103,13 @@ TODO
 
 * project based stuff
     * project name [for ``/srv/project_name``] (git setting?)
-* tests
+
+
+Build status
+------------
+
+.. image:: https://secure.travis-ci.org/onefinestay/gonzo.png?branch=master
+   :target: http://travis-ci.org/onefinestay/gonzo
 
 
 License
