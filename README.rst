@@ -51,11 +51,11 @@ Add the ``gonzo`` tasks to your fabfile::
 
 You can then run::
 
-    $ fab gonzo.instance:production-ecommerce-web-003 run_comand
+    $ fab gonzo.instance:production-ecommerce-web-003 run_command
 
 to target an inividual instance, and::
 
-    $ fab gonzo.group:production-ecommerce-web run_comand
+    $ fab gonzo.group:production-ecommerce-web run_command
 
 to target an entire host group
 
