@@ -201,6 +201,17 @@ def set_project(project):
 
 
 @task
+def show_history(full=False):
+    """ Cat the release history on remote hosts for the specified project. """
+    require("project", provided_by=["set_project"])
+    if full:
+        run("cat {}".format(history_path(env.project)))
+    else:
+        run("tail -n 3 {}".format(history_path(env.project)))
+    print current()
+
+
+@task
 def set_release(name):
     """ Finds the commit ID mapping to 'name' which can be a branch name, a
         commit ID or None in which case it defaults to HEAD. Sets env.commit
