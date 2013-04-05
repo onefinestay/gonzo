@@ -41,11 +41,11 @@ def get_sizes():
     return config_module.SIZES
 
 
-def get_option(key, default=None, config_level='global'):
+def get_option(key, default=None):
     cwd = os.getcwd()
 
     repo = git.Repo(cwd)
-    config_reader = repo.config_reader(config_level=config_level)
+    config_reader = repo.config_reader()
     try:
         return config_reader.get_value('gonzo', key, default)
     except (NoSectionError, NoOptionError):
