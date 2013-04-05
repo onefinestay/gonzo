@@ -132,13 +132,13 @@ class Cloud(BaseCloud):
         except IndexError:
             raise Exception("Cannot find instance named %s" % name)
 
-    def next_az(self, env):
+    def next_az(self, server_type):
         """ Returns the next AZ to use, keeping the use of AZs balanced """
 
         available_azs = self.get_available_azs()
         available_azs.reverse()  # fill in a, b, c.. order, not a, z, y, x..
         filled_azs = []
-        instances = self.get_instances_by_env(env)
+        instances = self.get_instance_by_tags(setver_type=server_type)
         for instance in instances:
             filled_azs.append(instance.availability_zone[-1])
 

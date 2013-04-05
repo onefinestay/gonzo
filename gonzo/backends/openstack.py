@@ -132,7 +132,7 @@ class Cloud(BaseCloud):
                 return flavour
         raise KeyError("%s not found in instance type list" % name)
 
-    def next_az(self, env):
+    def next_az(self, server_type):
         """ Returns the next AZ to use, keeping the use of AZs balanced """
         return OPENSTACK_AVAILABILITY_ZONE
 
