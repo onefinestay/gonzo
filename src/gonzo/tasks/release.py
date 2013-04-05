@@ -7,18 +7,21 @@ import git
 
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
+PROJECT_ROOT = '/srv'
 
 
 def activate_command():
-    return ('cd /srv/%s/; source bin/activate; '
-            'cd releases/%s/%s'.format(env.project, env.commit))
+    project_env = os.path.join(PROJECT_ROOT, env.project)
+    release_env = os.path.join(
+        project_env, 'releases', env.commit, env.project)
+    return 'cd {}; source bin/activate; cd {}'.format(project_env, release_env)
 
 
-def history_path(project, project_root='/srv'):
-    return os.path.join(project_root, project, 'releases/.history')
+def history_path(project):
+    return os.path.join(PROJECT_ROOT, project, 'releases/.history')
 
 
-def get_releases(project_root, project):
+def get_releases(project):
     if not exists(history_path(project)):
         raise Exception("No history!")
 
@@ -26,15 +29,14 @@ def get_releases(project_root, project):
     return [l.strip() for l in releases.splitlines()]
 
 
-def get_adjacent_release(project_root, project, current_release,
-                         direction=NEXT):
+def get_adjacent_release(project, current_release, direction=NEXT):
     """ Return next or previous release from the history file according to
         direction which is NEXT (1) or PREVIOUS (-1).
 
         If current_release is None then pick first or last entry if
         PREVIOUS / NEXT
     """
-    releases = get_releases(project_root, project)
+    releases = get_releases(project)
 
     new_release = None
     if not current_release:
@@ -121,12 +123,12 @@ def set_history(project, release):
     append(history_path(project), '{}\n'.format(release), use_sudo=True)
 
 
-def register_release(project_root, project, release, chown_dirs='www-data'):
+def register_release(project, release, chown_dirs='www-data'):
     """ Registers a newly pushed release by setting permissions and recording
         the release in the history file. To make active, a rollforward is
         needed subsequently.
     """
-    target_release = os.path.join(project_root, project, "releases", release)
+    target_release = os.path.join(PROJECT_ROOT, project, "releases", release)
 
     if not os.path.exists(target_release):
         raise Exception("Target release %s not found" % target_release)
@@ -167,17 +169,17 @@ def commit_by_name(name):
         raise Exception("Invalid name: %s " % name)
 
 
-def purge(project_root, project, release):
+def purge(project, release):
     """ Purge package file for the particular release.
 
         Removes the cached file in ``project_root/project/packages`` and remove
         the untarred directory and remove history entry only if this is not the
         target of the 'current' pointer
     """
-    package_name = os.path.join(
-        project_root, project, 'packages', '%s.tgz' % release)
-    released_dir = os.path.join(project_root, project, 'releases', release)
-    history_file = os.path.join(project_root, project, 'releases', '.history')
+    project_dir = os.path.join(PROJECT_ROOT, project)
+    package_name = os.path.join(project_dir, 'packages', '%s.tgz' % release)
+    released_dir = os.path.join(project_dir, 'releases', release)
+    history_file = os.path.join(project_dir, 'releases', '.history')
     current_pointer = current()
 
     if exists(package_name):
@@ -190,12 +192,12 @@ def purge(project_root, project, release):
     sudo('rm -rf {}'.format(released_dir))
 
     # remove history entry
-    releases = get_releases(project_root, project)
+    releases = get_releases(project)
     releases = [v for v in releases if v.strip()]
     sudo('cat << EOF > {}\n{}\nEOF'.format(history_file, '\n'.join(releases)))
 
 
-def roll_history(project, project_root='/srv', direction=NEXT):
+def roll_history(project, direction=NEXT):
     """ Roll the current release back or forward to the adjacent one in the
         history file. if no current pointer exists, it is assumed that the last
         (most recent) entry in the history file is the one to link if rolling
@@ -207,7 +209,8 @@ def roll_history(project, project_root='/srv', direction=NEXT):
         also required.
     """
     FIRST_TIME = True
-    current = os.path.join(project_root, project, "releases", "current")
+    project_dir = os.path.join(PROJECT_ROOT, project)
+    current = os.path.join(project_dir, "releases", "current")
 
     if exists(current):
         FIRST_TIME = False
@@ -216,13 +219,13 @@ def roll_history(project, project_root='/srv', direction=NEXT):
         current_release = None
 
     next_release = get_adjacent_release(
-        project_root, project, current_release, direction)
+        project_dir, current_release, direction)
 
     if not next_release:
         raise Exception("No release to which to roll %s" %
                         {PREVIOUS: "back", NEXT: "forward"}[direction])
 
-    next_release = os.path.join(project_root, project, "releases", next_release)
+    next_release = os.path.join(project_dir, "releases", next_release)
     if not FIRST_TIME:
         sudo('rm {}'.format(current))
     sudo('ln -s {0} {1}'.format(next_release, current))
@@ -257,11 +260,11 @@ def set_release(name):
 
 
 @task
-def current(project_root='/srv'):
+def current():
     """ Return release ID (SHA) of the current release for the project """
     require("project", provided_by=["set_project"])
     current_path = os.path.join(
-        project_root, env.project, "releases", "current")
+        PROJECT_ROOT, env.project, "releases", "current")
 
     current_release = run('readlink {}'.format(current_path))
     current_release_id = os.path.split(current_release)[-1]
@@ -289,9 +292,7 @@ def push_release():
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    register_release(project_root='/srv',
-                     project=env.project,
-                     release=env.commit)
+    register_release(project=env.project, release=env.commit)
 
     if getattr(env, "install_requirements", True):
         if getattr(env, "pip_upgrade", False):
@@ -320,7 +321,7 @@ def prune_releases(releases='4'):
     """
     releases = int(releases)  # fabric params always come through as strings
     require("project", provided_by=["set_project"])
-    release_list = get_releases('/srv', env.project)
+    release_list = get_releases(env.project)
     current_release = current()
     index = release_list.index(current_release)
     if index > releases:
