@@ -280,3 +280,28 @@ def prune_releases(releases='4'):
         delete_release_list = release_list[:index-releases]
         for release in delete_release_list:
             purge('/srv', env.project, release)
+
+
+@task
+def purge_local_package(package):
+    """ Purge a pip installed package from a project virtualenv. """
+    require("project", provided_by=["set_project"])
+    sudo("{0} ; yes y | /srv/{1}/bin/pip uninstall {2}".format(
+        activate_command(), env.project, package))
+
+
+@task
+def purge_release():
+    """ USE WITH CARE! This removes:
+
+            * the package file from local cache
+            * the package file from the remote package cache
+            * the unpacked directory will be removed as long as it is not the
+              current release.
+    """
+    require("commit", provided_by=["set_release"])
+    require("project", provided_by=["set_project"])
+
+    purge('/srv', env.project, env.commit)
+
+
