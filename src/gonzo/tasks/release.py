@@ -13,6 +13,15 @@ NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 
 
+def get_releases(project_root, project):
+    history_path = os.path.join(project_root, project, 'releases/.history')
+    if not exists(history_path):
+        raise Exception("No history!")
+
+    releases = run('cat {}'.format(history_path))
+    return [l.strip() for l in releases.splitlines()]
+
+
 def get_adjacent_release(project_root, project, current_release,
                          direction=NEXT):
     """ Return next or previous release from the history file according to
@@ -21,13 +30,7 @@ def get_adjacent_release(project_root, project, current_release,
         If current_release is None then pick first or last entry if
         PREVIOUS / NEXT
     """
-
-    history_path = os.path.join(project_root, project, 'releases/.history')
-    if not exists(history_path):
-        raise Exception("No history!")
-
-    releases = run('cat {}'.format(history_path))
-    releases = [l.strip() for l in releases.splitlines()]
+    releases = get_releases(project_root, project)
 
     new_release = None
     if not current_release:
