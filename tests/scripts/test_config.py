@@ -1,5 +1,5 @@
 import StringIO
-import tempfile
+
 from mock import Mock, MagicMock, patch
 from git.config import GitConfigParser
 
@@ -13,7 +13,7 @@ def test_set_option(git):
     f = StringIO.StringIO()
     f.name = "foo"
     config_writer = GitConfigParser(f, False)
-    repo = Mock(config_writer=lambda: config_writer)
+    repo = Mock(config_writer=lambda *args, **kwargs: config_writer)
     git.Repo.return_value = repo
 
     set_option('projectkey', 'projectvalue')
@@ -40,7 +40,7 @@ def test_get_option(git):
 
     config_reader = GitConfigParser([f], read_only=True)
 
-    repo = Mock(config_reader=lambda: config_reader)
+    repo = Mock(config_reader=lambda *args, **kwargs: config_reader)
     git.Repo.return_value = repo
 
     assert get_option('projectkey') == 'projectvalue'
