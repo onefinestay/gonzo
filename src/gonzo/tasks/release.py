@@ -1,3 +1,5 @@
+from __future__ import absolute_import  # otherwise we find tasks.gonzo
+
 import os
 import gzip
 
