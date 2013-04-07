@@ -69,14 +69,14 @@ def main(args):
 
 def init_parser(parser):
     parser.add_argument(
-        '--cloud', dest='cloud', metavar='CLOUD', choices=get_clouds().keys(),
+        '--cloud', dest='cloud', choices=get_clouds().keys(),
         help='set the active cloud configuration'
     )
     parser.add_argument(
-        '--region', dest='region', metavar='REGION',
+        '--region', dest='region',
         choices=available_regions(), help='set the region'
     )
     parser.add_argument(
-        '--project', dest='project', metavar='PROJECT',
+        '--project', dest='project',
         help='set the project name to the local git config'
     )
