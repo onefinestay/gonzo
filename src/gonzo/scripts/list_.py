@@ -3,6 +3,8 @@
 """
 
 from datetime import datetime
+from functools import partial
+import sys
 
 from prettytable import PrettyTable
 
@@ -27,7 +29,7 @@ def _print_table(headers, output_list, show_header=False):
     return tableoutput
 
 
-def colorize(msg, colour):
+def colorize(msg, colour, use_color='auto'):
     colour_map = {
         'red': '\x1b[31m',
         'yellow': '\x1b[33m',
@@ -38,20 +40,26 @@ def colorize(msg, colour):
     reset = "\x1b[0m"
     colour = colour_map[colour]
 
-    return "%s%s%s" % (colour, msg, reset)
+    if (use_color == 'always' or
+            (use_color == 'auto' and sys.stdout.isatty())):
+        return "%s%s%s" % (colour, msg, reset)
+    else:
+        return msg
 
 
-def print_instance(instance):
+def print_instance(instance, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
-    name = colorize(instance.name, "yellow")
+    colorize_ = partial(colorize, use_color=use_color)
+
+    name = colorize_(instance.name, "yellow")
     instance_type = instance.instance_type
 
     instancecolour = "red"
     if instance.is_running():
         instancecolour = "green"
 
-    status = colorize(instance.status, instancecolour)
+    status = colorize_(instance.status, instancecolour)
     owner = instance.tags.get("owner", "--")
 
     start_time = instance.launch_time
@@ -65,7 +73,7 @@ def print_instance(instance):
     except TypeError:
         uptime = 'n/a'
 
-    uptime = colorize(uptime, "blue")
+    uptime = colorize_(uptime, "blue")
     group_list = [group.name for group in instance.groups]
 
     group_list.sort()
@@ -108,7 +116,7 @@ def list_(args):
     ]
     table_output = []
     for instance in instances:
-        table_output.append(print_instance(instance))
+        table_output.append(print_instance(instance, use_color=args.color))
 
     print _print_table(tablelist, table_output)
 
@@ -128,3 +136,7 @@ def init_parser(parser):
     parser.add_argument(
         '--all', dest='only_running', action='store_false', default=True,
         help='include terminating instances')
+    parser.add_argument(
+        '--color', dest='color', nargs='?', default='auto',
+        choices=['never', 'auto', 'always'],
+        help='display coloured output (default: auto)')
