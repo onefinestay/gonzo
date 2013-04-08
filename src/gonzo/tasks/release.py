@@ -26,23 +26,20 @@ def get_project():
     return project
 
 
+def project_path(*extra):
+    return os.path.join(PROJECT_ROOT, get_project(), *extra)
+
+
 def activate_command():
-    project = get_project()
-    project_env = os.path.join(PROJECT_ROOT, project)
-    release_env = os.path.join(
-        project_env, 'releases', env.commit, project)
-    return 'cd {}; source bin/activate; cd {}'.format(project_env, release_env)
+    return 'cd {}; source bin/activate; cd {}'.format(
+        project_path(), project_path('releases', env.commit, project))
 
 
-def history_path(project):
-    return os.path.join(PROJECT_ROOT, project, 'releases/.history')
-
-
-def get_releases(project):
-    if not exists(history_path(project)):
+def get_releases():
+    if not exists(project_path('releases', '.history')):
         raise Exception("No history!")
 
-    releases = run('cat {}'.format(history_path(project)))
+    releases = run('cat {}'.format(project_path('releases', '.history')))
     return [l.strip() for l in releases.splitlines()]
 
 
@@ -53,7 +50,7 @@ def get_adjacent_release(project, current_release, direction=NEXT):
         If current_release is None then pick first or last entry if
         PREVIOUS / NEXT
     """
-    releases = get_releases(project)
+    releases = get_releases()
 
     new_release = None
     if not current_release:
@@ -122,8 +119,7 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     _git = get_repo().git
     try:
         # the prefix used on the remote server for releases to live
-        prefix = os.path.join(
-            PROJECT_ROOT, project, 'releases', commit_id, project)
+        prefix = project_path('releases', commit_id, project)
         with gzip.open(tarfile, "wb") as outfile:
             outfile.write(_git.archive(commit_id, format="tar", prefix=prefix))
     except git.exc.GitCommandError:
@@ -133,12 +129,13 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     return (tarfile, True)
 
 
-def set_history(project, release):
+def set_history(release):
     """ Append the release to the .history file unless it already exists in
         there.
     """
     # this fabric command does what we want here
-    append(history_path(project), '{}\n'.format(release), use_sudo=True)
+    history_path = project_path('releases', '.history')
+    append(history_path, '{}\n'.format(release), use_sudo=True)
 
 
 def register_release(project, release, chown_dirs='www-data'):
@@ -146,7 +143,7 @@ def register_release(project, release, chown_dirs='www-data'):
         the release in the history file. To make active, a rollforward is
         needed subsequently.
     """
-    target_release = os.path.join(PROJECT_ROOT, project, "releases", release)
+    target_release = project_path("releases", release)
 
     if not os.path.exists(target_release):
         raise Exception("Target release %s not found" % target_release)
@@ -187,17 +184,17 @@ def commit_by_name(name):
         raise Exception("Invalid name: %s " % name)
 
 
-def purge(project, release):
+def purge_release(release):
     """ Purge package file for the particular release.
 
         Removes the cached file in ``project_root/project/packages`` and remove
         the untarred directory and remove history entry only if this is not the
         target of the 'current' pointer
     """
-    project_dir = os.path.join(PROJECT_ROOT, project)
-    package_name = os.path.join(project_dir, 'packages', '%s.tgz' % release)
-    released_dir = os.path.join(project_dir, 'releases', release)
-    history_file = os.path.join(project_dir, 'releases', '.history')
+    project_dir = project_path()
+    package_name = project_path('packages', '%s.tgz' % release)
+    released_dir = project_path('releases', release)
+    history_path = project_path('releases', '.history')
     current_pointer = current()
 
     if exists(package_name):
@@ -210,12 +207,12 @@ def purge(project, release):
     sudo('rm -rf {}'.format(released_dir))
 
     # remove history entry
-    releases = get_releases(project)
+    releases = get_releases()
     releases = [v for v in releases if v.strip()]
-    sudo('cat << EOF > {}\n{}\nEOF'.format(history_file, '\n'.join(releases)))
+    sudo('cat << EOF > {}\n{}\nEOF'.format(history_path, '\n'.join(releases)))
 
 
-def roll_history(project, direction=NEXT):
+def roll_history(direction=NEXT):
     """ Roll the current release back or forward to the adjacent one in the
         history file. if no current pointer exists, it is assumed that the last
         (most recent) entry in the history file is the one to link if rolling
@@ -227,8 +224,8 @@ def roll_history(project, direction=NEXT):
         also required.
     """
     FIRST_TIME = True
-    project_dir = os.path.join(PROJECT_ROOT, project)
-    current = os.path.join(project_dir, "releases", "current")
+    project_dir = project_path()
+    current = project_path("releases", "current")
 
     if exists(current):
         FIRST_TIME = False
@@ -243,7 +240,7 @@ def roll_history(project, direction=NEXT):
         raise Exception("No release to which to roll %s" %
                         {PREVIOUS: "back", NEXT: "forward"}[direction])
 
-    next_release = os.path.join(project_dir, "releases", next_release)
+    next_release = project_path("releases", next_release)
     if not FIRST_TIME:
         sudo('rm {}'.format(current))
     sudo('ln -s {0} {1}'.format(next_release, current))
@@ -257,11 +254,11 @@ def set_project(project):
 @task
 def show_history(full=False):
     """ Cat the release history on remote hosts for the specified project. """
-    project = get_project()
+    history_path = project_path('releases', '.history')
     if full:
-        run("cat {}".format(history_path(project)))
+        run("cat {}".format(history_path))
     else:
-        run("tail -n 3 {}".format(history_path(project)))
+        run("tail -n 3 {}".format(history_path))
     print current()
 
 
@@ -280,9 +277,7 @@ def set_commit(name):
 @task
 def current():
     """ Return release ID (SHA) of the current release for the project """
-    require("project", provided_by=["set_project"])
-    current_path = os.path.join(
-        PROJECT_ROOT, get_project(), "releases", "current")
+    current_path = project_path("releases", "current")
 
     current_release = run('readlink {}'.format(current_path))
     current_release_id = os.path.split(current_release)[-1]
@@ -297,21 +292,21 @@ def push():
         until a rollforward is done. The latter is a fast operation whilst this
         is slow.
     """
-    require("commit", provided_by=["set_commit"])
+    commit = env.commit or last_commit()
     project = get_project()
-    zipfile, _ = create_archive(project, env.commit)
+    zipfile, _ = create_archive(project, commit)
     zfname = os.path.split(zipfile)[-1]
 
     # based on whether the archive is on the remote system or not, push our
     # archive
-    packages_dir = os.path.join(PROJECT_ROOT, project, 'packages')
-    target_file = os.path.join(packages_dir, zfname)
+    packages_dir = project_path('packages')
+    target_file = project_path('packages', zfname)
     if not exists(target_file):
         sudo("mkdir -p {}".format(packages_dir))
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    register_release(project=project, release=env.commit)
+    register_release(project=project, release=commit)
 
     if getattr(env, "install_requirements", True):
         if getattr(env, "pip_upgrade", False):
@@ -339,25 +334,23 @@ def prune(releases='4'):
                             to be left.
     """
     releases = int(releases)  # fabric params always come through as strings
-    project = get_project()
-    release_list = get_releases(project)
+    release_list = get_releases()
     current_release = current()
     index = release_list.index(current_release)
     if index > releases:
         delete_release_list = release_list[:index-releases]
         for release in delete_release_list:
-            purge(project, release)
+            purge_release(release)
 
 
 @task
 def purge_local_package(package):
     """ Purge a pip installed package from a project virtualenv. """
-    require("project", provided_by=["set_project"])
     sudo("{0} ; yes y | pip uninstall {2}".format(activate_command(), package))
 
 
 @task
-def purge():
+def purge(release):
     """ USE WITH CARE! This removes:
 
             * the package file from local cache
@@ -365,20 +358,18 @@ def purge():
             * the unpacked directory will be removed as long as it is not the
               current release.
     """
-    require("commit", provided_by=["set_commit"])
-
-    purge(get_project(), env.commit)
+    purge_release(release)
 
 
 @task
 def rollback():
     """ Roll back a release to the previous, if available """
-    roll_history(get_project(), PREVIOUS)
+    roll_history(PREVIOUS)
 
 
 @task
 def rollforward():
     """ Roll forward a release to a newer one, if available """
-    roll_history(get_project(), NEXT)
+    roll_history(NEXT)
 
 
