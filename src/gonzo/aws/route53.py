@@ -92,7 +92,7 @@ class Route53(object):
     def get_values_by_name(self, name):
         """ Returns the values in a named record """
         record = self.get_record_by_name(name)
-        return record.resource_records
+        return record.resource_records  # pylint: disable=E1103
 
     def fqdn(self, name):
         """ Utility to turn a hostname into a FQDN """

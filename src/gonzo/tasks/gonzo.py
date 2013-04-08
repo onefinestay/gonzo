@@ -19,12 +19,12 @@ def resolve_int_dns(name):
         return None
 
 
-def get_hostname(instance):
+def get_hostname(inst):
     """ return a nice hostname (INT_DNS_ZONE) if available, or fall back
         to internal address"""
 
-    fallback = instance.internal_address()
-    name = instance.name
+    fallback = inst.internal_address()
+    name = inst.name
     if name is None:
         return fallback
 
@@ -43,8 +43,8 @@ def instance(*names):
 
     cloud = get_current_cloud()
     for name in names:
-        instance = cloud.get_instance_by_name(name)
-        dns_name = get_hostname(instance)
+        inst = cloud.get_instance_by_name(name)
+        dns_name = get_hostname(inst)
         env.hosts.append(dns_name)
 
     print env.hosts
@@ -62,6 +62,6 @@ def group(*env_type_pairs):
 
         instances = cloud.get_instance_by_tags(
             environment=environment, server_type=server_type)
-        env.hosts.extend([get_hostname(instance) for instance in instances])
+        env.hosts.extend([get_hostname(inst) for inst in instances])
 
     print env.hosts

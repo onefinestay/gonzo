@@ -1,5 +1,11 @@
 from abc import abstractmethod, abstractproperty
 
+import paramiko
+
+from gonzo.aws.route53 import Route53
+from gonzo.backends import get_current_cloud
+from gonzo.config import config_proxy as config
+
 
 class BaseInstance(object):
     """ Wrapper for cloud instances
@@ -221,3 +227,101 @@ class BaseCloud(object):
             key_name, tags=None):
         """ Launch an instance """
         pass
+
+
+def get_next_hostname(env_type):
+    """ Calculate the next hostname for a given environment, server_type
+        returns the full hostname, including the counter, e.g.
+        production-ecommerce-web-013
+    """
+    record_name = "-".join(["_count", env_type])
+    next_count = 1
+    r53 = Route53()
+    try:
+        count_value = r53.get_values_by_name(record_name)[0]
+        next_count = int(count_value.replace('\"', '')) + 1
+        r53.update_record(record_name, "TXT", "%s" % next_count)
+    except:  # TODO: specify
+        r53.add_remove_record(record_name, "TXT", "%s" % next_count)
+    name = "%s-%03d" % (env_type, next_count)
+    return name
+
+
+def find_or_create_security_groups(environment):
+    cloud = get_current_cloud()
+    if not cloud.security_group_exists(environment):
+        cloud.create_security_group(environment)
+
+    return ['gonzo', environment]
+
+
+def launch_instance(env_type, username=None):
+    """ Launch instances
+
+        Arguments:
+            env_type (string): environment-server_type
+
+        Keyword arguments:
+            username (string): username to set as owner
+            wait (bool): don't return until instance is running.
+                (default: True)
+    """
+
+    cloud = get_current_cloud()
+    environment, server_type = env_type.split("-", 1)
+
+    name = get_next_hostname(env_type)
+
+    image_name = config.CLOUD['AMI_NAME']
+
+    sizes = config.SIZES
+    default_size = sizes['default']
+    instance_type = sizes.get(environment, default_size)
+
+    zone = cloud.next_az(server_type)
+
+    find_or_create_security_groups('gonzo')
+    security_groups = find_or_create_security_groups(environment)
+
+    key_name = config.CLOUD['KEY_NAME']
+
+    tags = {
+        'environment': environment,
+        'server_type': server_type,
+    }
+
+    if username:
+        tags['owner'] = username
+
+    return cloud.launch(
+        name, image_name, instance_type, zone, security_groups, key_name,
+        tags)
+
+
+def set_hostname(instance, username='ubuntu'):
+    name = instance.name
+    hostname = "%s.%s" % (name, config.CLOUD['INT_DNS_ZONE'])
+    cmd = """
+        echo {hostname} | sudo tee /etc/hostname;
+        echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
+        sudo hostname -F /etc/hostname;
+    """.format(hostname=hostname, name=name)
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(
+        paramiko.AutoAddPolicy())
+    ssh.connect(
+        instance.internal_address(), username=username,
+        key_filename=config.CLOUD['SSH_IDENTITY_PATH'])
+
+    # stdin, stdout, stderr
+    _, _, _ = ssh.exec_command(cmd)
+
+
+def configure_instance(instance):
+    """ create dns entry
+        ssh into instance and set the hostname
+    """
+
+    instance.create_dns_entry()
+    set_hostname(instance)
