@@ -8,24 +8,21 @@ import git
 from gonzo.exceptions import ConfigurationError
 
 PROJECT_ROOT = '/srv'
+DEFAULT_HOME = os.path.join(os.path.expanduser("~"), '.gonzo/')
 
 
-def get_config_module():
+def get_config_module(gonzo_home=DEFAULT_HOME):
     """ returns the global configuration module """
-
-    gonzo_home = os.path.join(os.path.expanduser("~"), '.gonzo/')
-    gonzo_conf = 'config'
-
     if not os.path.exists(gonzo_home):
         os.mkdir(gonzo_home)
 
     try:
-        fp, pathname, description = imp.find_module(gonzo_conf, [gonzo_home])
+        fp, pathname, description = imp.find_module('config', [gonzo_home])
     except ImportError:
         raise ConfigurationError(
             "gonzo config does not exist. Please see README")
 
-    config_module = imp.load_module(gonzo_conf, fp, pathname, description)
+    config_module = imp.load_module('config', fp, pathname, description)
     return config_module
 
 
@@ -41,7 +38,8 @@ def get_sizes():
     return config_module.SIZES
 
 
-def get_option(key, default=None):
+def get_reader():
+    """ returns a git config reader """
     cwd = os.getcwd()
 
     try:
@@ -50,13 +48,20 @@ def get_option(key, default=None):
         # we're not in a git directory so check the global config
         user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
         reader = git.config.GitConfigParser([user_config], read_only=True)
+
+    return reader
+
+
+def get_option(key, default=None):
+    reader = get_reader()
     try:
         return reader.get_value('gonzo', key, default)
     except (NoSectionError, NoOptionError):
         return None
 
 
-def set_option(key, value, config_level='global'):
+def get_writer(config_level):
+    """ returns a git config writer """
     cwd = os.getcwd()
 
     try:
@@ -70,6 +75,12 @@ def set_option(key, value, config_level='global'):
         else:
             user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
             writer = git.config.GitConfigParser(user_config, read_only=False)
+
+    return writer
+
+
+def set_option(key, value, config_level='global'):
+    writer = get_writer(config_level)
     writer.set_value('gonzo', key, value)
 
 
