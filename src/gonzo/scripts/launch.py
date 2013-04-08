@@ -2,77 +2,40 @@
 """ Launch instances
 """
 
+from functools import partial
 import os
+import sys
+from time import sleep
 
-from gonzo.aws.route53 import Route53
-from gonzo.backends import get_current_cloud
-from gonzo.config import config_proxy as config
+from gonzo.backends.base import launch_instance, configure_instance
 from gonzo.exceptions import CommandError
+from gonzo.scripts.utils import colorize
 
 
-def get_next_hostname(env_type):
-    """ Calculate the next hostname for a given environment, server_type
-        returns the full hostname, including the counter, e.g.
-        production-ecommerce-web-013
-    """
-    record_name = "-".join(["_count", env_type])
-    next_count = 1
-    r53 = Route53()
-    try:
-        count_value = r53.get_values_by_name(record_name)[0]
-        next_count = int(count_value.replace('\"', '')) + 1
-        r53.update_record(record_name, "TXT", "%s" % next_count)
-    except:  # TODO: specify
-        r53.add_remove_record(record_name, "TXT", "%s" % next_count)
-    name = "%s-%03d" % (env_type, next_count)
-    return name
+def wait_for_instance_boot(instance, use_color='auto'):
+    colorize_ = partial(colorize, use_color=use_color)
+    stdout = sys.stdout
 
-
-def find_or_create_security_groups(environment):
-    cloud = get_current_cloud()
-    if not cloud.security_group_exists(environment):
-        cloud.create_security_group(environment)
-
-    return ['gonzo', environment]
+    print colorize_('Created instance', 'yellow'), instance.id
+    n = 0
+    sleep(1)
+    while not instance.is_running():
+        stdout.write("\r{}... {}s".format(instance.update(), n))
+        stdout.flush()
+        n += 1
+        sleep(1)
+    stdout.write("\r{} after {}s\n".format(instance.update(), n))
+    stdout.flush()
 
 
 def launch(args):
-    """ Launch instances
+    """ Launch instances """
 
-    """
-
-    cloud = get_current_cloud()
-    environment, server_type = args.env_type.split("-", 1)
-
-    name = get_next_hostname(args.env_type)
-    print "Name: %s" % name
-
-    image_name = config.CLOUD['AMI_NAME']
-
-    sizes = config.SIZES
-    default_size = sizes['default']
-    instance_type = sizes.get(environment, default_size)
-
-    zone = cloud.next_az(server_type)
-
-    find_or_create_security_groups('gonzo')
-    security_groups = find_or_create_security_groups(environment)
-
-    key_name = config.CLOUD['KEY_NAME']
-
-    tags = {
-        'environment': environment,
-        'server_type': server_type,
-    }
-
-    if 'USER' in os.environ:
-        tags['owner'] = os.environ['USER']
-
-    instance = cloud.launch(
-        name, image_name, instance_type, zone, security_groups, key_name,
-        tags)
-
-    print instance
+    username = os.environ.get('USER')
+    instance = launch_instance(args.env_type, username=username)
+    wait_for_instance_boot(instance, args.color)
+    configure_instance(instance)
+    print "Created instance {}".format(instance.name)
 
 
 def main(args):
@@ -97,3 +60,7 @@ def init_parser(parser):
     parser.add_argument(
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
+    parser.add_argument(
+        '--color', dest='color', nargs='?', default='auto',
+        choices=['never', 'auto', 'always'],
+        help='display coloured output (default: auto)')

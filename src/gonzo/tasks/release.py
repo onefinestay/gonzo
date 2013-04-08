@@ -3,7 +3,7 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 import os
 import gzip
 
-from fabric.api import task, require, env, sudo, put, run
+from fabric.api import task, env, sudo, put, run
 from fabric.contrib.files import exists, append
 import git
 
@@ -45,8 +45,10 @@ def project_path(*extra):
 
 
 def activate_command():
+    project = get_project()
+    commit = get_commit()
     return 'cd {}; source bin/activate; cd {}'.format(
-        project_path(), project_path('releases', get_commit(), project))
+        project_path(), project_path('releases', commit, project))
 
 
 def get_releases():
@@ -57,7 +59,7 @@ def get_releases():
     return [l.strip() for l in releases.splitlines()]
 
 
-def get_adjacent_release(project, current_release, direction=NEXT):
+def get_adjacent_release(current_release, direction=NEXT):
     """ Return next or previous release from the history file according to
         direction which is NEXT (1) or PREVIOUS (-1).
 
@@ -116,7 +118,7 @@ def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR):
     return os.path.join(proj_cache_dir, "%s.tgz" % commit_id)
 
 
-def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
+def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
     """ Create a tgz archive from the specified commit ID in the named project.
         Output file is in cache_dir which defaults to release_cache under the
         current working directory - it is created if it does not exist. File
@@ -126,6 +128,7 @@ def create_archive(project, commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
         (tarfile path, True) if it is created.
     """
 
+    project = get_project()
     tarfile = get_archive_name(commit_id, project, cache_dir)
     if os.path.isfile(tarfile):
         return (tarfile, False)
@@ -152,7 +155,7 @@ def set_history(release):
     append(history_path, '{}\n'.format(release), use_sudo=True)
 
 
-def register_release(project, release, chown_dirs='www-data'):
+def register_release(release, chown_dirs='www-data'):
     """ Registers a newly pushed release by setting permissions and recording
         the release in the history file. To make active, a rollforward is
         needed subsequently.
@@ -165,7 +168,7 @@ def register_release(project, release, chown_dirs='www-data'):
     if chown_dirs:
         sudo("chown -R {} {}".format(chown_dirs, target_release))
 
-    set_history(project, release)
+    set_history(release)
 
 
 def get_active_branch():
@@ -205,7 +208,6 @@ def purge_release(release):
         the untarred directory and remove history entry only if this is not the
         target of the 'current' pointer
     """
-    project_dir = project_path()
     package_name = project_path('packages', '%s.tgz' % release)
     released_dir = project_path('releases', release)
     history_path = project_path('releases', '.history')
@@ -238,8 +240,7 @@ def roll_history(direction=NEXT):
         also required.
     """
     FIRST_TIME = True
-    project_dir = project_path()
-    current = project_path("releases", "current")
+    current_release = current()
 
     if exists(current):
         FIRST_TIME = False
@@ -247,8 +248,7 @@ def roll_history(direction=NEXT):
     else:
         current_release = None
 
-    next_release = get_adjacent_release(
-        project_dir, current_release, direction)
+    next_release = get_adjacent_release(current_release, direction)
 
     if not next_release:
         raise Exception("No release to which to roll %s" %
@@ -256,8 +256,8 @@ def roll_history(direction=NEXT):
 
     next_release = project_path("releases", next_release)
     if not FIRST_TIME:
-        sudo('rm {}'.format(current))
-    sudo('ln -s {0} {1}'.format(next_release, current))
+        sudo('rm {}'.format(current_release))
+    sudo('ln -s {0} {1}'.format(next_release, current_release))
 
 
 @task
@@ -304,8 +304,7 @@ def push():
         is slow.
     """
     commit = get_commit()
-    project = get_project()
-    zipfile, _ = create_archive(project, commit)
+    zipfile, _ = create_archive(commit)
     zfname = os.path.split(zipfile)[-1]
 
     # based on whether the archive is on the remote system or not, push our
@@ -317,7 +316,7 @@ def push():
         put(zipfile, target_file, use_sudo=True)
         sudo("cd /; tar zxf %s" % target_file)
 
-    register_release(project=project, release=commit)
+    register_release(release=commit)
 
     if getattr(env, "install_requirements", True):
         if getattr(env, "pip_upgrade", False):
@@ -382,5 +381,3 @@ def rollback():
 def rollforward():
     """ Roll forward a release to a newer one, if available """
     roll_history(NEXT)
-
-
