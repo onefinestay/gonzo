@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock, MagicMock, patch
+from mock import Mock, patch
 
 from gonzo.scripts.config import set_cloud, get_cloud, available_regions
 from gonzo.exceptions import CommandError, ConfigurationError
@@ -13,7 +13,8 @@ def test_set_cloud(set_option, get_cloud, set_region):
 
     assert set_cloud('') == None
     set_cloud('some-cloud-service')
-    assert 'supported01' in set_region.mock_calls[0].__str__()
+    # this isn't quite right... don't want to have to call str
+    assert 'supported01' in str(set_region.call_args_list[0])
 
 
 @patch('gonzo.scripts.config.set_region')
