@@ -266,7 +266,7 @@ def show_history(full=False):
 
 
 @task
-def set_release(name):
+def set_commit(name):
     """ Finds the commit ID mapping to 'name' which can be a branch name, a
         commit ID or None in which case it defaults to HEAD. Sets env.commit
         which is used by, amongst others, push_release.
@@ -291,13 +291,13 @@ def current():
 
 
 @task
-def push_release():
-    """ Deploy commit identified by set_release previously.
+def push():
+    """ Deploy commit identified by set_commit previously.
         The release is not set live - the 'current' point is not amended -
         until a rollforward is done. The latter is a fast operation whilst this
         is slow.
     """
-    require("commit", provided_by=["set_release"])
+    require("commit", provided_by=["set_commit"])
     project = get_project()
     zipfile, _ = create_archive(project, env.commit)
     zfname = os.path.split(zipfile)[-1]
@@ -328,7 +328,7 @@ def push_release():
 
 
 @task
-def prune_releases(releases='4'):
+def prune(releases='4'):
     """ Orders the project directory and then will keep the number of specified
         releases and delete any previous releases present to minimise the disk
         space.
@@ -357,7 +357,7 @@ def purge_local_package(package):
 
 
 @task
-def purge_release():
+def purge():
     """ USE WITH CARE! This removes:
 
             * the package file from local cache
@@ -365,7 +365,7 @@ def purge_release():
             * the unpacked directory will be removed as long as it is not the
               current release.
     """
-    require("commit", provided_by=["set_release"])
+    require("commit", provided_by=["set_commit"])
 
     purge(get_project(), env.commit)
 
