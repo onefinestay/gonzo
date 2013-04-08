@@ -27,7 +27,7 @@ def available_regions():
     try:
         cloud_config = get_cloud()
         return cloud_config['REGIONS']
-    except ConfigurationError:
+    except KeyError:
         return None
 
 
