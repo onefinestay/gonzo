@@ -20,10 +20,24 @@ def get_project():
         1) it was specified on the command line
         2) it was specified in the git repo
     """
-    project = env.project or get_option('project')
+    project = getattr(env, 'project', get_option('project'))
     if project is None:
         raise Exception('No project specified. Cannot continue')
     return project
+
+
+def get_commit():
+    """ Try to return the intended commit / release to deal with. Otherwise
+        raise an acceptable error.
+
+        1) it was specified on the command line
+        2) use the current branch in the target repo
+    """
+    commit = getattr(env, 'commit', last_commit())
+    if commit is None:
+        raise Exception(
+            'Unable to ascertain target commit from command line or git repo')
+    return commit
 
 
 def project_path(*extra):
@@ -32,7 +46,7 @@ def project_path(*extra):
 
 def activate_command():
     return 'cd {}; source bin/activate; cd {}'.format(
-        project_path(), project_path('releases', env.commit, project))
+        project_path(), project_path('releases', get_commit(), project))
 
 
 def get_releases():
@@ -268,10 +282,7 @@ def set_commit(name):
         commit ID or None in which case it defaults to HEAD. Sets env.commit
         which is used by, amongst others, push_release.
     """
-    if name:
-        env.commit = commit_by_name(name)
-    else:
-        env.commit = last_commit()
+    env.commit = commit_by_name(name)
 
 
 @task
@@ -292,7 +303,7 @@ def push():
         until a rollforward is done. The latter is a fast operation whilst this
         is slow.
     """
-    commit = env.commit or last_commit()
+    commit = get_commit()
     project = get_project()
     zipfile, _ = create_archive(project, commit)
     zfname = os.path.split(zipfile)[-1]
