@@ -31,8 +31,7 @@ test_requirements, dependency_links = parse_requirments(
 
 setup(
     name='gonzo',
-    package_dir={'': 'src'},
-    packages=find_packages('src'),
+    packages=find_packages(exclude=['tests', 'tests.*']),
     version='0.1.3',
     author='onefinestay',
     author_email='engineering@onefinestay.com',
@@ -56,4 +55,5 @@ setup(
             'gonzo = gonzo.scripts.base:main'
         ]
     },
+    zip_safe=False,
 )
