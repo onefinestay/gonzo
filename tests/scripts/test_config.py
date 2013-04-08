@@ -1,47 +1,34 @@
-import StringIO
-
+import pytest
 from mock import Mock, MagicMock, patch
-from git.config import GitConfigParser
 
-from gonzo.config import set_option, get_option
-from gonzo.scripts.config import set_cloud, get_cloud
-
-
-@patch('gonzo.config.git')
-def test_set_option(git):
-    # our .git_config
-    f = StringIO.StringIO()
-    f.name = "foo"
-    config_writer = GitConfigParser(f, False)
-    repo = Mock(config_writer=lambda *args, **kwargs: config_writer)
-    git.Repo.return_value = repo
-
-    set_option('projectkey', 'projectvalue')
-
-    assert config_writer.sections() == ['gonzo']
-    assert config_writer.options('gonzo') == ['projectkey']
-    assert config_writer.get_value('gonzo', 'projectkey') == 'projectvalue'
-
-    f.seek(0)
-    assert 'gonzo' and 'projectkey' and 'projectvalue' in f.read()
+from gonzo.scripts.config import set_cloud, get_cloud, available_regions
+from gonzo.exceptions import CommandError, ConfigurationError
 
 
-@patch('gonzo.config.git')
-def test_get_option(git):
-    # our .git_config
-    f = StringIO.StringIO()
-    f.name = "bar"
+@patch('gonzo.scripts.config.set_region')
+@patch('gonzo.scripts.config.get_cloud')
+@patch('gonzo.config.set_option')
+def test_set_cloud(set_option, get_cloud, set_region):
+    get_cloud.return_value = {'REGIONS': ['supported01', 'supported02', 'supported03']}
 
-    # before we can test get_option we must set an option
-    config_writer = GitConfigParser(f, False)
-    config_writer.set_value('gonzo', 'projectkey', 'projectvalue')
-    # now do the test (writer and reader are both instances of GitConfigParser)
-    f.seek(0) # this would be executed if we were using the full mechanics
+    assert set_cloud('') == None
+    set_cloud('some-cloud-service')
+    assert 'supported01' in set_region.mock_calls[0].__str__()
 
-    config_reader = GitConfigParser([f], read_only=True)
 
-    repo = Mock(config_reader=lambda *args, **kwargs: config_reader)
-    git.Repo.return_value = repo
+@patch('gonzo.scripts.config.set_region')
+@patch('gonzo.scripts.config.get_cloud')
+@patch('gonzo.config.set_option')
+def test_set_cloud_raises(set_option, get_cloud, set_region):
+    get_cloud.return_value = {'REGIONS': []}
 
-    assert get_option('projectkey') == 'projectvalue'
+    with pytest.raises(CommandError):
+        set_cloud('some-cloud-service') == 'supported01'
 
+
+@patch('gonzo.scripts.config.get_cloud')
+def test_available_regions(get_cloud):
+    regions = [1, 2, 3, 4]
+    get_cloud.return_value = {'REGIONS': regions}
+
+    assert available_regions() == regions
