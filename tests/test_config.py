@@ -1,5 +1,5 @@
 import pytest
-from mock import Mock, MagicMock, patch
+from mock import Mock, patch
 
 from gonzo.config import get_reader, get_writer, set_option, \
         get_option, get_config_module, get_clouds, get_sizes, \
@@ -52,9 +52,7 @@ def test_get_option(get_reader):
     get_option('projectkey')
 
     assert len(reader.mock_calls) == 1
-    # there should be a nice way to do this but the call
-    # objects name value is None??
-    assert 'get_value' in reader.mock_calls[0].__str__()
+    assert reader.get_value.called
 
 
 @patch('gonzo.config.git')
@@ -75,7 +73,7 @@ def test_set_option(get_writer):
     set_option('projectkey', 'projectvalue')
 
     assert len(writer.mock_calls) == 1
-    assert 'set_value' in writer.mock_calls[0].__str__()
+    assert writer.set_value.called
 
 
 @patch('gonzo.config.get_clouds')
