@@ -26,9 +26,9 @@ CLOUDS = {
         ### Common to either clouds backend
         # Glance or AMI image name
         'IMAGE_NAME': 'Ubuntu 12.04 cloudimg amd64',
-        
+
         # Regions to deploy to, new instances will be evenly distributed
-        'REGIONS': ['RegionOne',],
+        'REGIONS': ['RegionOne', ],
 
         # Key to be injected into new instances
         'KEY_NAME': 'master',

@@ -33,7 +33,7 @@ setup(
     name='gonzo',
     package_dir={'': 'src'},
     packages=find_packages('src'),
-    version='0.1.2',
+    version='0.1.3',
     author='onefinestay',
     author_email='engineering@onefinestay.com',
     url='https://github.com/onefinestay/gonzo',
