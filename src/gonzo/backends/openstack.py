@@ -31,7 +31,7 @@ class Instance(BaseInstance):
 
     @property
     def groups(self):
-        # TODO:
+        # TODO: security groups
         return []
 
     @property

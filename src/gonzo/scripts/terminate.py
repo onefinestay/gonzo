@@ -6,9 +6,7 @@ from gonzo.exceptions import CommandError
 
 
 def terminate(args):
-    # TODO
-    print "Terminating", args
-
+    print "Terminating", args  # TODO: add terminate
 
 
 def main(args):
@@ -20,5 +18,4 @@ def main(args):
 
 
 def init_parser(parser):
-    parser.add_argument(
-        'instance_name', help="Terminate an instance")
+    parser.add_argument('instance_name', help="Terminate an instance")
