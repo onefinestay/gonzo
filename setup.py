@@ -1,6 +1,9 @@
 import os
 from setuptools import setup, find_packages
 
+here = os.path.abspath(os.path.dirname(__file__))
+make_abs = lambda fn: os.path.join(here, fn)
+
 
 def parse_requirments(fn, dependency_links):
     requirements = []
@@ -24,9 +27,10 @@ def parse_requirments(fn, dependency_links):
     return requirements, dependency_links
 
 
-requirements, dependency_links = parse_requirments('requirements.txt', [])
+requirements, dependency_links = parse_requirments(
+    make_abs('requirements.txt'), [])
 test_requirements, dependency_links = parse_requirments(
-    'test_requirements.txt', dependency_links)
+    make_abs('test_requirements.txt'), dependency_links)
 
 
 setup(
@@ -48,7 +52,7 @@ setup(
         "Environment :: Console",
     ],
     description='Instance and release management made easy',
-    long_description=open('README.rst').read(),
+    long_description=open(make_abs('README.rst')).read(),
     include_package_data=True,
     entry_points={
         'console_scripts': [
