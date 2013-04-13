@@ -1,9 +1,9 @@
 import argparse
 import pytest
-from mock import patch, call, sentinel, Mock
+from mock import patch, call, sentinel, Mock, PropertyMock
 
-from gonzo.scripts.config import (set_cloud, available_regions, set_region,
-    set_project, print_config, main, init_parser)
+from gonzo.scripts.config import (set_cloud, available_regions,
+    available_clouds, set_region, set_project, print_config, main, init_parser)
 from gonzo.exceptions import ConfigurationError
 from gonzo.test_utils import assert_has_calls, assert_called_once_with
 
@@ -61,6 +61,24 @@ class TestSetCloud(object):
         global_state.__getitem__ = state.__getitem__
         with pytest.raises(ConfigurationError):
             set_cloud('foo')
+
+
+@patch('gonzo.config.ConfigProxy.CLOUDS', new_callable=PropertyMock)
+class TestAvailableClouds(object):
+    def test_ok(self, clouds):
+        clouds.return_value = {
+            'foo': {},
+            'bar': {},
+        }
+        assert available_clouds() == ['foo', 'bar']
+
+    def test_missing(self, clouds):
+        clouds.side_effect = ConfigurationError()
+        assert available_clouds() is None
+
+    def test_non_dict(self, clouds):
+        clouds.return_value = "str"
+        assert available_clouds() is None
 
 
 @patch('gonzo.scripts.config.config_proxy')
