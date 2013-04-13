@@ -7,7 +7,7 @@ from fabric.api import task, env, sudo, put, run
 from fabric.contrib.files import exists, append
 import git
 
-from gonzo.config import PROJECT_ROOT, get_option
+from gonzo.config import PROJECT_ROOT, local_state
 
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
@@ -20,7 +20,7 @@ def get_project():
         1) it was specified on the command line
         2) it was specified in the git repo
     """
-    project = getattr(env, 'project', get_option('project'))
+    project = getattr(env, 'project', local_state['project'])
     if project is None:
         raise Exception('No project specified. Cannot continue')
     return project
