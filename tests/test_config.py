@@ -80,6 +80,13 @@ class TestGlobalState(object):
             state['foo'] = 'bar'
             assert state['foo'] == 'bar'
 
+    def test_overwrite(self):
+        with patch_open():
+            state = GlobalState('path/to/file')
+            state['foo'] = 'bar'
+            state['foo'] = 'baz'
+            assert state['foo'] == 'baz'
+
     def test_get_missing_section(self):
         with patch_open():
             state = GlobalState('path/to/file')
