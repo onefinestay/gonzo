@@ -52,7 +52,6 @@ class TestSetCloud(object):
             set_cloud('foo')
 
     def test_set_regions_not_iterable(self, config_proxy, global_state):
-        pytest.skip("TODO: catch TypeErrors. Move to tests for gonzo.config?")
         config_proxy.CLOUD = {
             'REGIONS': 0,
         }

@@ -25,7 +25,7 @@ def set_cloud(cloud):
     try:
         default_region = supported_regions[0]
         set_region(default_region)
-    except IndexError:
+    except (TypeError, IndexError):
         raise ConfigurationError(
             'Cloud "{}" has no supported regions'.format(cloud))
 
