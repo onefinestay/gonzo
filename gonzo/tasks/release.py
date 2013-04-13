@@ -12,6 +12,9 @@ from gonzo.config import PROJECT_ROOT, local_state
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 
+# TODO: move some of these, e.g. get_adjacent_release (all non-tasks?)
+# to a separate module
+
 
 def get_project():
     """ Try to return the intended project name for this repository. Otherwise
