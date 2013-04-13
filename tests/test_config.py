@@ -51,7 +51,7 @@ class TestStateDict(object):
         state = StateDict()
         with pytest.raises(ConfigurationError) as ex:
             state._raise("foo")
-            assert "foo" in str(ex)
+        assert "foo" in str(ex)
 
 
 @contextmanager
