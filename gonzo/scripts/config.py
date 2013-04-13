@@ -2,6 +2,8 @@
 """ Set the account and region for subsequent gonzo commands
 """
 
+from __future__ import print_function
+
 from gonzo.config import local_state, global_state, config_proxy
 from gonzo.exceptions import ConfigurationError
 
@@ -33,7 +35,7 @@ def available_regions():
         cloud_config = config_proxy.CLOUD
         return cloud_config['REGIONS']
     except (ConfigurationError, KeyError):
-        return None
+        return None  # so argparse shows metavar, not empty list
 
 
 def set_region(region):
@@ -55,9 +57,9 @@ def set_project(project):
 
 
 def print_config():
-    print 'cloud:', global_state.get('cloud')
-    print 'region:', global_state.get('region')
-    print 'project:', local_state.get('project')
+    print('cloud: {}'.format(global_state.get('cloud')))
+    print('region: {}'.format(global_state.get('region')))
+    print('project: {}'.format(local_state.get('project')))
 
 
 def main(args):
@@ -66,8 +68,8 @@ def main(args):
         set_region(args.region)
         set_project(args.project)
     except ConfigurationError as ex:
-        print ex
-        print
+        print(ex)
+        print()
 
     print_config()
 
