@@ -12,8 +12,11 @@ def colorize(msg, colour, use_color='auto'):
     reset = "\x1b[0m"
     colour = colour_map[colour]
 
-    if (use_color == 'always' or
-            (use_color == 'auto' and sys.stdout.isatty())):
+    force_color = (use_color == 'always')
+    auto_color = (use_color == 'auto')
+    color_recommended = sys.stdout.isatty()
+
+    if (force_color or (auto_color and color_recommended)):
         return "%s%s%s" % (colour, msg, reset)
     else:
         return msg
