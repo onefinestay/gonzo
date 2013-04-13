@@ -1,35 +1,66 @@
 import pytest
-from mock import Mock, patch
+from mock import patch, call
 
-from gonzo.scripts.config import set_cloud, get_cloud, available_regions
-from gonzo.exceptions import CommandError, ConfigurationError
-
-
-@patch('gonzo.scripts.config.set_region')
-@patch('gonzo.scripts.config.get_cloud')
-@patch('gonzo.config.set_option')
-def test_set_cloud(set_option, get_cloud, set_region):
-    get_cloud.return_value = {'REGIONS': ['supported01', 'supported02', 'supported03']}
-
-    assert set_cloud('') == None
-    set_cloud('some-cloud-service')
-    # this isn't quite right... don't want to have to call str
-    assert 'supported01' in str(set_region.call_args_list[0])
+from gonzo.scripts.config import set_cloud
+from gonzo.exceptions import ConfigurationError
+from gonzo.test_utils import assert_has_calls
 
 
-@patch('gonzo.scripts.config.set_region')
-@patch('gonzo.scripts.config.get_cloud')
-@patch('gonzo.config.set_option')
-def test_set_cloud_raises(set_option, get_cloud, set_region):
-    get_cloud.return_value = {'REGIONS': []}
+@patch('gonzo.scripts.config.global_state')
+@patch('gonzo.scripts.config.config_proxy')
+class TestSetCloud(object):
+    def test_noop(self, config_proxy, global_state):
+        set_cloud(None)
+        assert global_state.__getitem__.call_count == 0
 
-    with pytest.raises(CommandError):
-        set_cloud('some-cloud-service') == 'supported01'
+    def test_set(self, config_proxy, global_state):
+        config_proxy.CLOUD = {
+            'REGIONS': ['region1', 'region2'],
+        }
+        state = {
+            'cloud': 'foo',
+        }
+        global_state.__getitem__ = state.__getitem__
+        set_cloud('foo')
+
+        calls = [
+            call('cloud', 'foo'),
+            call('region', 'region1'),
+        ]
+        assert_has_calls(global_state.__setitem__, calls)
+
+    def test_set_no_regions(self, config_proxy, global_state):
+        config_proxy.CLOUD = {}
+        state = {
+            'cloud': 'foo',
+        }
+        global_state.__getitem__ = state.__getitem__
+        with pytest.raises(ConfigurationError):
+            set_cloud('foo')
+
+    def test_set_empty_regions(self, config_proxy, global_state):
+        config_proxy.CLOUD = {
+            'REGIONS': [],
+        }
+        state = {
+            'cloud': 'foo',
+        }
+        global_state.__getitem__ = state.__getitem__
+        with pytest.raises(ConfigurationError):
+            set_cloud('foo')
+
+    def test_set_regions_not_iterable(self, config_proxy, global_state):
+        pytest.skip("TODO: catch TypeErrors. Move to tests for gonzo.config?")
+        config_proxy.CLOUD = {
+            'REGIONS': 0,
+        }
+        state = {
+            'cloud': 'foo',
+        }
+        global_state.__getitem__ = state.__getitem__
+        with pytest.raises(ConfigurationError):
+            set_cloud('foo')
 
 
-@patch('gonzo.scripts.config.get_cloud')
-def test_available_regions(get_cloud):
-    regions = [1, 2, 3, 4]
-    get_cloud.return_value = {'REGIONS': regions}
-
-    assert available_regions() == regions
+class TestAvailableRegions(object):
+    pass

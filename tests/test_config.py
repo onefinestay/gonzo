@@ -1,87 +1,166 @@
-import pytest
-from mock import Mock, patch
+from contextlib import contextmanager
+from StringIO import StringIO
+import subprocess
 
-from gonzo.config import get_reader, get_writer, set_option, \
-        get_option, get_config_module, get_clouds, get_sizes, \
-        get_cloud
+import pytest
+from mock import ANY, Mock, patch, sentinel
+
+from gonzo.exceptions import ConfigurationError
+from gonzo.config import (get_config_module, StateDict, GlobalState,
+    LocalState, ConfigProxy)
+from gonzo.test_utils import assert_called_once_with
+
 
 @patch('gonzo.config.imp')
 @patch('gonzo.config.os')
-def test_get_config_module(os, imp):
-    CONFIG = {'config': True}
-    os.path.exists.return_value = True
-    imp.find_module.return_value = Mock(), Mock(), Mock()
-    imp.load_module.return_value = CONFIG
+class TestGetConfigModule(object):
+    def test_get_config_module(self, os, imp):
+        os.path.exists.return_value = True
+        imp.find_module.return_value = Mock(), Mock(), Mock()
+        imp.load_module.return_value = sentinel.config
 
-    assert get_config_module() == CONFIG
+        assert get_config_module() is sentinel.config
 
+    def test_missing_home(self, os, imp):
+        os.path.exists.return_value = False
+        imp.find_module.return_value = Mock(), Mock(), Mock()
+        get_config_module()
+        assert_called_once_with(os.mkdir, ANY)
 
-@patch('gonzo.config.get_config_module')
-def test_get_clouds(cm):
-    clouds = {'cloud': []}
-    CONFIG = Mock(CLOUDS=clouds)
-    cm.return_value = CONFIG
-
-    assert get_clouds() == clouds 
-
-
-@patch('gonzo.config.get_config_module')
-def test_get_sizes(cm):
-    sizes = Mock(name='sizes')
-    CONFIG = Mock(SIZES=sizes)
-    cm.return_value = CONFIG
-
-    assert get_sizes() == sizes 
+    def test_import_error(self, os, imp):
+        imp.find_module.side_effect = ImportError()
+        with pytest.raises(ConfigurationError):
+            get_config_module()
 
 
-@patch('gonzo.config.git')
-def test_get_reader(git):
-    reader, repo = Mock(), Mock()
-    repo.config_reader.return_value = reader
-    git.Repo.return_value = repo
+class TestStateDict(object):
+    def test_get(self):
+        class MockStateDict(StateDict):
+            def __getitem__(self, key):
+                if key == "spam":
+                    return "ham"
+                else:
+                    raise ConfigurationError()
 
-    assert get_reader() == reader
+        state = MockStateDict()
+        assert state.get("spam") == "ham"
+        assert state.get("eggs") == None
+        assert state.get("eggs", "eggs") == "eggs"
 
-
-@patch('gonzo.config.get_reader')
-def test_get_option(get_reader):
-    # ensure we are calling get_value
-    reader = Mock()
-    get_reader.return_value = reader
-
-    get_option('projectkey')
-
-    assert len(reader.mock_calls) == 1
-    assert reader.get_value.called
-
-
-@patch('gonzo.config.git')
-def test_get_writer(git):
-    writer, repo = Mock(), Mock()
-    repo.config_writer.return_value = writer
-    git.Repo.return_value = repo
-
-    assert get_writer('global') == writer
+    def test_raise(self):
+        state = StateDict()
+        with pytest.raises(ConfigurationError) as ex:
+            state._raise("foo")
+            assert "foo" in str(ex)
 
 
-@patch('gonzo.config.get_writer')
-def test_set_option(get_writer):
-    # ensure that we are calling 'set_value' on a writer object
-    writer = Mock()
-    get_writer.return_value = writer
+@contextmanager
+def patch_open():
+    with patch('gonzo.config.open', create=True) as open_manager:
+        with patch('ConfigParser.open', create=True) as open_:
 
-    set_option('projectkey', 'projectvalue')
+            file_ = StringIO()
+            def reset(*args, **kwargs):
+                file_.seek(0)
 
-    assert len(writer.mock_calls) == 1
-    assert writer.set_value.called
+            open_.return_value.readline = file_.readline
+            open_.return_value.close = reset
+            open_manager.return_value.__enter__.return_value = file_
+            open_manager.return_value.__exit__.side_effect = reset
+
+            yield file_
+
+class TestGlobalState(object):
+    def test_get_set(self):
+        with patch_open():
+            state = GlobalState('path/to/file')
+            state['foo'] = 'bar'
+            assert state['foo'] == 'bar'
+
+    def test_get_missing_section(self):
+        with patch_open():
+            state = GlobalState('path/to/file')
+            with pytest.raises(ConfigurationError):
+                state['foo']
+
+    def test_get_missing_key(self):
+        with patch_open() as file_:
+            file_.write('[gonzo]')
+            file_.seek(0)
+            state = GlobalState('path/to/file')
+            with pytest.raises(ConfigurationError):
+                state['foo']
 
 
-@patch('gonzo.config.get_clouds')
-@patch('gonzo.config.get_option')
-def test_get_cloud(get_option, get_clouds):
-	get_option = Mock(lambda x: 'thisisacloud')
-	get_clouds = Mock(lambda x: {'thisisacloud': True})
+class TestLocalState(object):
+    @patch('gonzo.config.subprocess.check_output')
+    def test_get(self, check_output):
+        state = LocalState()
+        state.git_args = ['cmd']
 
-	assert get_cloud()
+        check_output.return_value = ""
+        state['foo'] = 'bar'
+        assert_called_once_with(check_output, ['cmd', 'gonzo.foo', 'bar'])
+
+    @patch('gonzo.config.subprocess.check_output')
+    def test_set(self, check_output):
+        state = LocalState()
+        state.git_args = ['cmd']
+
+        check_output.return_value = "bar"
+        assert state['foo'] == 'bar'
+        assert_called_once_with(check_output, ['cmd', 'gonzo.foo'])
+
+    @patch('gonzo.config.subprocess.check_output')
+    def test_get_error(self, check_output):
+        state = LocalState()
+
+        check_output.side_effect = subprocess.CalledProcessError(0, "")
+        with pytest.raises(ConfigurationError):
+            state['foo']
+
+    @patch('gonzo.config.subprocess.check_output')
+    def test_set_error(self, check_output):
+        state = LocalState()
+
+        check_output.side_effect = subprocess.CalledProcessError(0, "")
+        with pytest.raises(ConfigurationError):
+            state['foo'] = 'bar'
 
 
+class TestConfigProxy(object):
+    @patch('gonzo.config.get_config_module')
+    def test_clouds(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value.CLOUDS = sentinel.clouds
+        assert config_proxy.CLOUDS is sentinel.clouds
+
+    @patch('gonzo.config.get_config_module')
+    def test_sizes(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value.SIZES = sentinel.sizes
+        assert config_proxy.SIZES is sentinel.sizes
+
+    @patch('gonzo.config.global_state', {'cloud': 'foo'})
+    @patch('gonzo.config.get_config_module')
+    def test_cloud(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value.CLOUDS = {
+            'foo': sentinel.foo,
+            'bar': sentinel.bar,
+        }
+        assert config_proxy.CLOUD is sentinel.foo
+
+    @patch('gonzo.config.global_state', {'cloud': 'foo'})
+    @patch('gonzo.config.get_config_module')
+    def test_cloud_missing(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value.CLOUDS = {
+        }
+        with pytest.raises(ConfigurationError):
+            config_proxy.CLOUD
+
+    @patch('gonzo.config.global_state', {'region': sentinel.region})
+    def test_region(self):
+        config_proxy = ConfigProxy()
+        assert config_proxy.REGION is sentinel.region
