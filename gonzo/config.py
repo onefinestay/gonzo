@@ -97,13 +97,19 @@ class ConfigProxy(object):
     def CLOUDS(self):
         """ returns a configuration dict """
         config_module = get_config_module()
-        return config_module.CLOUDS
+        try:
+            return config_module.CLOUDS
+        except AttributeError as ex:
+            raise ConfigurationError(ex)
 
     @property
     def SIZES(self):
         """ returns the host group instance size map """
         config_module = get_config_module()
-        return config_module.SIZES
+        try:
+            return config_module.SIZES
+        except AttributeError as ex:
+            raise ConfigurationError(ex)
 
     ###
     # Subset of the above, depending on current state

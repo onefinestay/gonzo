@@ -31,10 +31,21 @@ def set_cloud(cloud):
 
 
 def available_regions():
+    """ list of configured clouds for argparse suggestions """
     try:
         cloud_config = config_proxy.CLOUD
         return cloud_config['REGIONS']
     except (ConfigurationError, KeyError):
+        return None  # so argparse shows metavar, not empty list
+
+
+def available_clouds():
+    """ list of regions configured for the current cloud
+        for argparse suggestions """
+    try:
+        clouds = config_proxy.CLOUDS
+        return clouds
+    except (ConfigurationError):
         return None  # so argparse shows metavar, not empty list
 
 
@@ -76,7 +87,7 @@ def main(args):
 
 def init_parser(parser):
     parser.add_argument(
-        '--cloud', dest='cloud', choices=config_proxy.CLOUDS.keys(),
+        '--cloud', dest='cloud', choices=available_clouds(),
         help='set the active cloud configuration'
     )
     parser.add_argument(
