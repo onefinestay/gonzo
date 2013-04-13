@@ -7,10 +7,13 @@ from fabric.api import task, env, sudo, put, run
 from fabric.contrib.files import exists, append
 import git
 
-from gonzo.config import PROJECT_ROOT, get_option
+from gonzo.config import PROJECT_ROOT, local_state
 
 NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
+
+# TODO: move some of these, e.g. get_adjacent_release (all non-tasks?)
+# to a separate module
 
 
 def get_project():
@@ -20,7 +23,7 @@ def get_project():
         1) it was specified on the command line
         2) it was specified in the git repo
     """
-    project = getattr(env, 'project', get_option('project'))
+    project = getattr(env, 'project', local_state['project'])
     if project is None:
         raise Exception('No project specified. Cannot continue')
     return project
@@ -348,7 +351,7 @@ def prune(releases='4'):
     current_release = current()
     index = release_list.index(current_release)
     if index > releases:
-        delete_release_list = release_list[:index-releases]
+        delete_release_list = release_list[:index - releases]
         for release in delete_release_list:
             purge_release(release)
 
