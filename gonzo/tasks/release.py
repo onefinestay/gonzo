@@ -348,7 +348,7 @@ def prune(releases='4'):
     current_release = current()
     index = release_list.index(current_release)
     if index > releases:
-        delete_release_list = release_list[:index-releases]
+        delete_release_list = release_list[:index - releases]
         for release in delete_release_list:
             purge_release(release)
 

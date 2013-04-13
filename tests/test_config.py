@@ -44,7 +44,7 @@ class TestStateDict(object):
 
         state = MockStateDict()
         assert state.get("spam") == "ham"
-        assert state.get("eggs") == None
+        assert state.get("eggs") is None
         assert state.get("eggs", "eggs") == "eggs"
 
     def test_raise(self):
@@ -60,6 +60,7 @@ def patch_open():
         with patch('ConfigParser.open', create=True) as open_:
 
             file_ = StringIO()
+
             def reset(*args, **kwargs):
                 file_.seek(0)
 
@@ -69,6 +70,7 @@ def patch_open():
             open_manager.return_value.__exit__.side_effect = reset
 
             yield file_
+
 
 class TestGlobalState(object):
     def test_get_set(self):

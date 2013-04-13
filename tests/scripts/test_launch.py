@@ -1,7 +1,6 @@
-import pytest
 from mock import Mock, patch
 
-from gonzo.scripts.launch import wait_for_instance_boot, launch
+from gonzo.scripts.launch import launch
 
 
 @patch('gonzo.scripts.launch.configure_instance')
@@ -15,4 +14,3 @@ def test_launch(launch_instance, boot, configure):
     assert launch_instance.called
     assert boot.called
     assert configure.called
-

@@ -1,8 +1,7 @@
-import pytest
 from mock import Mock, patch
 
-from gonzo.backends.base import get_next_hostname, \
-    find_or_create_security_groups, launch_instance
+from gonzo.backends.base import (get_next_hostname,
+    find_or_create_security_groups, launch_instance)
 
 
 @patch('gonzo.backends.base.config')
@@ -23,7 +22,7 @@ def test_get_next_hostname(Route53):
     r53.get_values_by_name.return_value = ['9']
     name = get_next_hostname('prod')
 
-    # check expected calls  
+    # check expected calls
     assert r53.get_values_by_name.called
     assert r53.update_record.called
     assert not r53.add_remove_record.called

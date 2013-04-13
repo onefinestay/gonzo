@@ -74,7 +74,7 @@ class TestAvailableRegions(object):
 
     def test_missing(self, config_proxy):
         config_proxy.CLOUD = {}
-        assert available_regions() == None
+        assert available_regions() is None
 
 
 @patch('gonzo.scripts.config.global_state')
@@ -97,6 +97,7 @@ class TestSetProject(object):
     def test_set(self, local_state):
         set_project('foo')
         assert_called_once_with(local_state.__setitem__, 'project', 'foo')
+
 
 @patch('gonzo.scripts.config.print', create=True)
 @patch('gonzo.scripts.config.global_state')
@@ -132,4 +133,3 @@ def test_parser():
     # just make sure it parses ok
     parser = argparse.ArgumentParser()
     init_parser(parser)
-

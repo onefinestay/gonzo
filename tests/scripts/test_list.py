@@ -1,9 +1,9 @@
 import datetime
 
-import pytest
 from mock import Mock, patch
 
 from gonzo.scripts.list_ import print_instance
+
 
 @patch('gonzo.scripts.list_.colorize')
 def test_print_instance(colorize):
@@ -18,15 +18,24 @@ def test_print_instance(colorize):
     groups = [group1, group2]
 
     instance = Mock(
-                name='cloud',
-                instance_type='fancy',
-                status='happy',
-                tags={'owner': 'ofs'},
-                launch_time=datetime.datetime(2000, 01, 01),
-                groups=groups,
-                availability_zone='cloud-zone'
-            )
-    expected = ['fancy-cloud', 'fancy', 'fancy-cloud', 'ofs', 'fancy-cloud', 'group1,group2', 'cloud-zone']
+        name='cloud',
+        instance_type='fancy',
+        status='happy',
+        tags={'owner': 'ofs'},
+        launch_time=datetime.datetime(2000, 01, 01),
+        groups=groups,
+        availability_zone='cloud-zone'
+    )
+
+    expected = [
+        'fancy-cloud',
+        'fancy',
+        'fancy-cloud',
+        'ofs',
+        'fancy-cloud',
+        'group1,group2',
+        'cloud-zone',
+    ]
     result = print_instance(instance)
-    
+
     assert result == expected
