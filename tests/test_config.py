@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from StringIO import StringIO
 import subprocess
+import types
 
 import pytest
 from mock import ANY, Mock, patch, sentinel
@@ -138,10 +139,24 @@ class TestConfigProxy(object):
         assert config_proxy.CLOUDS is sentinel.clouds
 
     @patch('gonzo.config.get_config_module')
+    def test_clouds_missing(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value = types.ModuleType(name='config')
+        with pytest.raises(ConfigurationError):
+            config_proxy.CLOUD
+
+    @patch('gonzo.config.get_config_module')
     def test_sizes(self, config_module):
         config_proxy = ConfigProxy()
         config_module.return_value.SIZES = sentinel.sizes
         assert config_proxy.SIZES is sentinel.sizes
+
+    @patch('gonzo.config.get_config_module')
+    def test_sizes_missing(self, config_module):
+        config_proxy = ConfigProxy()
+        config_module.return_value = types.ModuleType(name='config')
+        with pytest.raises(ConfigurationError):
+            config_proxy.SIZES
 
     @patch('gonzo.config.global_state', {'cloud': 'foo'})
     @patch('gonzo.config.get_config_module')
