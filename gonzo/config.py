@@ -1,94 +1,88 @@
-from functools import wraps
+from ConfigParser import ConfigParser, NoSectionError, NoOptionError
 import imp
 import os
-from ConfigParser import NoSectionError, NoOptionError
-
-import git
+import subprocess
 
 from gonzo.exceptions import ConfigurationError
 
 PROJECT_ROOT = '/srv'
+GONZO_HOME = os.path.join(os.path.expanduser("~"), '.gonzo/')
+STATE_FILE = os.path.join(GONZO_HOME, '.state')
 
 
-def get_config_module():
+def get_config_module(gonzo_home=GONZO_HOME):
     """ returns the global configuration module """
-
-    gonzo_home = os.path.join(os.path.expanduser("~"), '.gonzo/')
-    gonzo_conf = 'config'
-
     if not os.path.exists(gonzo_home):
         os.mkdir(gonzo_home)
 
     try:
-        fp, pathname, description = imp.find_module(gonzo_conf, [gonzo_home])
+        fp, pathname, description = imp.find_module('config', [gonzo_home])
     except ImportError:
         raise ConfigurationError(
             "gonzo config does not exist. Please see README")
 
-    config_module = imp.load_module(gonzo_conf, fp, pathname, description)
+    config_module = imp.load_module('config', fp, pathname, description)
     return config_module
 
 
-def get_clouds():
-    """ returns a configuration dict """
-    config_module = get_config_module()
-    return config_module.CLOUDS
+class StateDict(object):
+    """ methods common to global and local state dicts """
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except ConfigurationError:
+            return default
+
+    def _raise(self, key):
+        raise ConfigurationError('{} not specified'.format(key))
 
 
-def get_sizes():
-    """ returns the host group instance size map """
-    config_module = get_config_module()
-    return config_module.SIZES
+class GlobalState(StateDict):
+    """ global state, kept in state_file, defaulting to
+        ~/.gonzo/.state """
+
+    def __init__(self, state_file):
+        self.state_file = state_file
+
+    def __getitem__(self, key):
+        state = ConfigParser()
+        state.read(self.state_file)
+        try:
+            return state.get('gonzo', key)
+        except (NoSectionError, NoOptionError):
+            self._raise(key)
+
+    def __setitem__(self, key, value):
+        state = ConfigParser()
+        state.read(self.state_file)
+        if not state.has_section('gonzo'):
+            state.add_section('gonzo')
+        state.set('gonzo', key, value)
+
+        with open(self.state_file, 'wb') as state_file:
+            state.write(state_file)
 
 
-def get_option(key, default=None):
-    cwd = os.getcwd()
+class LocalState(StateDict):
+    """ local state, kept in local git config """
+    git_args = ['git', 'config', '--local']
 
-    try:
-        reader = git.Repo(cwd).config_reader()
-    except git.exc.InvalidGitRepositoryError:
-        # we're not in a git directory so check the global config
-        user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
-        reader = git.config.GitConfigParser([user_config], read_only=True)
-    try:
-        return reader.get_value('gonzo', key, default)
-    except (NoSectionError, NoOptionError):
-        return None
+    def __getitem__(self, key):
+        git_key = 'gonzo.{}'.format(key)
+        try:
+            output = subprocess.check_output(self.git_args + [git_key])
+            value = output.strip()
+        except subprocess.CalledProcessError:
+            self._raise(key)
 
+        return value
 
-def set_option(key, value, config_level='global'):
-    cwd = os.getcwd()
-
-    try:
-        writer = git.Repo(cwd).config_writer(config_level=config_level)
-    except git.exc.InvalidGitRepositoryError:
-        # we're not in a git directory so check the global config
-        if config_level == 'repository':
-            raise Exception(
-                'Tried to write local config outside a git repository: '
-                '{}'.format(cwd))
-        else:
-            user_config = os.path.normpath(os.path.expanduser("~/.gitconfig"))
-            writer = git.config.GitConfigParser(user_config, read_only=False)
-    writer.set_value('gonzo', key, value)
-
-
-def get_cloud():
-    cloud = get_option('cloud')
-    clouds = get_clouds()
-    try:
-        return clouds[cloud]
-    except KeyError:
-        raise ConfigurationError('Invalid cloud: {}'.format(cloud))
-
-
-def lazy(func):
-    @wraps(func)
-    def wrapper(self):
-        if not hasattr(func, 'value'):
-            func.value = func(self)
-        return func.value
-    return wrapper
+    def __setitem__(self, key, value):
+        git_key = 'gonzo.{}'.format(key)
+        try:
+            subprocess.check_output(self.git_args + [git_key, value])
+        except subprocess.CalledProcessError:
+            self._raise(key)
 
 
 class ConfigProxy(object):
@@ -96,20 +90,44 @@ class ConfigProxy(object):
         imported at import time
     """
 
-    @property
-    @lazy
-    def CLOUD(self):
-        return get_cloud()
+    ###
+    # Compltete list, user provided
 
     @property
-    @lazy
-    def REGION(self):
-        return get_option('region')
+    def CLOUDS(self):
+        """ returns a configuration dict """
+        config_module = get_config_module()
+        try:
+            return config_module.CLOUDS
+        except AttributeError as ex:
+            raise ConfigurationError(ex)
 
     @property
-    @lazy
     def SIZES(self):
-        return get_sizes()
+        """ returns the host group instance size map """
+        config_module = get_config_module()
+        try:
+            return config_module.SIZES
+        except AttributeError as ex:
+            raise ConfigurationError(ex)
+
+    ###
+    # Subset of the above, depending on current state
+
+    @property
+    def CLOUD(self):
+        cloud = global_state['cloud']
+        clouds = self.CLOUDS
+        try:
+            return clouds[cloud]
+        except KeyError:
+            raise ConfigurationError('Invalid cloud: {}'.format(cloud))
+
+    @property
+    def REGION(self):
+        return global_state['region']
 
 
 config_proxy = ConfigProxy()
+global_state = GlobalState(STATE_FILE)
+local_state = LocalState()
