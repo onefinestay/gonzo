@@ -283,7 +283,7 @@ def launch_instance(env_type, username=None):
     find_or_create_security_groups('gonzo')
     security_groups = find_or_create_security_groups(environment)
 
-    key_name = config.CLOUD['KEY_NAME']
+    key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = {
         'environment': environment,
@@ -300,7 +300,7 @@ def launch_instance(env_type, username=None):
 
 def set_hostname(instance, username='ubuntu'):
     name = instance.name
-    hostname = "%s.%s" % (name, config.CLOUD['INT_DNS_ZONE'])
+    hostname = "%s.%s" % (name, config.CLOUD['DNS_ZONE'])
     cmd = """
         echo {hostname} | sudo tee /etc/hostname;
         echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
@@ -312,7 +312,7 @@ def set_hostname(instance, username='ubuntu'):
         paramiko.AutoAddPolicy())
     ssh.connect(
         instance.internal_address(), username=username,
-        key_filename=config.CLOUD['SSH_IDENTITY_PATH'])
+        key_filename=config.CLOUD['PRIVATE_KEY_FILE'])
 
     # stdin, stdout, stderr
     _, _, _ = ssh.exec_command(cmd)

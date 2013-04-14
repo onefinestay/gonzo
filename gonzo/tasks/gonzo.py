@@ -8,8 +8,8 @@ from gonzo.config import config_proxy as config
 
 
 def resolve_int_dns(name):
-    """ turn into an INT_DNS_ZONE hostname if resolvable """
-    hostname = "%s.%s" % (name, config.CLOUD['INT_DNS_ZONE'])
+    """ turn into an DNS_ZONE hostname if resolvable """
+    hostname = "%s.%s" % (name, config.CLOUD['DNS_ZONE'])
     hostname = str(hostname)
     dig = envoy.run('dig %s +short' % hostname)
 
@@ -20,7 +20,7 @@ def resolve_int_dns(name):
 
 
 def get_hostname(inst):
-    """ return a nice hostname (INT_DNS_ZONE) if available, or fall back
+    """ return a nice hostname (DNS_ZONE) if available, or fall back
         to internal address"""
 
     fallback = inst.internal_address()
