@@ -1,11 +1,9 @@
 from __future__ import absolute_import  # otherwise we find tasks.gonzo
 
 import os
-import gzip
 
-from fabric.api import task, env, sudo, put, run
+from fabric.api import task, env, sudo, put, run, local, settings
 from fabric.contrib.files import exists, append
-import git
 
 from gonzo.config import PROJECT_ROOT, local_state
 
@@ -95,16 +93,8 @@ def get_adjacent_release(current_release, direction=NEXT):
     return new_release
 
 
-def get_repo():
-    """ Return a git.Repo object, caching it if not already in cache. """
-    if not getattr(get_repo, "repo", None):
-        cwd = os.getcwd()
-        get_repo.repo = git.Repo(cwd)
-
-    return get_repo.repo
-
-
-def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR):
+def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR,
+                     format='tgz'):
     """ Utility method to return fully qualified path to a cache file """
 
     if not os.path.exists(cache_dir):
@@ -118,10 +108,10 @@ def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR):
     if not os.path.isdir(proj_cache_dir):
         raise Exception("Cache dir specified is not a directory!")
 
-    return os.path.join(proj_cache_dir, "%s.tgz" % commit_id)
+    return os.path.join(proj_cache_dir, "{}.{}".format(commit_id, format))
 
 
-def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
+def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR, format='tgz'):
     """ Create a tgz archive from the specified commit ID in the named project.
         Output file is in cache_dir which defaults to release_cache under the
         current working directory - it is created if it does not exist. File
@@ -133,16 +123,17 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR):
 
     project = get_project()
     tarfile = get_archive_name(commit_id, project, cache_dir)
+    prefix = project_path('releases', commit_id, project)
     if os.path.isfile(tarfile):
         return (tarfile, False)
 
-    _git = get_repo().git
-    try:
-        # the prefix used on the remote server for releases to live
-        prefix = project_path('releases', commit_id, project)
-        with gzip.open(tarfile, "wb") as outfile:
-            outfile.write(_git.archive(commit_id, format="tar", prefix=prefix))
-    except git.exc.GitCommandError:
+    git_archive_template = 'git archive --format={0} --prefix={1} {2} > {3}'
+    git_command = git_archive_template.format(
+        format, prefix, commit_id, tarfile)
+
+    res = local(git_command, capture=True)
+
+    if not res.succeeded:
         os.remove(tarfile)
         raise Exception("Invalid commit ID: %s " % commit_id)
 
@@ -176,7 +167,10 @@ def register_release(release, chown_dirs='www-data'):
 
 def get_active_branch():
     """ Return active branch for the specified repo """
-    return get_repo().active_branch.name
+    res = local('git branch', capture=True)
+    for line in res.splitlines():
+        if line.startswith('*'):
+            return line[2:]  # "* branch-name"
 
 
 def last_commit(branch=None):
@@ -195,13 +189,12 @@ def commit_by_name(name):
         ID on that branch, or if a commit ID in which case will return the full
         commit ID. If neither, raises exception.
     """
-    repo = get_repo()
-
-    try:
-        commit = repo.commit(name)
-        return commit.hexsha
-    except git.BadObject:
-        raise Exception("Invalid name: %s " % name)
+    with settings(warn_only=True):
+        res = local('git rev-parse {}'.format(name), capture=True)
+        if res.succeeded:
+            return res
+        else:
+            raise Exception("Invalid name: %s " % name)
 
 
 def purge_release(release):
