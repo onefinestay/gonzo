@@ -293,7 +293,7 @@ def launch_instance(env_type, username=None):
 
 def set_hostname(instance, username='ubuntu'):
     name = instance.name
-    hostname = "%s.%s" % (name, config.CLOUD['DNS_ZONE'])
+    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
     cmd = """
         echo {hostname} | sudo tee /etc/hostname;
         echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
