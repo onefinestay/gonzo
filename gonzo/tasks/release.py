@@ -2,7 +2,7 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 
 import os
 
-from fabric.api import task, env, sudo, put, run, local
+from fabric.api import task, env, sudo, put, run, local, settings
 from fabric.contrib.files import exists, append
 
 from gonzo.config import PROJECT_ROOT, local_state
