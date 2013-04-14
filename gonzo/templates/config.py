@@ -19,7 +19,6 @@ CLOUDS = {
         'BACKEND': 'gonzo.backends.aws',
 
         # AWS authentication details
-        'AWS_USER_ID': 0,
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 

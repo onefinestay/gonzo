@@ -131,10 +131,6 @@ class BaseCloud(object):
     def list_security_groups(self):
         pass
 
-    @abstractmethod
-    def list_images(self):
-        pass
-
     def get_security_group(self, name):
         """ Return the named security group """
         groups = self.list_security_groups()
@@ -158,12 +154,9 @@ class BaseCloud(object):
         """ Creates a security group """
         pass
 
-    def get_image(self, name):
-        images = self.list_images()
-        for image in images:
-            if image.name == name:
-                return image
-        raise KeyError("%s not found in image list" % name)
+    @abstractmethod
+    def get_image_by_name(self, name):
+        """ Find image by name """
 
     def get_instance_by_name(self, name):
         """ Return instance having given name """
