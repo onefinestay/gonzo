@@ -184,10 +184,11 @@ def commit_by_name(name):
     """
     with settings(warn_only=True):
         res = local('git rev-parse {}'.format(name), capture=True)
-        if res.succeeded:
-            return res
-        else:
-            raise Exception("Invalid name: %s " % name)
+
+    if res.succeeded:
+        return res
+    else:
+        raise Exception("Invalid name: %s " % name)
 
 
 def purge_release(release):
