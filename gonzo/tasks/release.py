@@ -131,7 +131,8 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR, format='tgz'):
     git_command = git_archive_template.format(
         format, prefix, commit_id, tarfile)
 
-    res = local(git_command, capture=True)
+    with settings(warn_only=True):
+        res = local(git_command, capture=True)
 
     if not res.succeeded:
         os.remove(tarfile)
