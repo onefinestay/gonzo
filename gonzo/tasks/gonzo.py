@@ -9,9 +9,9 @@ from gonzo.config import config_proxy as config
 
 def resolve_int_dns(name):
     """ turn into an DNS_ZONE hostname if resolvable """
-    hostname = "%s.%s" % (name, config.CLOUD['DNS_ZONE'])
+    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
     hostname = str(hostname)
-    dig = envoy.run('dig %s +short' % hostname)
+    dig = envoy.run("dig {} +short".format(hostname))
 
     if len(dig.std_out):
         return hostname
