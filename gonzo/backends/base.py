@@ -272,7 +272,7 @@ def launch_instance(env_type, username=None):
 
     name = get_next_hostname(env_type)
 
-    image_name = config.CLOUD['AMI_NAME']
+    image_name = config.CLOUD['IMAGE_NAME']
 
     sizes = config.SIZES
     default_size = sizes['default']
