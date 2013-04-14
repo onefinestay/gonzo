@@ -167,7 +167,10 @@ def register_release(release, chown_dirs='www-data'):
 
 def get_active_branch():
     """ Return active branch for the specified repo """
-    return get_repo().active_branch.name
+    res = local('git branch', capture=True)
+    for line in res.splitlines():
+        if line.startswith('*'):
+            return line[2:]  # "* branch-name"
 
 
 def last_commit(branch=None):
