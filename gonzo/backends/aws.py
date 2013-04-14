@@ -118,9 +118,10 @@ class Cloud(BaseCloud):
             'name': name,
         })
         if len(images) == 0:
-            raise KeyError("%s not found in image list" % name)
+            raise KeyError("{} not found in image list".format(name))
         if len(images) > 1:
-            raise KeyError("More than one image found with name %s" % name)
+            raise KeyError(
+                "More than one image found with name {}".format(name))
         return images[0]
 
     def get_available_azs(self):
