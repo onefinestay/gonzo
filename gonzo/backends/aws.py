@@ -80,10 +80,6 @@ class Cloud(BaseCloud):
     def list_security_groups(self):
         return self.connection.get_all_security_groups()
 
-    def list_images(self):
-        owner = config.CLOUD['AWS_USER_ID']
-        return self.connection.get_all_images(owners=[owner])
-
     def _region(self):
         region_name = config.REGION
         acces_key_id = config.CLOUD['AWS_ACCESS_KEY_ID']
@@ -115,6 +111,18 @@ class Cloud(BaseCloud):
         sg = self.connection.create_security_group(
             sg_name, 'Rules for %s' % sg_name)
         return sg
+
+    def get_image_by_name(self, name):
+        """ Find image by name """
+        images = self.connection.get_all_images(filters={
+            'name': name,
+        })
+        if len(images) == 0:
+            raise KeyError("{} not found in image list".format(name))
+        if len(images) > 1:
+            raise KeyError(
+                "More than one image found with name {}".format(name))
+        return images[0]
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
@@ -152,8 +160,10 @@ class Cloud(BaseCloud):
     def launch(
             self, name, image_name, instance_type, zone,
             security_groups, key_name, tags=None):
+
+        image = self.get_image_by_name(image_name)
         reservation = self.connection.run_instances(
-            image_name, key_name=key_name,
+            image.id, key_name=key_name,
             security_groups=security_groups,
             instance_type=instance_type,
             placement=zone

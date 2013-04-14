@@ -14,7 +14,7 @@ class Route53(object):
             self, zone_name=None, aws_access_key_id=None,
             aws_secret_access_key=None):
 
-        zone_name = zone_name or config.CLOUD['INT_DNS_ZONE']
+        zone_name = zone_name or config.CLOUD['DNS_ZONE']
         aws_access_key_id = aws_access_key_id or config.CLOUD[
             'AWS_ACCESS_KEY_ID']
         aws_secret_access_key = aws_secret_access_key or config.CLOUD[
