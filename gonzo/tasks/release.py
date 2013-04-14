@@ -127,7 +127,7 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR, format='tgz'):
     if os.path.isfile(tarfile):
         return (tarfile, False)
 
-    git_archive_template = 'git archive --format={0} --prefix={1} {2} > {3}'
+    git_archive_template = 'git archive --format={0} --prefix={1} {2} > "{3}"'
     git_command = git_archive_template.format(
         format, prefix, commit_id, tarfile)
 
