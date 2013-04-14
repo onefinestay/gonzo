@@ -189,13 +189,12 @@ def commit_by_name(name):
         ID on that branch, or if a commit ID in which case will return the full
         commit ID. If neither, raises exception.
     """
-    repo = get_repo()
-
-    try:
-        commit = repo.commit(name)
-        return commit.hexsha
-    except git.BadObject:
-        raise Exception("Invalid name: %s " % name)
+    with settings(warn_only=True):
+        res = local('git rev-parse {}'.format(name), capture=True)
+        if res.succeeded:
+            return res
+        else:
+            raise Exception("Invalid name: %s " % name)
 
 
 def purge_release(release):
