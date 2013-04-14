@@ -165,21 +165,13 @@ def register_release(release, chown_dirs='www-data'):
     set_history(release)
 
 
-def get_active_branch():
-    """ Return active branch for the specified repo """
-    res = local('git branch', capture=True)
-    for line in res.splitlines():
-        if line.startswith('*'):
-            return line[2:]  # "* branch-name"
-
-
 def last_commit(branch=None):
     """ Return the last commit ID for the named branch, or the currently active
         branch if not specified
     """
 
     if not branch:
-        branch = get_active_branch()
+        branch = 'HEAD'
 
     return commit_by_name(branch)
 
