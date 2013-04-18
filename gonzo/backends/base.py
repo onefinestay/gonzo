@@ -131,10 +131,6 @@ class BaseCloud(object):
     def list_security_groups(self):
         pass
 
-    @abstractmethod
-    def list_images(self):
-        pass
-
     def get_security_group(self, name):
         """ Return the named security group """
         groups = self.list_security_groups()
@@ -158,12 +154,9 @@ class BaseCloud(object):
         """ Creates a security group """
         pass
 
-    def get_image(self, name):
-        images = self.list_images()
-        for image in images:
-            if image.name == name:
-                return image
-        raise KeyError("%s not found in image list" % name)
+    @abstractmethod
+    def get_image_by_name(self, name):
+        """ Find image by name """
 
     def get_instance_by_name(self, name):
         """ Return instance having given name """
@@ -272,7 +265,7 @@ def launch_instance(env_type, username=None):
 
     name = get_next_hostname(env_type)
 
-    image_name = config.CLOUD['AMI_NAME']
+    image_name = config.CLOUD['IMAGE_NAME']
 
     sizes = config.SIZES
     default_size = sizes['default']
@@ -283,7 +276,7 @@ def launch_instance(env_type, username=None):
     find_or_create_security_groups('gonzo')
     security_groups = find_or_create_security_groups(environment)
 
-    key_name = config.CLOUD['KEY_NAME']
+    key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = {
         'environment': environment,
@@ -300,7 +293,7 @@ def launch_instance(env_type, username=None):
 
 def set_hostname(instance, username='ubuntu'):
     name = instance.name
-    hostname = "%s.%s" % (name, config.CLOUD['INT_DNS_ZONE'])
+    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
     cmd = """
         echo {hostname} | sudo tee /etc/hostname;
         echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
@@ -312,7 +305,7 @@ def set_hostname(instance, username='ubuntu'):
         paramiko.AutoAddPolicy())
     ssh.connect(
         instance.internal_address(), username=username,
-        key_filename=config.CLOUD['SSH_IDENTITY_PATH'])
+        key_filename=config.CLOUD['PRIVATE_KEY_FILE'])
 
     # stdin, stdout, stderr
     _, _, _ = ssh.exec_command(cmd)

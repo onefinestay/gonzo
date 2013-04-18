@@ -1,6 +1,7 @@
 import datetime
 
 from novaclient.v1_1 import client as nova_client
+from novaclient.exceptions import NotFound, NoUniqueMatch
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends.base import BaseInstance, BaseCloud
@@ -94,9 +95,6 @@ class Cloud(BaseCloud):
     def list_security_groups(self):
         return self.connection.api.security_groups.list()
 
-    def list_images(self):
-        return self.connection.api.images.list()
-
     def _list_instance_types(self):
         return self.connection.api.flavors.list()
 
@@ -105,6 +103,14 @@ class Cloud(BaseCloud):
         sg = self.connection.api.security_groups.create(
             sg_name, 'Rules for %s' % sg_name)
         return sg
+
+    def get_image_by_name(self, name):
+        """ Find image by name """
+        try:
+            return self.connection.api.images.find(name=name)
+        except (NotFound, NoUniqueMatch):
+            # in case we want to do/throw something else later
+            raise
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
@@ -139,7 +145,7 @@ class Cloud(BaseCloud):
     def launch(
             self, name, image_name, instance_type, zone,
             security_groups, key_name, tags=None):
-        image = self.get_image(image_name)
+        image = self.get_image_by_name(image_name)
         flavour = self._get_instance_type(instance_type)
         raw_instance = self.connection.create(
             name, image.id, flavor=flavour.id, availability_zone=zone,

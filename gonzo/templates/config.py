@@ -19,7 +19,6 @@ CLOUDS = {
         'BACKEND': 'gonzo.backends.aws',
 
         # AWS authentication details
-        'AWS_USER_ID': 0,
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 
@@ -30,16 +29,20 @@ CLOUDS = {
         # Regions to deploy to, new instances will be evenly distributed
         'REGIONS': ['RegionOne', ],
 
-        # Key to be injected into new instances
-        'KEY_NAME': 'master',
-        'SSH_IDENTITY_PATH': "~/path/to/keys/master.pem",
+        # Key to be injected into new instances by the cloud provider
+        # You typically upload the public key to the provide and give it a
+        # name for internal reference
+        'PUBLIC_KEY_NAME': 'master',
+        'PRIVATE_KEY_FILE': "~/.ssh/id_rsa",
 
         # Access to Route53 for recording hostnames and counting server types
+        # This is currently required even for Openstack based clouds; if you
+        # are using AWS, you will have already specified these above
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 
         # domain to hold host information
-        'INT_DNS_ZONE': 'example.com',
+        'DNS_ZONE': 'example.com',
     },
 }
 
