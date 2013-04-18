@@ -1,4 +1,6 @@
 from abc import abstractmethod, abstractproperty
+import socket
+import time
 
 import paramiko
 
@@ -310,6 +312,7 @@ def set_hostname(instance, username='ubuntu'):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(
         paramiko.AutoAddPolicy())
+
     ssh.connect(
         instance.internal_address(), username=username,
         key_filename=config.CLOUD['SSH_IDENTITY_PATH'])
@@ -324,4 +327,12 @@ def configure_instance(instance):
     """
 
     instance.create_dns_entry()
-    set_hostname(instance)
+
+    # sometimes instances aren't quite ready to accept connections
+    max_retries = 10
+    for attempt in range(max_retries):
+        try:
+            set_hostname(instance)
+            break
+        except socket.error:
+            time.sleep(5)
