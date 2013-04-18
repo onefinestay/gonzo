@@ -8,7 +8,7 @@ develop:
 	pip install -r test_requirements.txt
 
 pytest:
-	py.test --cov gonzo
+	py.test --cov gonzo tests
 
 flake8:
 	flake8 --ignore=E128 gonzo tests

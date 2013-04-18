@@ -1,10 +1,16 @@
 from abc import abstractmethod, abstractproperty
+import socket
+import time
 
 import paramiko
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
+
+
+# For initial connection after instance creation.
+MAX_RETRIES = 10
 
 
 class BaseInstance(object):
@@ -303,6 +309,7 @@ def set_hostname(instance, username='ubuntu'):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(
         paramiko.AutoAddPolicy())
+
     ssh.connect(
         instance.internal_address(), username=username,
         key_filename=config.CLOUD['PRIVATE_KEY_FILE'])
@@ -317,4 +324,11 @@ def configure_instance(instance):
     """
 
     instance.create_dns_entry()
-    set_hostname(instance)
+
+    # sometimes instances aren't quite ready to accept connections
+    for attempt in range(MAX_RETRIES):
+        try:
+            set_hostname(instance)
+            break
+        except socket.error:
+            time.sleep(5)
