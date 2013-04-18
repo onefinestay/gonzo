@@ -9,6 +9,10 @@ from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
 
 
+# For initial connection after instance creation.
+MAX_RETRIES = 10
+
+
 class BaseInstance(object):
     """ Wrapper for cloud instances
 
@@ -329,8 +333,7 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
     # sometimes instances aren't quite ready to accept connections
-    max_retries = 10
-    for attempt in range(max_retries):
+    for attempt in range(MAX_RETRIES):
         try:
             set_hostname(instance)
             break
