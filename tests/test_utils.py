@@ -2,6 +2,7 @@ import pytest
 
 from gonzo.utils import last_index
 
+
 def test_last_index():
     assert last_index([1, 1], 1) == 1
     assert last_index([1, 1, 2], 1) == 1

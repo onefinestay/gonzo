@@ -12,5 +12,3 @@ def last_index(list_, value):
     if found is None:
         raise ValueError("{} is not in list {}".format(value, list_))
     return found
-
-

@@ -282,11 +282,12 @@ def push():
         with settings(warn_only=True):
             res = sudo("virtualenv {}".format(base_dir))
 
+        # TODO: install setuptools and virtualenv? or bootatrap, e.g.
+        # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
         if not res.succeeded:
             if "virtualenv: command not found" in res:
-                # TODO: install setuptools and virtualenv? or bootatrap, e.g.
-                # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
-                raise RuntimeError("Virtualenv not installed on target server!")
+                raise RuntimeError(
+                    "Virtualenv not installed on target server!")
             else:
                 raise RuntimeError(res)
 
@@ -379,7 +380,6 @@ def rollback():
     # sadly, there's not way to make this atomic
     set_current(previous_release)
     rollback_history()
-
 
 
 @task

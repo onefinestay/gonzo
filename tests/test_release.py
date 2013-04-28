@@ -155,6 +155,7 @@ def test_append_to_history_noop():
         append_to_history('aaa')
         assert releases == ['aaa']
 
+
 def test_append_to_history_repeat():
     with mock_history(initial=['aaa', 'bbb']) as releases:
         append_to_history('aaa')
