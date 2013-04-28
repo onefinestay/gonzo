@@ -3,15 +3,19 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 import os
 
 from fabric.api import task, env, sudo, put, run, local, settings
-from fabric.contrib.files import exists, append
+from fabric.context_managers import prefix as fab_prefix
+from fabric.contrib.files import exists
 
 from gonzo.config import PROJECT_ROOT, local_state
+from gonzo.utils import last_index
 
-NEXT, PREVIOUS = 1, -1
 DEFAULT_ARCHIVE_DIR = "./release_cache"
+USER = 'www-data'  # TODO: make configurable
 
-# TODO: move some of these, e.g. get_adjacent_release (all non-tasks?)
-# to a separate module
+
+def usudo(*args, **kwargs):
+    kwargs['user'] = USER
+    return sudo(*args, **kwargs)
 
 
 def get_project():
@@ -23,7 +27,7 @@ def get_project():
     """
     project = getattr(env, 'project', local_state['project'])
     if project is None:
-        raise Exception('No project specified. Cannot continue')
+        raise RuntimeError('No project specified. Cannot continue')
     return project
 
 
@@ -36,7 +40,7 @@ def get_commit():
     """
     commit = getattr(env, 'commit', last_commit())
     if commit is None:
-        raise Exception(
+        raise RuntimeError(
             'Unable to ascertain target commit from command line or git repo')
     return commit
 
@@ -54,43 +58,26 @@ def activate_command():
 
 def get_releases():
     if not exists(project_path('releases', '.history')):
-        raise Exception("No history!")
+        return []
 
     releases = run('cat {}'.format(project_path('releases', '.history')))
     return [l.strip() for l in releases.splitlines()]
 
 
-def get_adjacent_release(current_release, direction=NEXT):
-    """ Return next or previous release from the history file according to
-        direction which is NEXT (1) or PREVIOUS (-1).
-
-        If current_release is None then pick first or last entry if
-        PREVIOUS / NEXT
-    """
+def get_previous_release(current_release):
+    """ Return the previously active release from the history file """
     releases = get_releases()
 
-    new_release = None
-    if not current_release:
-        try:
-            new_release = releases[-1] if direction == NEXT else releases[0]
-        except IndexError:
-            new_release = None
-    else:
-        try:
-            current_index = releases.index(current_release)
-            next_index = current_index + direction
-            if next_index < 0:
-                new_release = None
-            else:
-                new_release = releases[next_index]
-        except ValueError:
-            # raised if the current release is not found
-            new_release = None
-        except IndexError:
-            # reaised if the adjacent index is out of range
-            new_release = None
-
-    return new_release
+    try:
+        current_index = last_index(releases, current_release)
+        previous_index = current_index - 1
+        if previous_index < 0:
+            return None
+        else:
+            return releases[previous_index]
+    except ValueError:
+        # raised if the current release is not found
+        return None
 
 
 def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR,
@@ -100,18 +87,19 @@ def get_archive_name(commit_id, project, cache_dir=DEFAULT_ARCHIVE_DIR,
     if not os.path.exists(cache_dir):
         os.mkdir(cache_dir)
 
-    proj_cache_dir = "%s/%s" % (cache_dir, project)
+    proj_cache_dir = os.path.join(cache_dir, project)
     cache_dir = os.path.realpath(proj_cache_dir)
     if not os.path.exists(proj_cache_dir):
         os.mkdir(proj_cache_dir)
 
     if not os.path.isdir(proj_cache_dir):
-        raise Exception("Cache dir specified is not a directory!")
+        raise RuntimeError("Cache dir specified is not a directory!")
 
     return os.path.join(proj_cache_dir, "{}.{}".format(commit_id, format))
 
 
-def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR, format='tgz'):
+def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR,
+        file_format='tgz'):
     """ Create a tgz archive from the specified commit ID in the named project.
         Output file is in cache_dir which defaults to release_cache under the
         current working directory - it is created if it does not exist. File
@@ -123,47 +111,48 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR, format='tgz'):
 
     project = get_project()
     tarfile = get_archive_name(commit_id, project, cache_dir)
-    prefix = project_path('releases', commit_id, project)
+    prefix = project_path('releases', commit_id, project, '')  # end with sep
     if os.path.isfile(tarfile):
         return (tarfile, False)
 
     git_archive_template = 'git archive --format={0} --prefix={1} {2} > "{3}"'
     git_command = git_archive_template.format(
-        format, prefix, commit_id, tarfile)
+        file_format, prefix, commit_id, tarfile)
 
     with settings(warn_only=True):
         res = local(git_command, capture=True)
 
     if not res.succeeded:
         os.remove(tarfile)
-        raise Exception("Invalid commit ID: %s " % commit_id)
+        raise RuntimeError("Invalid commit ID: {} " .format(commit_id))
 
     return (tarfile, True)
 
 
-def set_history(release):
-    """ Append the release to the .history file unless it already exists in
-        there.
+def append_to_history(release):
+    """ Append the release to the .history file
+
+        If ``release`` is already the last entry, do nothing.
     """
-    # this fabric command does what we want here
+
+    releases = get_releases()
+    try:
+        current = releases[-1]
+    except IndexError:
+        current = None
+
+    if release == current:
+        return
+
     history_path = project_path('releases', '.history')
-    append(history_path, '{}\n'.format(release), use_sudo=True)
+    usudo('echo {} >> {}'.format(release, history_path))
 
 
-def register_release(release, chown_dirs='www-data'):
-    """ Registers a newly pushed release by setting permissions and recording
-        the release in the history file. To make active, a rollforward is
-        needed subsequently.
-    """
-    target_release = project_path("releases", release)
-
-    if not os.path.exists(target_release):
-        raise Exception("Target release %s not found" % target_release)
-
-    if chown_dirs:
-        sudo("chown -R {} {}".format(chown_dirs, target_release))
-
-    set_history(release)
+def rollback_history():
+    """ Remove the last line from the .history file """
+    history_path = project_path('releases', '.history')
+    if exists(history_path):
+        usudo("sed -i '$ d' {}".format(history_path))
 
 
 def last_commit(branch=None):
@@ -188,7 +177,7 @@ def commit_by_name(name):
     if res.succeeded:
         return res
     else:
-        raise Exception("Invalid name: %s " % name)
+        raise RuntimeError("Invalid name: {}".format(name))
 
 
 def purge_release(release):
@@ -198,56 +187,24 @@ def purge_release(release):
         the untarred directory and remove history entry only if this is not the
         target of the 'current' pointer
     """
-    package_name = project_path('packages', '%s.tgz' % release)
+    package_name = project_path('packages', '{}.tgz'.format(release))
     released_dir = project_path('releases', release)
     history_path = project_path('releases', '.history')
-    current_pointer = current()
+    current_pointer = get_current()
 
     if exists(package_name):
-        sudo('rm {}'.format(package_name))
+        usudo('rm {}'.format(package_name))
 
     if current_pointer == release:
-        raise Exception(
+        raise RuntimeError(
             "Cannot remove checked out directory as it is the current release")
 
-    sudo('rm -rf {}'.format(released_dir))
+    usudo('rm -rf {}'.format(released_dir))
 
     # remove history entry
     releases = get_releases()
     releases = [v for v in releases if v.strip()]
-    sudo('cat << EOF > {}\n{}\nEOF'.format(history_path, '\n'.join(releases)))
-
-
-def roll_history(direction=NEXT):
-    """ Roll the current release back or forward to the adjacent one in the
-        history file. if no current pointer exists, it is assumed that the last
-        (most recent) entry in the history file is the one to link if rolling
-        forward, and the first (earliest) entry is the one to link if rolling
-        backwards.
-
-        Rolling forward is the key step to make a release live after
-        registering a release. Restarting any processes running the old code is
-        also required.
-    """
-    FIRST_TIME = True
-    current_release = current()
-
-    if exists(current):
-        FIRST_TIME = False
-        current_release = current()
-    else:
-        current_release = None
-
-    next_release = get_adjacent_release(current_release, direction)
-
-    if not next_release:
-        raise Exception("No release to which to roll %s" %
-                        {PREVIOUS: "back", NEXT: "forward"}[direction])
-
-    next_release = project_path("releases", next_release)
-    if not FIRST_TIME:
-        sudo('rm {}'.format(current_release))
-    sudo('ln -s {0} {1}'.format(next_release, current_release))
+    usudo('cat << EOF > {}\n{}\nEOF'.format(history_path, '\n'.join(releases)))
 
 
 @task
@@ -263,7 +220,7 @@ def show_history(full=False):
         run("cat {}".format(history_path))
     else:
         run("tail -n 3 {}".format(history_path))
-    print current()
+    print get_current()
 
 
 @task
@@ -276,22 +233,38 @@ def set_commit(name):
 
 
 @task
-def current():
-    """ Return release ID (SHA) of the current release for the project """
+def get_current():
+    """ Return release ID (SHA) of the current release for the project
+
+        If no ``current`` symlink exists, return ``None``
+    """
+
     current_path = project_path("releases", "current")
 
-    current_release = run('readlink {}'.format(current_path))
+    with settings(warn_only=True):
+        current_release = run('readlink {}'.format(current_path))
+
+    if not current_release.succeeded:
+        return None
+
     current_release_id = os.path.split(current_release)[-1]
 
     return current_release_id
 
 
+def set_current(release):
+    release_dir = project_path("releases", release)
+    symlink = project_path("releases", "current")
+
+    usudo('ln -sf {} {}'.format(release_dir, symlink))
+
+
 @task
 def push():
-    """ Deploy commit identified by set_commit previously.
+    """ Deploy commit identified by ``set_commit`` previously.
         The release is not set live - the 'current' point is not amended -
-        until a rollforward is done. The latter is a fast operation whilst this
-        is slow.
+        until ``activate`` is invoked. The latter is a fast operation whilst
+        this is slow.
     """
     commit = get_commit()
     zipfile, _ = create_archive(commit)
@@ -301,12 +274,31 @@ def push():
     # archive
     packages_dir = project_path('packages')
     target_file = project_path('packages', zfname)
-    if not exists(target_file):
-        sudo("mkdir -p {}".format(packages_dir))
-        put(zipfile, target_file, use_sudo=True)
-        sudo("cd /; tar zxf %s" % target_file)
 
-    register_release(release=commit)
+    base_dir = project_path()
+
+    if not exists(project_path('bin', 'activate')):
+        with settings(warn_only=True):
+            res = sudo("virtualenv {}".format(base_dir))
+
+        if not res.succeeded:
+            if "virtualenv: command not found" in res:
+                # TODO: install setuptools and virtualenv? or bootatrap, e.g.
+                # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
+                raise RuntimeError("Virtualenv not installed on target server!")
+            else:
+                raise RuntimeError(res)
+
+    sudo("chown -R {} {}".format(USER, base_dir))
+
+    if not exists(target_file):
+        usudo("mkdir -p {}".format(packages_dir))
+
+        # can't pass a user to 'put'
+        put(zipfile, target_file, use_sudo=True)
+        sudo("chown -R {} {}".format(USER, target_file))
+
+        usudo("cd /; tar zxf {}".format(target_file))
 
     if getattr(env, "install_requirements", True):
         if getattr(env, "pip_upgrade", False):
@@ -318,27 +310,28 @@ def push():
             quiet_flag = "--quiet"
         else:
             quiet_flag = ""
-        sudo("%s ; pip install %s -r requirements.txt %s" %
-            (activate_command(), upgrade_flag, quiet_flag))
+        with fab_prefix(activate_command()):
+            usudo("pip install {} -r requirements.txt {}".format(
+                upgrade_flag, quiet_flag))
 
 
 @task
-def prune(releases='4'):
+def prune(keep='4'):
     """ Orders the project directory and then will keep the number of specified
         releases and delete any previous releases present to minimise the disk
         space.
 
         Arguments:
 
-            releases (str): a string representation of the number of releases
+            keep (str): a string representation of the number of releases
                             to be left.
     """
-    releases = int(releases)  # fabric params always come through as strings
+    keep = int(keep)  # fabric params always come through as strings
     release_list = get_releases()
-    current_release = current()
+    current_release = get_current()
     index = release_list.index(current_release)
-    if index > releases:
-        delete_release_list = release_list[:index - releases]
+    if index > keep:
+        delete_release_list = release_list[:index - keep]
         for release in delete_release_list:
             purge_release(release)
 
@@ -346,16 +339,19 @@ def prune(releases='4'):
 @task
 def purge_local_package(package):
     """ Purge a pip installed package from a project virtualenv. """
-    sudo("{0} ; yes y | pip uninstall {2}".format(activate_command(), package))
+    with fab_prefix(activate_command()):
+        usudo("pip uninstall --yes {}".format(package))
 
 
 @task
 def purge(release):
-    """ USE WITH CARE! This removes:
+    """ Remove all data related to the release.
 
-            * the package file from local cache
-            * the package file from the remote package cache
-            * the unpacked directory will be removed as long as it is not the
+    This removes:
+
+        - the package file from local cache
+        - the package file from the remote package cache
+        - the unpacked directory will be removed as long as it is not the
               current release.
     """
     purge_release(release)
@@ -363,11 +359,36 @@ def purge(release):
 
 @task
 def rollback():
-    """ Roll back a release to the previous, if available """
-    roll_history(PREVIOUS)
+    """ Roll back to the most recent active release in the history file.
+
+        This is used for quick recovery in case of bugs discovered shortly
+        after activating a new release.
+
+        Like ``activate``, this only moves a symlink, so any process using the
+        code should be restarted following this command.
+    """
+
+    current_release = get_current()
+
+    previous_release = get_previous_release(current_release)
+
+    if not previous_release:
+        raise RuntimeError("No release to roll back to")
+
+    # sadly, there's not way to make this atomic
+    set_current(previous_release)
+    rollback_history()
+
 
 
 @task
-def rollforward():
-    """ Roll forward a release to a newer one, if available """
-    roll_history(NEXT)
+def activate():
+    """ Activate the release specified by ``set_commit``, if available.
+
+        Note that this command only moves a symlink, so any process using the
+        code should be restarted following this command.
+    """
+    commit = get_commit()
+    # sadly, there's not way to make this atomic
+    set_current(commit)
+    append_to_history(commit)
