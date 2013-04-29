@@ -177,32 +177,6 @@ def _replace_history(release_list):
         history_path, '\n'.join(release_list)))
 
 
-def purge_release(release):
-    """ Purge package file for the particular release.
-
-        Removes the cached file in ``project_root/project/packages`` and remove
-        the untarred directory and remove history entry only if this is not the
-        target of the 'current' pointer
-    """
-    package_name = project_path('packages', '{}.tgz'.format(release))
-    released_dir = project_path('releases', release)
-    current_pointer = get_current()
-
-    if exists(package_name):
-        usudo('rm {}'.format(package_name))
-
-    if current_pointer == release:
-        raise RuntimeError(
-            "Cannot remove checked out directory as it is the current release")
-
-    usudo('rm -rf {}'.format(released_dir))
-
-    # remove history entry
-    releases = list_releases()
-    releases = [v for v in releases if v != release]
-    _replace_history(releases)
-
-
 @task
 def set_project(project):
     env.project = project
@@ -342,7 +316,7 @@ def purge_local_package(package):
 
 
 @task
-def purge(release):
+def purge_release(release):
     """ Remove all data related to the release.
 
     This removes:
@@ -352,7 +326,26 @@ def purge(release):
         - the unpacked directory will be removed as long as it is not the
               current release.
     """
-    purge_release(release)
+    package_name = project_path('packages', '{}.tgz'.format(release))
+    released_dir = project_path('releases', release)
+    current_pointer = get_current()
+
+    if exists(package_name):
+        usudo('rm {}'.format(package_name))
+
+    if current_pointer == release:
+        raise RuntimeError(
+            "Cannot remove checked out directory as it is the current release")
+
+    usudo('rm -rf {}'.format(released_dir))
+
+    # remove history entry
+    releases = list_releases()
+    releases = [v for v in releases if v != release]
+    _replace_history(releases)
+
+
+
 
 
 @task
