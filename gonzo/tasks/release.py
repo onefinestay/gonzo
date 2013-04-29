@@ -38,7 +38,7 @@ def get_commit():
         1) it was specified on the command line
         2) use the current branch in the target repo
     """
-    commit = getattr(env, 'commit', last_commit())
+    commit = getattr(env, 'commit', None) or rev_parse('HEAD')
     if commit is None:
         raise RuntimeError(
             'Unable to ascertain target commit from command line or git repo')
@@ -159,29 +159,22 @@ def rollback_history():
         usudo("sed -i '$ d' {}".format(history_path))
 
 
-def last_commit(branch=None):
-    """ Return the last commit ID for the named branch, or the currently active
-        branch if not specified
-    """
+def rev_parse(revision):
+    """ Use git rev-parse to parse ``revision`` into a commit sha """
 
-    if not branch:
-        branch = 'HEAD'
-
-    return commit_by_name(branch)
-
-
-def commit_by_name(name):
-    """ Will check to see if name is a branch, and if so return the last commit
-        ID on that branch, or if a commit ID in which case will return the full
-        commit ID. If neither, raises exception.
-    """
     with settings(warn_only=True):
-        res = local('git rev-parse {}'.format(name), capture=True)
+        res = local('git rev-parse {}'.format(revision), capture=True)
 
     if res.succeeded:
         return res
     else:
-        raise RuntimeError("Invalid name: {}".format(name))
+        raise RuntimeError("Unknown revision: {}".format(revision))
+
+
+def _replace_history(release_list):
+    history_path = project_path('releases', '.history')
+    usudo('cat << EOF > {}\n{}\nEOF'.format(
+        history_path, '\n'.join(release_list)))
 
 
 def purge_release(release):
@@ -193,7 +186,6 @@ def purge_release(release):
     """
     package_name = project_path('packages', '{}.tgz'.format(release))
     released_dir = project_path('releases', release)
-    history_path = project_path('releases', '.history')
     current_pointer = get_current()
 
     if exists(package_name):
@@ -207,8 +199,8 @@ def purge_release(release):
 
     # remove history entry
     releases = list_releases()
-    releases = [v for v in releases if v.strip()]
-    usudo('cat << EOF > {}\n{}\nEOF'.format(history_path, '\n'.join(releases)))
+    releases = [v for v in releases if v != release]
+    _replace_history(releases)
 
 
 @task
@@ -228,12 +220,12 @@ def show_history(full=False):
 
 
 @task
-def set_commit(name):
-    """ Finds the commit ID mapping to 'name' which can be a branch name, a
-        commit ID or None in which case it defaults to HEAD. Sets env.commit
-        which is used by, amongst others, push_release.
+def set_commit(revision):
+    """ Set env.commit which is used by, amongst others, push_release.
+
+        ``revision`` may be anything git can parse into a commit sha
     """
-    env.commit = commit_by_name(name)
+    env.commit = rev_parse(revision)
 
 
 @task
