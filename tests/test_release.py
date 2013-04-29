@@ -7,7 +7,7 @@ import pytest
 from gonzo.test_utils import assert_called_once_with, assert_has_calls
 from gonzo.tasks.release import (
     append_to_history, get_previous_release, rollback, activate,
-    purge_release)
+    purge_release, prune)
 
 
 @contextmanager
@@ -152,7 +152,7 @@ def test_purge_release(get_current, exists):
     get_current.return_value = 'ccc'
     exists.return_value = True
     with mock_history(initial=['aaa', 'bbb', 'ccc']) as releases:
-        with patch('gonzo.tasks.release.sudo'):
+        with patch('gonzo.tasks.release.sudo'):  # skip rm
             purge_release('aaa')
     assert releases == ['bbb', 'ccc']
 
@@ -163,6 +163,29 @@ def test_purge_release_current(get_current, exists):
     get_current.return_value = 'bbb'
     exists.return_value = True
     with mock_history(initial=['aaa', 'bbb']) as releases:
-        with pytest.raises(RuntimeError):
-            purge_release('ccc')
+        with patch('gonzo.tasks.release.sudo'):  # skip rm
+            with pytest.raises(RuntimeError):
+                purge_release('bbb')
     assert releases == ['aaa', 'bbb']
+
+
+@patch('gonzo.tasks.release.exists')
+@patch('gonzo.tasks.release.get_current')
+def test_prune(get_current, exists):
+    get_current.return_value = 'ddd'
+    exists.return_value = True
+    with mock_history(initial=['aaa', 'bbb', 'ccc', 'ddd']) as releases:
+        with patch('gonzo.tasks.release.sudo'):  # skip rm
+            prune(2)
+    assert releases == ['ccc', 'ddd']
+
+
+@patch('gonzo.tasks.release.exists')
+@patch('gonzo.tasks.release.get_current')
+def test_prune_not_enough_left(get_current, exists):
+    get_current.return_value = 'ddd'
+    exists.return_value = True
+    with mock_history(initial=['aaa', 'bbb', 'ccc', 'ddd']) as releases:
+        with patch('gonzo.tasks.release.sudo'):  # skip rm
+            prune(5)
+    assert releases == ['aaa', 'bbb', 'ccc', 'ddd']

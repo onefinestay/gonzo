@@ -217,9 +217,11 @@ def get_current():
     if not current_release.succeeded:
         return None
 
-    current_release_id = os.path.split(current_release)[-1]
+    current = os.path.split(current_release)[-1]
+    # TODO: do we want to make sure current == list_releases()[-1]
+    # this should always be the case
 
-    return current_release_id
+    return current
 
 
 def set_current(release):
@@ -303,7 +305,7 @@ def prune(keep='4'):
     current_release = get_current()
     index = release_list.index(current_release)
     if index > keep:
-        delete_release_list = release_list[:index - keep]
+        delete_release_list = release_list[:index - keep + 1]
         for release in delete_release_list:
             purge_release(release)
 
@@ -343,9 +345,6 @@ def purge_release(release):
     releases = list_releases()
     releases = [v for v in releases if v != release]
     _replace_history(releases)
-
-
-
 
 
 @task
