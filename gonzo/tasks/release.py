@@ -56,7 +56,7 @@ def activate_command():
         project_path(), project_path('releases', commit, project))
 
 
-def get_releases():
+def list_releases():
     if not exists(project_path('releases', '.history')):
         return []
 
@@ -66,7 +66,7 @@ def get_releases():
 
 def get_previous_release(current_release):
     """ Return the previously active release from the history file """
-    releases = get_releases()
+    releases = list_releases()
 
     try:
         current_index = last_index(releases, current_release)
@@ -129,13 +129,18 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR,
     return (tarfile, True)
 
 
+def _append_to_history(release):
+    history_path = project_path('releases', '.history')
+    usudo('echo {} >> {}'.format(release, history_path))
+
+
 def append_to_history(release):
     """ Append the release to the .history file
 
         If ``release`` is already the last entry, do nothing.
     """
 
-    releases = get_releases()
+    releases = list_releases()
     try:
         current = releases[-1]
     except IndexError:
@@ -144,8 +149,7 @@ def append_to_history(release):
     if release == current:
         return
 
-    history_path = project_path('releases', '.history')
-    usudo('echo {} >> {}'.format(release, history_path))
+    _append_to_history(release)
 
 
 def rollback_history():
@@ -202,7 +206,7 @@ def purge_release(release):
     usudo('rm -rf {}'.format(released_dir))
 
     # remove history entry
-    releases = get_releases()
+    releases = list_releases()
     releases = [v for v in releases if v.strip()]
     usudo('cat << EOF > {}\n{}\nEOF'.format(history_path, '\n'.join(releases)))
 
@@ -329,7 +333,7 @@ def prune(keep='4'):
                             to be left.
     """
     keep = int(keep)  # fabric params always come through as strings
-    release_list = get_releases()
+    release_list = list_releases()
     current_release = get_current()
     index = release_list.index(current_release)
     if index > keep:
