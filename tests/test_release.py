@@ -146,6 +146,18 @@ def test_activate(get_current, set_current, get_commit):
     assert_called_once_with(set_current, 'ccc')
 
 
+@patch('gonzo.tasks.release.get_commit')
+@patch('gonzo.tasks.release.set_current')
+@patch('gonzo.tasks.release.get_current')
+def test_activate_existing(get_current, set_current, get_commit):
+    get_current.return_value = 'bbb'
+    get_commit.return_value = 'aaa'
+    with mock_history(initial=['aaa', 'bbb']) as releases:
+        activate()
+        assert releases == ['aaa', 'bbb', 'aaa']
+    assert_called_once_with(set_current, 'aaa')
+
+
 @patch('gonzo.tasks.release.exists')
 @patch('gonzo.tasks.release.get_current')
 def test_purge_release(get_current, exists):
