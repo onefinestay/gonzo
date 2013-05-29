@@ -124,7 +124,7 @@ def create_archive(commit_id, cache_dir=DEFAULT_ARCHIVE_DIR,
 
     if not res.succeeded:
         os.remove(tarfile)
-        raise RuntimeError("Invalid commit ID: {} " .format(commit_id))
+        raise RuntimeError("Invalid commit ID: {} ".format(commit_id))
 
     return (tarfile, True)
 
