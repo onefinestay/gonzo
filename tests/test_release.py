@@ -26,8 +26,8 @@ def disable_external_commands():
 
 @contextmanager
 def mock_history(initial):
-    """ intercept ``sudo`` and ``run`` commands, and match against
-        a list of regexes, to fake history management
+    """ mock the commands that interact with the .history file, to fake
+        history management
     """
 
     releases = copy.copy(initial)
