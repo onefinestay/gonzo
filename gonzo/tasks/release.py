@@ -3,7 +3,7 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 import os
 
 from fabric.api import task, env, sudo, put, run, local, settings
-from fabric.context_managers import prefix as fab_prefix
+from fabric.context_managers import prefix as fab_prefix, hide
 from fabric.contrib.files import exists
 
 from gonzo.config import PROJECT_ROOT, local_state
@@ -57,10 +57,12 @@ def activate_command():
 
 
 def list_releases():
-    if not exists(project_path('releases', '.history')):
+    history_path = project_path('releases', '.history')
+    if not exists(history_path):
         return []
 
-    releases = run('cat {}'.format(project_path('releases', '.history')))
+    with hide('stdout'):
+        releases = run('cat {}'.format(history_path))
     return [l.strip() for l in releases.splitlines()]
 
 
@@ -152,11 +154,11 @@ def append_to_history(release):
     _append_to_history(release)
 
 
-def rollback_history():
+def rollback_history(revision):
     """ Remove the last line from the .history file """
-    history_path = project_path('releases', '.history')
-    if exists(history_path):
-        usudo("sed -i '$ d' {}".format(history_path))
+    history = list_releases()
+    last = history.index(revision)  # raises ValueError if revision is unknown
+    _replace_history(history[:last + 1])
 
 
 def rev_parse(revision):
@@ -185,11 +187,13 @@ def set_project(project):
 @task
 def show_history(full=False):
     """ Cat the release history on remote hosts for the specified project. """
-    history_path = project_path('releases', '.history')
+    history = list_releases()
     if full:
-        run("cat {}".format(history_path))
+        start = None
     else:
-        run("tail -n 3 {}".format(history_path))
+        start = -3
+
+    print '\n'.join(history[start:])
     print get_current()
 
 
@@ -367,7 +371,7 @@ def rollback():
 
     # sadly, there's not way to make this atomic
     set_current(previous_release)
-    rollback_history()
+    rollback_history(previous_release)
 
 
 @task

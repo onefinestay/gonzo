@@ -39,22 +39,15 @@ def mock_history(initial):
     def _append_to_history(release):
         releases.append(release)
 
-    def rollback_history():
-        if releases is None:
-            raise RuntimeError("Trying to rollback with missing history file")
-        if releases:  # sed is ok as long as the file exists
-            releases.pop()
-
     def _replace_history(release_list):
         releases[:] = release_list
 
     with nested(
         patch('gonzo.tasks.release.list_releases', list_releases),
         patch('gonzo.tasks.release._append_to_history', _append_to_history),
-        patch('gonzo.tasks.release.rollback_history', rollback_history),
         patch('gonzo.tasks.release._replace_history', _replace_history),
         patch('gonzo.tasks.release.get_project'),
-    ) as (_, _, _, _, get_project):
+    ) as (_, _, _, get_project):
 
         get_project.return_value = project
 
