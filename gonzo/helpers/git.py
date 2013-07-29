@@ -1,0 +1,22 @@
+from fabric.api import local
+from fabric.context_managers import hide
+from fabric.utils import puts
+
+
+def get_current_branch():
+    with hide('running', 'stdout'):
+        branch = local('git symbolic-ref -q HEAD', capture=True)
+
+    return branch.replace('refs/heads/', '')
+
+
+def diff_branch(target_branch):
+    with hide('running', 'stdout'):
+        puts('fetching upstream branches...')
+        local('git fetch')
+        rev_list = 'git rev-list --count --left-right {}...HEAD'.format(
+            target_branch)
+        upstream_counts = local(rev_list, capture=True)
+
+    upstream_ahead, local_ahead = map(int, upstream_counts.split('\t'))
+    return upstream_ahead, local_ahead
