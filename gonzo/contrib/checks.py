@@ -8,7 +8,7 @@ Trying to release a branch that is not {0}: "{1}"
 
 Checkout {0} and merge in topic branch before releasing:
 
-    $ git co {0}
+    $ git checkout {0}
     $ git merge {1}
 
 """
