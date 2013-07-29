@@ -1,3 +1,13 @@
+""" These checks are intended to be used ahead of releasing to certain
+environments (such as production). They assume a couple of points regarding
+your release strategy:
+
+    * That your releases should take place from a specific named branch
+      eg. `master`
+    * That everything that is deployed lands on a particular remote branch
+
+"""
+
 from fabric.contrib.console import confirm
 from fabric.utils import abort, warn
 
@@ -37,7 +47,10 @@ def assert_release_branch(release_branch='master'):
 
 
 def assert_ahead_of_current_release(current_release='origin/master'):
-    """ Checks the local branch is ahead of `current_release`
+    """ Checks the local branch is ahead of `current_release`.
+
+        Assumes `current_release` to be the `master` branch of your remote
+        `origin`. Can specify a local branch instead.
     """
     upstream_ahead, local_ahead = diff_branch(current_release)
     if upstream_ahead > 0:

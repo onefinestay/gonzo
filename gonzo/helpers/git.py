@@ -4,6 +4,8 @@ from fabric.utils import puts
 
 
 def get_current_branch():
+    """ Uses git to return the current symbolic-ref (branch)
+    """
     with hide('running', 'stdout'):
         branch = local('git symbolic-ref -q HEAD', capture=True)
 
@@ -11,6 +13,10 @@ def get_current_branch():
 
 
 def diff_branch(target_branch):
+    """ Compares your current git HEAD to `target_branch` and returns a tuple
+        of integers denoting how many commits ahead each branch is
+        `(upstream_ahead, local_ahead)`
+    """
     with hide('running', 'stdout'):
         puts('fetching upstream branches...')
         local('git fetch')
