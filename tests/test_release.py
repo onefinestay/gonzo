@@ -125,7 +125,7 @@ def test_rollback_nowhere_to_go(get_current, set_current, abort):
     with mock_history(initial=['aaa']) as releases:
         with pytest.raises(ValueError):
             rollback()
-        assert abort.called == True
+        assert abort.called is True
         assert releases == ['aaa']
     assert_has_calls(set_current, [])
 
@@ -139,16 +139,26 @@ def test_rollback_to_invalid_release(rev_parse, set_current, abort):
     with mock_history(initial=['aaa']) as releases:
         with pytest.raises(ValueError):
             rollback('bbb')
-        assert abort.called == True
+        assert abort.called is True
         assert releases == ['aaa']
     assert_has_calls(set_current, [])
 
 
 @patch('gonzo.tasks.release.set_current')
 @patch('gonzo.tasks.release.rev_parse')
-def test_rollback_to_release(rev_parse, set_current):
+def test_rollback_to_previous_release(rev_parse, set_current):
     rev_parse.return_value = 'aaa'
     with mock_history(initial=['aaa', 'bbb']) as releases:
+        rollback('aaa')
+        assert releases == ['aaa']
+    assert_called_once_with(set_current, 'aaa')
+
+
+@patch('gonzo.tasks.release.set_current')
+@patch('gonzo.tasks.release.rev_parse')
+def test_rollback_to_release(rev_parse, set_current):
+    rev_parse.return_value = 'aaa'
+    with mock_history(initial=['aaa', 'bbb', 'ccc']) as releases:
         rollback('aaa')
         assert releases == ['aaa']
     assert_called_once_with(set_current, 'aaa')
