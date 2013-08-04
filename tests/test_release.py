@@ -6,7 +6,7 @@ import pytest
 
 from gonzo.test_utils import assert_called_once_with, assert_has_calls
 from gonzo.tasks.release import (
-    append_to_history, get_previous_release, rollback, activate,
+    append_to_history, get_previous_release, get_project, rollback, activate,
     purge_release, prune)
 
 
@@ -53,6 +53,18 @@ def mock_history(initial):
 
         with disable_external_commands():
             yield releases
+
+
+@patch('gonzo.tasks.release.local_state', new_callable=dict)
+def test_get_undefined_project_no_fallback(local_state):
+    with pytest.raises(KeyError):
+        get_project()
+
+
+@patch('gonzo.tasks.release.local_state', new_callable=dict)
+def test_get_undefined_project_with_fallback(local_state):
+    local_state['project'] = 'gonzo'
+    assert get_project() == 'gonzo'
 
 
 @patch('gonzo.tasks.release.list_releases')
