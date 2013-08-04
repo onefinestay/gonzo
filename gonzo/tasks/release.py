@@ -354,7 +354,14 @@ def purge_release(release):
 
 @task
 def rollback(release=None):
-    """ Roll back to the most recent active release in the history file.
+    """ Either roll back to the most recent active release in the history file
+        or to the specified release.
+
+        Specifying a ``release`` SHA will roll back to the given release
+        provided it is in the history list and purge all subsequent releases so
+        that it is the most current. Providing a partial SHA or other ref will
+        use ``git rev-parse`` to expand the full SHA so that it can be looked
+        up in the history list.
 
         This is used for quick recovery in case of bugs discovered shortly
         after activating a new release.
