@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from novaclient.v1_1 import client as nova_client
 from novaclient.exceptions import NotFound, NoUniqueMatch
@@ -6,10 +7,12 @@ from novaclient.exceptions import NotFound, NoUniqueMatch
 from gonzo.aws.route53 import Route53
 from gonzo.backends.base import BaseInstance, BaseCloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import TimeoutExceeded
 
 
 OPENSTACK_AVAILABILITY_ZONE = "nova"
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+TIMEOUT = 30  # seconds
 
 
 class Instance(BaseInstance):
@@ -152,6 +155,14 @@ class Cloud(BaseCloud):
             security_groups=security_groups, key_name=key_name)
 
         instance = self.instance_class(raw_instance)
+
+        # we need to wait for instance to be ready before we can set tags
+        # simply checking instance.status seems to just hit a cache
+        start = time.time()
+        while instance.id not in (i.id for i in self.list_instances()):
+            if (time.time() - start > TIMEOUT):
+                raise TimeoutExceeded('Timeout waiting for instance to launch')
+            time.sleep(0.5)
 
         tags = tags or {}
 
