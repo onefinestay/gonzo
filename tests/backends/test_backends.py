@@ -1,7 +1,7 @@
 from mock import Mock, patch
 
 from gonzo.backends.base import (get_next_hostname,
-    find_or_create_security_groups, launch_instance)
+    create_if_not_exist_security_group, launch_instance)
 
 
 @patch('gonzo.backends.base.config')
@@ -31,18 +31,18 @@ def test_get_next_hostname(Route53):
 
 
 @patch('gonzo.backends.base.get_current_cloud')
-def test_find_or_create_security_groups_creates(cloud):
+def create_if_not_exist_security_group_skips(cloud):
     cloud().security_group_exists.return_value = False
-    groups = find_or_create_security_groups('env')
+    groups = create_if_not_exist_security_group('env')
 
     assert cloud().create_security_group.called
     assert groups == ['gonzo', 'env']
 
 
 @patch('gonzo.backends.base.get_current_cloud')
-def test_find_or_create_security_groups_skips(cloud):
+def create_if_not_exist_security_group_skips(cloud):
     cloud().security_group_exists.return_value = True
-    groups = find_or_create_security_groups('env')
+    groups = create_if_not_exist_security_group('env')
 
     assert not cloud().create_security_group.called
     assert groups == ['gonzo', 'env']
