@@ -251,8 +251,6 @@ def create_if_not_exist_security_group(group_name):
     if not cloud.security_group_exists(group_name):
         cloud.create_security_group(group_name)
 
-    return group_name
-
 
 def launch_instance(env_type, security_groups, username=None):
     """ Launch instances

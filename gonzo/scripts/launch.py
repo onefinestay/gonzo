@@ -32,7 +32,9 @@ def launch(args):
     """ Launch instances """
 
     username = os.environ.get('USER')
-    instance = launch_instance(args.env_type, args.security_groups, username=username)
+    instance = launch_instance(args.env_type,
+                               args.security_groups,
+                               username=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
     print "Created instance {}".format(instance.name)
@@ -63,8 +65,9 @@ def init_parser(parser):
     parser.add_argument(
         '--security-group', dest='security_groups',
         metavar='sg-name', action='append', default=[],
-        help='Specify additional security groups to create (if necessary) and assign. '
-             'Environment and gonzo security groups will be automatically added.')
+        help='Specify additional security groups to create (if necessary) and '
+             'assign. Environment and gonzo security groups will be '
+             'automatically added.')
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
