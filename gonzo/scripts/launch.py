@@ -36,7 +36,6 @@ def launch(args):
     # Define environment security group
     environment, server_type = args.env_type.split("-", 1)
     args.security_groups.append(environment)
-    print str(args.security_groups)
 
     instance = launch_instance(args.env_type,
                                args.security_groups,
