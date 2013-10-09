@@ -1,7 +1,8 @@
 from mock import Mock, patch
 
 from gonzo.backends.base import (get_next_hostname,
-    create_if_not_exist_security_group, launch_instance)
+                                 create_if_not_exist_security_group,
+                                 launch_instance)
 
 
 @patch('gonzo.backends.base.create_if_not_exist_security_group')
@@ -16,7 +17,8 @@ def test_launch_instance(get_cloud,
     get_cloud.return_value = cloud
     get_hostname.return_value = 'prod-100'
 
-    security_groups = ['gonzo', 'test']
+    security_groups = ['environment', 'gonzo', 'test']
+
     launch_instance('environment-server', security_groups)
 
     assert cloud.launch.called
@@ -24,10 +26,8 @@ def test_launch_instance(get_cloud,
     args, kwargs = cloud.launch.call_args
     (name, image_name, instance_type,
      zone, security_groups, key_name, tags) = args
-    assert 'test' in security_groups
     assert security_groups.count('gonzo') == 1
-    assert 'environment' in security_groups
-    assert 'gonzo' in security_groups
+    assert sorted(security_groups) == ['environment', 'gonzo', 'test']
 
 
 @patch('gonzo.backends.base.Route53')

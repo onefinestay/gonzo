@@ -277,10 +277,6 @@ def launch_instance(env_type, security_groups, username=None):
 
     zone = cloud.next_az(server_type)
 
-    # Add default security groups
-    security_groups.append(environment)
-    security_groups.append('gonzo')
-
     # Remove non-unique groups
     security_groups = list(set(security_groups))
 

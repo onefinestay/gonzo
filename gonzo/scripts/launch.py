@@ -32,6 +32,12 @@ def launch(args):
     """ Launch instances """
 
     username = os.environ.get('USER')
+
+    # Define environment security group
+    environment, server_type = args.env_type.split("-", 1)
+    args.security_groups.append(environment)
+    print str(args.security_groups)
+
     instance = launch_instance(args.env_type,
                                args.security_groups,
                                username=username)
@@ -52,6 +58,11 @@ env_type_pair_help = """
 e.g. production-platform-app, which is interpreted as
     environment: production, server_type: ecommerce-web"""
 
+additional_security_group_help = """
+Specify additional security groups to create (if
+necessary) and assign. Environment and gonzo security
+groups will be automatically defined."""
+
 
 def init_parser(parser):
     parser.add_argument(
@@ -63,11 +74,9 @@ def init_parser(parser):
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
     parser.add_argument(
-        '--security-group', dest='security_groups',
-        metavar='sg-name', action='append', default=[],
-        help='Specify additional security groups to create (if necessary) and '
-             'assign. Environment and gonzo security groups will be '
-             'automatically added.')
+        '-sg', '--additional-security-group', dest='security_groups',
+        metavar='sg-name', action='append', default=['gonzo'],
+        help=additional_security_group_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
