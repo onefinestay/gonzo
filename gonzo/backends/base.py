@@ -246,15 +246,13 @@ def get_next_hostname(env_type):
     return name
 
 
-def find_or_create_security_groups(environment):
+def create_if_not_exist_security_group(group_name):
     cloud = get_current_cloud()
-    if not cloud.security_group_exists(environment):
-        cloud.create_security_group(environment)
-
-    return ['gonzo', environment]
+    if not cloud.security_group_exists(group_name):
+        cloud.create_security_group(group_name)
 
 
-def launch_instance(env_type, username=None):
+def launch_instance(env_type, security_groups=None, username=None):
     """ Launch instances
 
         Arguments:
@@ -279,8 +277,9 @@ def launch_instance(env_type, username=None):
 
     zone = cloud.next_az(server_type)
 
-    find_or_create_security_groups('gonzo')
-    security_groups = find_or_create_security_groups(environment)
+    if security_groups is not None:
+        for security_group in security_groups:
+            create_if_not_exist_security_group(security_group)
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
