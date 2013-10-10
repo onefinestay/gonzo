@@ -33,12 +33,19 @@ def launch(args):
 
     username = os.environ.get('USER')
 
-    # Define environment security group
-    environment, server_type = args.env_type.split("-", 1)
-    args.security_groups.append(environment)
+    security_groups = []
+    if args.security_groups is not None:
+        security_groups += args.security_groups.split(",")
+
+    # Define default environment and gonzo security groups
+    environment = args.env_type.split("-", 1)[0]
+    security_groups.append(environment)
+    security_groups.append('gonzo')
+    # Remove duplicates
+    security_groups = list(set(security_groups))
 
     instance = launch_instance(args.env_type,
-                               args.security_groups,
+                               security_groups,
                                username=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
@@ -73,8 +80,8 @@ def init_parser(parser):
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
     parser.add_argument(
-        '-sg', '--additional-security-group', dest='security_groups',
-        metavar='sg-name', action='append', default=['gonzo'],
+        '--additional-security-groups', dest='security_groups',
+        metavar='sg-name[,sg-name]',
         help=additional_security_group_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',

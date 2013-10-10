@@ -252,7 +252,7 @@ def create_if_not_exist_security_group(group_name):
         cloud.create_security_group(group_name)
 
 
-def launch_instance(env_type, security_groups, username=None):
+def launch_instance(env_type, security_groups=None, username=None):
     """ Launch instances
 
         Arguments:
@@ -277,11 +277,9 @@ def launch_instance(env_type, security_groups, username=None):
 
     zone = cloud.next_az(server_type)
 
-    # Remove non-unique groups
-    security_groups = list(set(security_groups))
-
-    for security_group in security_groups:
-        create_if_not_exist_security_group(security_group)
+    if security_groups is not None:
+        for security_group in security_groups:
+            create_if_not_exist_security_group(security_group)
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
