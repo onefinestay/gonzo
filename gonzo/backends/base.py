@@ -295,23 +295,11 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
     if username:
         tags['owner'] = username
 
-    # Build the user-data script, replacing params in template.
-    ud_template = Template(user_data)
-    # Define params available by default
-    template_params = {'hostname': name,
-                       'domain': config.CLOUD['DNS_ZONE'],
-                       'fqdn': "%s.%s" % (name, config.CLOUD['DNS_ZONE'])}
-    # Define params available from cloud config
-    if 'USER_DATA_PARAMS' in config.CLOUD:
-        template_params.update(config.CLOUD['USER_DATA_PARAMS'])
-    # Define params available from command line argument
-    if user_data_params:
-        template_params.update(user_data_params)
-    filled_ud = ud_template.render(**template_params)
+    parsed_user_data = parse_user_data(user_data, user_data_params, name)
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
-        user_data=filled_ud, tags=tags)
+        user_data=parsed_user_data, tags=tags)
 
 
 def set_hostname(instance, username='ubuntu'):
@@ -349,3 +337,24 @@ def configure_instance(instance):
             break
         except socket.error:
             time.sleep(5)
+
+
+def parse_user_data(user_data, cli_params, hostname):
+    if user_data is None:
+        return None
+
+    # Build the user-data script, replacing params in template.
+    ud_template = Template(user_data)
+    # Define params available by default
+    template_params = {'hostname': hostname,
+                       'domain': config.CLOUD['DNS_ZONE'],
+                       'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])}
+    # Define params available from cloud config
+    if 'USER_DATA_PARAMS' in config.CLOUD:
+        template_params.update(config.CLOUD['USER_DATA_PARAMS'])
+    # Define params available from command line argument
+    if cli_params is not None:
+        template_params.update(cli_params)
+
+    return ud_template.render(**template_params)
+
