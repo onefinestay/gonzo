@@ -34,16 +34,15 @@ def get_user_data(uri):
     """ Attempt to fetch user data from URL or file. Failing that, assume raw
      user data has been passed """
     if uri is None:
-        return uri
+        return None
 
     if os.path.isfile(uri):
-        return file(uri, 'r').read()
+        print os.path.expanduser(uri)
+        return file(os.path.expanduser(uri), 'r').read()
     else:
-        if uri == config.CLOUD['CLOUD_INIT_DEFAULT']:
-            return None
         try:
             return urlopen(uri).read()
-        except URLError:
+        except:
             return uri
 
 
@@ -59,8 +58,15 @@ def launch(args):
 
     username = os.environ.get('USER')
 
-    user_data = get_user_data(args.user_data)
+    # If user data hasn't been passed by argument, check for default in config.
+    user_data_uri = args.user_data
+    if user_data_uri is None and 'DEFAULT_USER_DATA' in config.CLOUD:
+        user_data_uri = config.CLOUD['DEFAULT_USER_DATA']
+    # Attempt to read user data from url or file
+    user_data = get_user_data(user_data_uri)
     user_data_params = parse_user_data_params(args.user_data_params)
+
+    raise Exception("UserData: %s" % user_data)
 
     instance = launch_instance(args.env_type, user_data=user_data,
                                user_data_params=user_data_params,
@@ -91,7 +97,6 @@ def init_parser(parser):
         help="Override instance size")
     parser.add_argument(
         '--user-data', dest='user_data',
-        default=str(config.CLOUD['DEFAULT_USER_DATA']),
         help="File, URL or explicit contents of user-data to be passed to new "
              "instance and run by cloud-init. Can utilize parameters. See "
              "template/userdata_template.")
