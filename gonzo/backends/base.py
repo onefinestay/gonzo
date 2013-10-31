@@ -2,6 +2,8 @@ from abc import abstractmethod, abstractproperty
 import socket
 import time
 
+from mako.template import Template
+
 import paramiko
 
 from gonzo.aws.route53 import Route53
@@ -223,7 +225,7 @@ class BaseCloud(object):
     @abstractmethod
     def launch(
             self, name, image_name, instance_type, zone, security_groups,
-            key_name, tags=None):
+            key_name, user_data=None, tags=None):
         """ Launch an instance """
         pass
 
@@ -254,7 +256,8 @@ def find_or_create_security_groups(environment):
     return ['gonzo', environment]
 
 
-def launch_instance(env_type, username=None):
+def launch_instance(env_type, user_data=None, user_data_params=None,
+                    username=None):
     """ Launch instances
 
         Arguments:
@@ -292,9 +295,23 @@ def launch_instance(env_type, username=None):
     if username:
         tags['owner'] = username
 
+    # Build the user-data script, replacing params in template.
+    ud_template = Template(user_data)
+    # Define params available by default
+    template_params = {'hostname': name,
+                       'domain': config.CLOUD['DNS_ZONE'],
+                       'fqdn': "%s.%s" % (name, config.CLOUD['DNS_ZONE'])}
+    # Define params available from cloud config
+    if 'USER_DATA_PARAMS' in config.CLOUD:
+        template_params.update(config.CLOUD['USER_DATA_PARAMS'])
+    # Define params available from command line argument
+    if user_data_params:
+        template_params.update(user_data_params)
+    filled_ud = ud_template.render(**template_params)
+
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
-        tags)
+        user_data=filled_ud, tags=tags)
 
 
 def set_hostname(instance, username='ubuntu'):
@@ -328,7 +345,7 @@ def configure_instance(instance):
     # sometimes instances aren't quite ready to accept connections
     for attempt in range(MAX_RETRIES):
         try:
-            set_hostname(instance)
+            #set_hostname(instance)
             break
         except socket.error:
             time.sleep(5)

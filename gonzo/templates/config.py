@@ -43,6 +43,14 @@ CLOUDS = {
 
         # domain to hold host information
         'DNS_ZONE': 'example.com',
+
+        # Default cloud-init script to pass when creating new instances.
+        # Can be overridden with --user-data.
+        # Will be passed as a template. See templates/userdata_template for
+        # more info.
+        'DEFAULT_USER_DATA': None,
+        # Extra params to use when rendering user data template.
+        'USER_DATA_PARAMS': {},
     },
 }
 

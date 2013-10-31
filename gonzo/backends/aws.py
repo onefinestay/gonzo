@@ -159,14 +159,14 @@ class Cloud(BaseCloud):
 
     def launch(
             self, name, image_name, instance_type, zone,
-            security_groups, key_name, tags=None):
+            security_groups, key_name, user_data=None, tags=None):
 
         image = self.get_image_by_name(image_name)
         reservation = self.connection.run_instances(
             image.id, key_name=key_name,
             security_groups=security_groups,
             instance_type=instance_type,
-            placement=zone
+            placement=zone, user_data=user_data
         )
         instance = self.instance_class(reservation.instances[0])
         instance.set_name(name)

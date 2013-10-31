@@ -6,8 +6,10 @@ from functools import partial
 import os
 import sys
 from time import sleep
+from urllib2 import urlopen, URLError
 
 from gonzo.backends.base import launch_instance, configure_instance
+from gonzo.config import config_proxy as config
 from gonzo.exceptions import CommandError
 from gonzo.scripts.utils import colorize
 
@@ -28,11 +30,41 @@ def wait_for_instance_boot(instance, use_color='auto'):
     stdout.flush()
 
 
+def get_user_data(uri):
+    """ Attempt to fetch user data from URL or file. Failing that, assume raw
+     user data has been passed """
+    if uri is None:
+        return uri
+
+    if os.path.isfile(uri):
+        return file(uri, 'r').read()
+    else:
+        if uri == config.CLOUD['CLOUD_INIT_DEFAULT']:
+            return None
+        try:
+            return urlopen(uri).read()
+        except URLError:
+            return uri
+
+
+def parse_user_data_params(user_data_params=None):
+    if user_data_params is None:
+        return {}
+
+    return dict(kv.split("=") for kv in user_data_params.split(","))
+
+
 def launch(args):
     """ Launch instances """
 
     username = os.environ.get('USER')
-    instance = launch_instance(args.env_type, username=username)
+
+    user_data = get_user_data(args.user_data)
+    user_data_params = parse_user_data_params(args.user_data_params)
+
+    instance = launch_instance(args.env_type, user_data=user_data,
+                               user_data_params=user_data_params,
+                               username=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
     print "Created instance {}".format(instance.name)
@@ -47,7 +79,7 @@ def main(args):
 
 
 env_type_pair_help = """
-e.g. produiction-platform-app, which is interpreted as
+e.g. production-platform-app, which is interpreted as
     environment: production, server_type: ecommerce-web"""
 
 
@@ -58,9 +90,19 @@ def init_parser(parser):
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
     parser.add_argument(
+        '--user-data', dest='user_data',
+        default=str(config.CLOUD['DEFAULT_USER_DATA']),
+        help="File, URL or explicit contents of user-data to be passed to new "
+             "instance and run by cloud-init. Can utilize parameters. See "
+             "template/userdata_template.")
+    parser.add_argument(
+        '--user-data-params', dest='user_data_params',
+        metavar='key=val[,key=val..]',
+        help='Additional parameters to use when rendering user data.')
+    parser.add_argument(
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
-        help='display coloured output (default: auto)')
+        help='display coloured output. (default: auto)')

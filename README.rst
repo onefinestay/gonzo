@@ -126,6 +126,49 @@ namespaces to provide a clean CLI::
 
     apache.maintenance_mode = task(maintenance_mode)
 
+Using Gonzo With CloudInit
+---------------------------
+
+CloudInit can be used to personalise the instances you launch. The user data
+scripts passed to new instances for CloudInit to process can be specified for
+each cloud by using the DEFAULT_USER_DATA config item in config.py::
+
+    CLOUDS = {
+        'cloudname': {
+
+            ...
+            'DEFAULT_USER_DATA': 'http://example.com/my-cloudinit-config.txt',
+            ...
+
+Additionally, user data scripts can be specified per instance by using the
+launch argument "--user-data <file | url | content>"::
+
+    # gonzo launch --user-data ~/.gonzo/cloudinit_web_app production-web-app
+
+User data scripts can be specified as a file path, a URL, or as explicit
+content.
+
+Before user data scripts are passed to new instances, they're first rendered as
+a template, allowing them to be parameterised. By default a few are already
+available, such as hostname, domain and fqdn. These can be supplemented by
+defining a USER_DATA_PARAMS cloud config dictionary::
+
+    CLOUDS = {
+        'cloudname': {
+
+            ...
+            'DEFAULT_USER_DATA': 'http://example.com/my-cloudinit-config.txt',
+            'USER_DATA_PARAMS': {
+                'puppet_address': 'puppetmaster.example.com',
+            }
+            ...
+
+Again, these parameters can also be supplemented or overridden at launch time
+by using the command line argument "--user-data-params key=val[,key=val..]"::
+
+    # gonzo launch --user-data ~/.gonzo/cloudinit_web_app \
+        --user-data-params puppet_address=puppetmaster2.example.com \
+        production-web-app
 TODO
 ----
 
