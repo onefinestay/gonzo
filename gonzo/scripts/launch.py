@@ -97,8 +97,8 @@ def init_parser(parser):
         help="Override instance size")
     parser.add_argument(
         '--user-data', dest='user_data',
-        help="File, URL or explicit contents of user-data to be passed to new "
-             "instance and run by cloud-init. Can utilize parameters. See "
+        help="File or URL containing user-data to be passed to new instances "
+             "and run by cloud-init. Can utilize parameters. See "
              "template/userdata_template.")
     parser.add_argument(
         '--user-data-params', dest='user_data_params',

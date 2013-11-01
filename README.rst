@@ -141,12 +141,11 @@ each cloud by using the DEFAULT_USER_DATA config item in config.py::
             ...
 
 Additionally, user data scripts can be specified per instance by using the
-launch argument "--user-data <file | url | content>"::
+launch argument "--user-data <file | url>"::
 
     # gonzo launch --user-data ~/.gonzo/cloudinit_web_app production-web-app
 
-User data scripts can be specified as a file path, a URL, or as explicit
-content.
+User data scripts can be specified as a file path or URL.
 
 Before user data scripts are passed to new instances, they're first rendered as
 a template, allowing them to be parameterised. By default a few are already

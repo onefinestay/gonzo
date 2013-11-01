@@ -11,9 +11,10 @@
 #
 #   Before this script is passed to the new instance, it will be treated as a
 #   template with indicated parameters replaced. Parameters which are available
-#   by default are described below. Parameters can be overwritten or added to
-#   by specifying the USER_DATA_PARAMS cloud config dictionary and by using the
-#   launch flag  "--additional-user-data-params key1=value1[,key2=value2..]".
+#   by default are described below. Parameters can be overwritten or
+#   supplemented by specifying the USER_DATA_PARAMS cloud config dictionary and
+#   by using the launch flag
+#   "--additional-user-data-params key1=value1[,key2=value2..]".
 #
 # Default parameters:
 #   * hostname
