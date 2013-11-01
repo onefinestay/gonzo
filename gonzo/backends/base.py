@@ -273,10 +273,11 @@ def launch_instance(env_type, username=None):
     zone = cloud.next_az(server_type)
 
     # check that the instance can be associated with a Security Group
-    security_groups = config.CLOUD['SECURITY_GROUPS']
+    security_groups = config.CLOUD.get('SECURITY_GROUPS')
     if not security_groups:
         raise ConfigurationError('Security Group(s) must be defined for every Cloud')
 
+    # this won't raise if any of the Groups or Rules already exist
     cloud.create_security_groups(security_groups)
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']

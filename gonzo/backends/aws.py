@@ -81,7 +81,7 @@ class Cloud(BaseCloud):
         return self.connection.get_all_security_groups()
 
     def create_security_groups(self, groups):
-        # ToDo: configurable Rules
+        # ToDo: configurable Rules for Amazon as well.
         for sg_name, _ in groups.items():
             self.create_security_group(sg_name)
 
