@@ -7,6 +7,7 @@ import paramiko
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import ConfigurationError
 
 
 # For initial connection after instance creation.
@@ -246,14 +247,6 @@ def get_next_hostname(env_type):
     return name
 
 
-def find_or_create_security_groups(environment):
-    cloud = get_current_cloud()
-    if not cloud.security_group_exists(environment):
-        cloud.create_security_group(environment)
-
-    return ['gonzo', environment]
-
-
 def launch_instance(env_type, username=None):
     """ Launch instances
 
@@ -279,8 +272,12 @@ def launch_instance(env_type, username=None):
 
     zone = cloud.next_az(server_type)
 
-    find_or_create_security_groups('gonzo')
-    security_groups = find_or_create_security_groups(environment)
+    # check that the instance can be associated with a Security Group
+    security_groups = config.CLOUD['SECURITY_GROUPS']
+    if not security_groups:
+        raise ConfigurationError('Security Group(s) must be defined for every Cloud')
+
+    cloud.create_security_groups(security_groups)
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 

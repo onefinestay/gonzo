@@ -80,6 +80,11 @@ class Cloud(BaseCloud):
     def list_security_groups(self):
         return self.connection.get_all_security_groups()
 
+    def create_security_groups(self, groups):
+        # ToDo: configurable Rules
+        for sg_name, _ in groups.items():
+            self.create_security_group(sg_name)
+
     def _region(self):
         region_name = config.REGION
         acces_key_id = config.CLOUD['AWS_ACCESS_KEY_ID']

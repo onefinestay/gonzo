@@ -1,12 +1,14 @@
 import datetime
+import logging
 
 from novaclient.v1_1 import client as nova_client
-from novaclient.exceptions import NotFound, NoUniqueMatch
+from novaclient.exceptions import NotFound, NoUniqueMatch, BadRequest
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends.base import BaseInstance, BaseCloud
 from gonzo.config import config_proxy as config
 
+logger = logging.getLogger(__name__)
 
 OPENSTACK_AVAILABILITY_ZONE = "nova"
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
@@ -95,14 +97,41 @@ class Cloud(BaseCloud):
     def list_security_groups(self):
         return self.connection.api.security_groups.list()
 
-    def _list_instance_types(self):
-        return self.connection.api.flavors.list()
+    def create_security_groups(self, groups):
+        """ Creates security groups from Gonzo dict config format """
+        existing_groups = self.connection.api.security_groups.list()
+
+        for sg_name, rules in groups.items():
+            group = next(
+                (sg for sg in existing_groups if sg.name == sg_name), None
+            )
+            if not group:
+                self.create_security_group(sg_name)
+
+            self.create_security_rules(group, rules)
 
     def create_security_group(self, sg_name):
         """ Creates a security group """
-        sg = self.connection.api.security_groups.create(
-            sg_name, 'Rules for %s' % sg_name)
-        return sg
+        group = self.connection.api.security_groups.create(
+            name=sg_name,
+            description='Security group for {}'.format(config.CLOUD['TENANT_NAME']))
+        return group
+
+    def create_security_rules(self, group, rules):
+        for rule in rules:
+            try:
+                self.connection.api.security_group_rules.create(
+                    ip_protocol=rule['ip_protocol'],
+                    from_port=rule['from_port'],
+                    to_port=rule['to_port'],
+                    cidr=rule['cidr'],
+                    parent_group_id=group.id
+                )
+            except BadRequest:
+                logger.info('{} already exists'.format(rule))
+
+    def _list_instance_types(self):
+        return self.connection.api.flavors.list()
 
     def get_image_by_name(self, name):
         """ Find image by name """
