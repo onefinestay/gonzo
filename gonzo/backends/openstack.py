@@ -149,8 +149,6 @@ class Cloud(BaseCloud):
         flavour = self._get_instance_type(instance_type)
         userdata = config.CLOUD.get('USERDATA')
 
-        logger.info('userdata: {}'.format(userdata))
-
         raw_instance = self.connection.create(
             name, image.id, userdata=userdata,
             flavor=flavour.id, availability_zone=zone,
