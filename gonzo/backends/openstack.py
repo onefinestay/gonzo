@@ -97,6 +97,9 @@ class Cloud(BaseCloud):
     def list_security_groups(self):
         return self.connection.api.security_groups.list()
 
+    def _list_instance_types(self):
+        return self.connection.api.flavors.list()
+
     def create_security_groups(self, groups):
         """ Creates security groups from Gonzo dict config format """
         existing_groups = self.connection.api.security_groups.list()
