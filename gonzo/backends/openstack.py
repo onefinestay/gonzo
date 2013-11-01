@@ -147,8 +147,13 @@ class Cloud(BaseCloud):
             security_groups, key_name, tags=None):
         image = self.get_image_by_name(image_name)
         flavour = self._get_instance_type(instance_type)
+        userdata = config.CLOUD.get('USERDATA')
+
+        logger.info('userdata: {}'.format(userdata))
+
         raw_instance = self.connection.create(
-            name, image.id, flavor=flavour.id, availability_zone=zone,
+            name, image.id, userdata=userdata,
+            flavor=flavour.id, availability_zone=zone,
             security_groups=security_groups, key_name=key_name)
 
         instance = self.instance_class(raw_instance)
