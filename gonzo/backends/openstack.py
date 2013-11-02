@@ -5,15 +5,16 @@ from novaclient.exceptions import NotFound, NoUniqueMatch
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends.base import BaseInstance, BaseCloud
+from gonzo.exceptions import ConfigurationError
 from gonzo.config import config_proxy as config
 
 
 OPENSTACK_AVAILABILITY_ZONE = "nova"
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-
+ACTIVE_STATE = 'ACTIVE'
 
 class Instance(BaseInstance):
-    running_state = 'ACTIVE'
+    running_state = ACTIVE_STATE
 
     def _refresh(self):
         self._parent = self._parent.manager.get(self._parent.id)
@@ -54,6 +55,27 @@ class Instance(BaseInstance):
     @property
     def status(self):
         return self._parent.status
+
+    @property
+    def address(self):
+        if self.public:
+            floating_ips = self._parent.connection.api.floating_ips.list()
+            # not guaranteed
+            public_ip = next(
+                (ip for ip in floating_ips if ip.instance_id == self._parent.id), 
+                None)
+
+        if public_ip:
+            return public_ip
+
+        else:
+            # guaranteed
+            addresses = self._parent.addresses
+            privates = addresses['private']
+            private = privates[0]
+            ip = private['addr']
+
+            return ip
 
     def update(self):
         self._refresh()
@@ -144,14 +166,19 @@ class Cloud(BaseCloud):
 
     def launch(
             self, name, image_name, instance_type, zone,
-            security_groups, key_name, tags=None):
+            security_groups, key_name, public, tags=None):
         image = self.get_image_by_name(image_name)
         flavour = self._get_instance_type(instance_type)
         raw_instance = self.connection.create(
             name, image.id, flavor=flavour.id, availability_zone=zone,
             security_groups=security_groups, key_name=key_name)
 
-        instance = self.instance_class(raw_instance)
+        instance = self.instance_class(raw_instance, public)
+
+        if instance.public:
+            ip = self.next_available_floating_ip()
+            self.wait_for_status(instance, ACTIVE_STATE)
+            self.connection.add_floating_ip(server=instance, address=ip)
 
         tags = tags or {}
 
@@ -159,3 +186,18 @@ class Cloud(BaseCloud):
             instance.add_tag(tag, value)
 
         return instance
+
+    def next_available_floating_ip(self):
+        floating_ips = self.connection.api.floating_ips.list()
+        available_ips = [ip for ip in floating_ips if not ip.instance_id]
+
+        if not available_ips:
+            floating_ip = self.connection.api.floating_ips.create()
+        else:
+            floating_ip = available_ips.pop()
+
+        if not floating_ip:
+            raise ConfigurationError("No Public IP's configured or available")
+
+        ip = floating_ip.ip
+        return ip

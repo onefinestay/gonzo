@@ -47,6 +47,10 @@ class Instance(BaseInstance):
     def status(self):
         return self._parent.state
 
+    @property
+    def address(self):
+        raise NotImplementedError
+
     def update(self):
         return self._parent.update()
 

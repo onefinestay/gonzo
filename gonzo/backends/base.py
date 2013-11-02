@@ -20,8 +20,9 @@ class BaseInstance(object):
     """
     running_state = abstractproperty
 
-    def __init__(self, parent):
+    def __init__(self, parent, public=False):
         self._parent = parent
+        self.public = public
 
     def __repr__(self):
         return "<%s.%s %s>" % (
@@ -34,6 +35,11 @@ class BaseInstance(object):
     @abstractproperty
     def name(self):
         """ Instance name """
+        pass
+
+    @abstractproperty
+    def address(self):
+        """ IP of instance """
         pass
 
     @abstractproperty
@@ -227,6 +233,15 @@ class BaseCloud(object):
         """ Launch an instance """
         pass
 
+    def wait_for_status(self, server, status):
+        while server.status != status:
+            # ToDo: a propper logging config
+            print('waiting for server state {}'.format(status))
+            time.sleep(1)
+            server.update()
+
+        print('{} achieved'.format(status))
+
 
 def get_next_hostname(env_type):
     """ Calculate the next hostname for a given environment, server_type
@@ -254,7 +269,7 @@ def find_or_create_security_groups(environment):
     return ['gonzo', environment]
 
 
-def launch_instance(env_type, username=None):
+def launch_instance(env_type, username=None, public=False):
     """ Launch instances
 
         Arguments:
@@ -269,8 +284,8 @@ def launch_instance(env_type, username=None):
     cloud = get_current_cloud()
     environment, server_type = env_type.split("-", 1)
 
-    name = get_next_hostname(env_type)
-
+    #name = get_next_hostname(env_type)
+    name = 'adga'
     image_name = config.CLOUD['IMAGE_NAME']
 
     sizes = config.SIZES
@@ -294,7 +309,7 @@ def launch_instance(env_type, username=None):
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
-        tags)
+        public, tags)
 
 
 def set_hostname(instance, username='ubuntu'):
