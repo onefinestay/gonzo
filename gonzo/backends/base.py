@@ -284,8 +284,7 @@ def launch_instance(env_type, username=None, public=False):
     cloud = get_current_cloud()
     environment, server_type = env_type.split("-", 1)
 
-    #name = get_next_hostname(env_type)
-    name = 'adga'
+    name = get_next_hostname(env_type)
     image_name = config.CLOUD['IMAGE_NAME']
 
     sizes = config.SIZES
