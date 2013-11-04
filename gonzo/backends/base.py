@@ -280,7 +280,7 @@ def launch_instance(env_type, username=None):
     zone = cloud.next_az(server_type)
 
     find_or_create_security_groups('gonzo')
-    security_groups = find_or_create_security_groups(environment)
+    security_groups = find_or_create_security_groups(server_type)
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
