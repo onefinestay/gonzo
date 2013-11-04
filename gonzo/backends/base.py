@@ -1,15 +1,11 @@
 from abc import abstractmethod, abstractproperty
 from os.path import expanduser
-import socket
-import time
 from urlparse import urlparse
 
 import os
 
-import paramiko
 from jinja2 import Environment
 import requests
-import sys
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
