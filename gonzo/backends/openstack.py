@@ -150,14 +150,9 @@ class Cloud(BaseCloud):
 
         raw_instance = self.connection.create(
             name, image.id, flavor=flavour.id, availability_zone=zone,
-            security_groups=security_groups, key_name=key_name,
+            security_groups=security_groups, key_name=key_name, meta=tags,
             userdata=user_data)
 
         instance = self.instance_class(raw_instance)
-
-        tags = tags or {}
-
-        for tag, value in tags.items():
-            instance.add_tag(tag, value)
 
         return instance
