@@ -1,10 +1,15 @@
 from abc import abstractmethod, abstractproperty
+from os.path import expanduser
 import socket
 import time
+from urlparse import urlparse
 
-from mako.template import Template
+import os
 
 import paramiko
+from jinja2 import Environment
+import requests
+import sys
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
@@ -295,32 +300,59 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
     if username:
         tags['owner'] = username
 
-    parsed_user_data = parse_user_data(user_data, user_data_params, name)
+    user_data_params = build_user_data_params_dict(name, user_data_params)
+    user_data = load_user_data(user_data_params, user_data)
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
-        user_data=parsed_user_data, tags=tags)
+        user_data=user_data, tags=tags)
 
 
-def set_hostname(instance, username='ubuntu'):
-    name = instance.name
-    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
-    cmd = """
-        echo {hostname} | sudo tee /etc/hostname;
-        echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
-        sudo hostname -F /etc/hostname;
-    """.format(hostname=hostname, name=name)
+def build_user_data_params_dict(hostname, arg_params=None):
+    """ Returns a dictionary of parameters to use when rendering user data
+     scripts from template.
 
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(
-        paramiko.AutoAddPolicy())
+     Parameter sources include gonzo defined defaults, cloud configuration and
+     a comma separated key value command line argument. They are also
+     overridden in that order. """
+    params = {'hostname': hostname,
+              'domain': config.CLOUD['DNS_ZONE'],
+              'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])}
 
-    ssh.connect(
-        instance.internal_address(), username=username,
-        key_filename=config.CLOUD['PRIVATE_KEY_FILE'])
+    if 'USER_DATA_PARAMS' in config.CLOUD:
+        params.update(config.CLOUD['USER_DATA_PARAMS'])
 
-    # stdin, stdout, stderr
-    _, _, _ = ssh.exec_command(cmd)
+    if arg_params is not None:
+        # Parse argument supplied user data params to dictionary
+        arg_params = dict(kv.split("=") for kv in arg_params.split(","))
+        params.update(arg_params)
+
+    return params
+
+
+def load_user_data(user_data_params, user_data_uri=None):
+    """ Attempt to fetch user data from URL or file. And render, replacing
+     parameters """
+    if user_data_uri is None:
+        # Look for a default in cloud config
+        if 'DEFAULT_USER_DATA' in config.CLOUD:
+            user_data_uri = config.CLOUD['DEFAULT_USER_DATA']
+        else:
+            return None
+
+    try:
+        urlparse(user_data_uri)
+        user_data = requests.get(user_data_uri).text
+    except requests.exceptions.MissingSchema:
+        # Not a url. possibly a file.
+        user_data_uri = expanduser(user_data_uri)
+        if os.path.isabs(user_data_uri):
+            user_data = file(user_data_uri, 'r').read()
+        else:
+            return None
+
+    user_data_tpl = Environment().from_string(user_data)
+    return user_data_tpl.render(user_data_params)
 
 
 def configure_instance(instance):
@@ -329,32 +361,3 @@ def configure_instance(instance):
     """
 
     instance.create_dns_entry()
-
-    # sometimes instances aren't quite ready to accept connections
-    for attempt in range(MAX_RETRIES):
-        try:
-            #set_hostname(instance)
-            break
-        except socket.error:
-            time.sleep(5)
-
-
-def parse_user_data(user_data, cli_params, hostname):
-    if user_data is None:
-        return None
-
-    # Build the user-data script, replacing params in template.
-    ud_template = Template(user_data)
-    # Define params available by default
-    template_params = {'hostname': hostname,
-                       'domain': config.CLOUD['DNS_ZONE'],
-                       'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])}
-    # Define params available from cloud config
-    if 'USER_DATA_PARAMS' in config.CLOUD:
-        template_params.update(config.CLOUD['USER_DATA_PARAMS'])
-    # Define params available from command line argument
-    if cli_params is not None:
-        template_params.update(cli_params)
-
-    return ud_template.render(**template_params)
-

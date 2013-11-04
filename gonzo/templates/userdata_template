@@ -23,13 +23,13 @@
 #
 #
 #cloud-config
-hostname: ${hostname}
-fqdn: ${fqdn}
+hostname: {{hostname}}
+fqdn: {{fqdn}}
 byobu_by_default: disable
 
 
 puppet:
-    install: False
+    install: True
     conf:
         main:
             logdir: "/var/log/puppet"
@@ -45,5 +45,5 @@ puppet:
             ssl_client_header: "SSL_CLIENT_S_DN"
             ssl_client_verify_header: "SSL_CLIENT_VERIFY"
         agent:
-            server: "puppetmaster.${domain}"
+            server: "puppetmaster.{{domain}}"
             report: "true"
