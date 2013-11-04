@@ -6,6 +6,7 @@ import os
 
 from jinja2 import Environment
 import requests
+import sys
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
@@ -297,7 +298,14 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
         tags['owner'] = username
 
     user_data_params = build_user_data_params_dict(name, user_data_params)
-    user_data = load_user_data(user_data_params, user_data)
+
+    try:
+        user_data = load_user_data(user_data_params, user_data)
+    except requests.exceptions.ConnectionError:
+        abort("Failed to connect to user-data source %s" % user_data)
+
+    print "===== User Data =====\n%s" % user_data
+    sys.exit(1)
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
@@ -338,7 +346,12 @@ def load_user_data(user_data_params, user_data_uri=None):
 
     try:
         urlparse(user_data_uri)
-        user_data = requests.get(user_data_uri).text
+
+        resp = requests.get(user_data_uri)
+        if resp.status_code != requests.codes.ok:
+            raise requests.exceptions.ConnectionError("Bad response")
+        
+        user_data = resp.text
     except requests.exceptions.MissingSchema:
         # Not a url. possibly a file.
         user_data_uri = expanduser(user_data_uri)
@@ -357,3 +370,10 @@ def configure_instance(instance):
     """
 
     instance.create_dns_entry()
+
+
+def abort(message=None):
+    if message is not None:
+        print >> sys.stderr, message
+
+    sys.exit(1)
