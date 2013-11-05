@@ -4,4 +4,3 @@ docs/_build/
 .DS_Store
 dist
 .coverage
-.idea
