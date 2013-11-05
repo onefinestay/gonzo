@@ -297,19 +297,22 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
     if username:
         tags['owner'] = username
 
-    user_data_params = build_user_data_params_dict(name, user_data_params)
-
-    try:
-        user_data = load_user_data(user_data_params, user_data)
-    except requests.exceptions.ConnectionError as err:
-        abort("Failed to connect to user-data source %s\n%s" % (user_data,
-                                                                err.message))
-    except IOError as err:
-        abort("Failed to read file %s\n%s" % (user_data, err.strerror))
+    user_data = get_user_data(name, user_data, user_data_params)
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
+
+
+def get_user_data(hostname, arg_ud_uri=None, arg_ud_params=None):
+    user_data_params = build_user_data_params_dict(hostname, arg_ud_params)
+
+    try:
+        return load_user_data(user_data_params, arg_ud_uri)
+    except requests.exceptions.ConnectionError as err:
+        abort("Failed to connect to user-data source\n%s" % err.strerror)
+    except IOError as err:
+        abort("Failed to read file\n%s" % err.strerror)
 
 
 def build_user_data_params_dict(hostname, arg_params=None):
@@ -337,6 +340,7 @@ def build_user_data_params_dict(hostname, arg_params=None):
 def load_user_data(user_data_params, user_data_uri=None):
     """ Attempt to fetch user data from URL or file. And render, replacing
      parameters """
+
     if user_data_uri is None:
         # Look for a default in cloud config
         if 'DEFAULT_USER_DATA' in config.CLOUD:
