@@ -301,11 +301,11 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
 
     try:
         user_data = load_user_data(user_data_params, user_data)
-    except requests.exceptions.ConnectionError:
-        abort("Failed to connect to user-data source %s" % user_data)
-
-    print "===== User Data =====\n%s" % user_data
-    sys.exit(1)
+    except requests.exceptions.ConnectionError as err:
+        abort("Failed to connect to user-data source %s\n%s" % (user_data,
+                                                                err.message))
+    except IOError as err:
+        abort("Failed to read file %s\n%s" % (user_data, err.strerror))
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
@@ -350,11 +350,12 @@ def load_user_data(user_data_params, user_data_uri=None):
         resp = requests.get(user_data_uri)
         if resp.status_code != requests.codes.ok:
             raise requests.exceptions.ConnectionError("Bad response")
-        
+
         user_data = resp.text
     except requests.exceptions.MissingSchema:
         # Not a url. possibly a file.
         user_data_uri = expanduser(user_data_uri)
+        user_data_uri = os.path.abspath(user_data_uri)
         if os.path.isabs(user_data_uri):
             user_data = file(user_data_uri, 'r').read()
         else:
