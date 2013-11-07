@@ -282,10 +282,6 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
 
     zone = cloud.next_az(server_type)
 
-    if security_groups is not None:
-        for security_group in security_groups:
-            create_if_not_exist_security_group(security_group)
-
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = {
@@ -296,11 +292,30 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
     if username:
         tags['owner'] = username
 
+    security_groups = get_security_groups(server_type, security_groups)
+
     user_data = get_user_data(name, user_data, user_data_params)
 
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
+
+
+def get_security_groups(server_type, security_groups_arg=None):
+    # Set defaults
+    security_groups = [server_type, 'gonzo']
+
+    # Add argument passed groups
+    if security_groups_arg is not None:
+        security_groups += security_groups_arg.split(",")
+
+    # Remove Duplicates
+    security_groups = list(set(security_groups))
+
+    for security_group in security_groups:
+        create_if_not_exist_security_group(security_group)
+
+    return security_groups
 
 
 def get_user_data(hostname, arg_ud_uri=None, arg_ud_params=None):

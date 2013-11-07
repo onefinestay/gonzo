@@ -33,19 +33,8 @@ def launch(args):
 
     username = os.environ.get('USER')
 
-    security_groups = []
-    if args.security_groups is not None:
-        security_groups += args.security_groups.split(",")
-
-    # Define default environment and gonzo security groups
-    instance_type = args.env_type.split("-", 1)[1]
-    security_groups.append(instance_type)
-    security_groups.append('gonzo')
-    # Remove duplicates
-    security_groups = list(set(security_groups))
-
     instance = launch_instance(args.env_type,
-                               security_groups=security_groups,
+                               security_groups=args.security_groups,
                                user_data=args.user_data,
                                user_data_params=args.user_data_params,
                                username=username)
