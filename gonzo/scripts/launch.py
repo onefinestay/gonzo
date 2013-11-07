@@ -66,7 +66,7 @@ e.g. production-platform-app, which is interpreted as
 
 additional_security_group_help = """
 Specify additional security groups to create (if
-necessary) and assign. Environment and gonzo security
+necessary) and assign. Server type and gonzo security
 groups will be automatically defined."""
 
 user_data_help = """
