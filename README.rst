@@ -131,7 +131,7 @@ Using Gonzo With CloudInit
 
 CloudInit can be used to personalise the instances you launch. The user data
 scripts passed to new instances for CloudInit to process can be specified for
-each cloud by using the `DEFAULT_USER_DATA` config item in config.py::
+each cloud by using the ``DEFAULT_USER_DATA`` config item in config.py::
 
     CLOUDS = {
         'cloudname': {
