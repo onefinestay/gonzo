@@ -141,7 +141,7 @@ each cloud by using the `DEFAULT_USER_DATA` config item in config.py::
             ...
 
 Additionally, user data scripts can be specified per instance by using the
-launch argument `--user-data <file | url>`::
+launch argument ``--user-data <file | url>``::
 
     # gonzo launch --user-data ~/.gonzo/cloudinit_web_app production-web-app
 
