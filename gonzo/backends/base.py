@@ -1,12 +1,10 @@
 from abc import abstractmethod, abstractproperty
-from os.path import expanduser
-from urlparse import urlparse
-
 import os
+import sys
 
 from jinja2 import Environment
 import requests
-import sys
+from urlparse import urlparse
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
@@ -372,7 +370,7 @@ def load_user_data(user_data_params, user_data_uri=None):
         user_data = resp.text
     except requests.exceptions.MissingSchema:
         # Not a url. possibly a file.
-        user_data_uri = expanduser(user_data_uri)
+        user_data_uri = os.path.expanduser(user_data_uri)
         user_data_uri = os.path.abspath(user_data_uri)
         if os.path.isabs(user_data_uri):
             user_data = file(user_data_uri, 'r').read()
