@@ -17,17 +17,13 @@ def test_launch_instance(get_cloud,
     get_cloud.return_value = cloud
     get_hostname.return_value = 'prod-100'
 
-    security_groups = ['environment', 'gonzo', 'test']
-
-    launch_instance('environment-server', security_groups)
+    launch_instance('environment-server')
 
     assert cloud.launch.called
 
     args, kwargs = cloud.launch.call_args
     (name, image_name, instance_type,
-     zone, security_groups, key_name, tags) = args
-    assert security_groups.count('gonzo') == 1
-    assert sorted(security_groups) == ['environment', 'gonzo', 'test']
+     zone, key_name, tags) = args
 
 
 @patch('gonzo.backends.base.Route53')
