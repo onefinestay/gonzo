@@ -150,7 +150,7 @@ User data scripts can be specified as a file path or URL.
 Before user data scripts are passed to new instances, they're first rendered as
 a template, allowing them to be parameterised. By default a few are already
 available, such as hostname, domain and fqdn. These can be supplemented by
-defining a `USER_DATA_PARAMS` cloud config dictionary::
+defining a ``USER_DATA_PARAMS`` cloud config dictionary::
 
     CLOUDS = {
         'cloudname': {
@@ -163,7 +163,7 @@ defining a `USER_DATA_PARAMS` cloud config dictionary::
             ...
 
 Again, these parameters can also be supplemented or overridden at launch time
-by using the command line argument `--user-data-params key=val[,key=val..]`::
+by using the command line argument ``--user-data-params key=val[,key=val..]``::
 
     # gonzo launch --user-data ~/.gonzo/cloudinit_web_app \
         --user-data-params puppet_address=puppetmaster2.example.com \
