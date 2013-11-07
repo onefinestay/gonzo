@@ -1,13 +1,12 @@
 from abc import abstractmethod, abstractproperty
 import os
-import sys
 
 from jinja2 import Environment
 import requests
 from urlparse import urlparse
 
 from gonzo.aws.route53 import Route53
-from gonzo.backends import get_current_cloud
+from gonzo.backends import get_current_cloud, UserDataError
 from gonzo.config import config_proxy as config
 
 
@@ -323,13 +322,7 @@ def add_default_security_groups(server_type, additional_security_groups=None):
 
 def get_user_data(hostname, user_data_uri=None, additional_params=None):
     user_data_params = build_user_data_params(hostname, additional_params)
-
-    try:
-        return load_user_data(user_data_params, user_data_uri)
-    except requests.exceptions.ConnectionError as err:
-        abort("Failed to connect to user-data source\n%s" % err.strerror)
-    except IOError as err:
-        abort("Failed to read file\n%s" % err.strerror)
+    return load_user_data(user_data_params, user_data_uri)
 
 
 def build_user_data_params(hostname, additional_params=None):
@@ -367,31 +360,35 @@ def load_user_data(user_data_params, user_data_uri=None):
 
     try:
         urlparse(user_data_uri)
-
-        resp = requests.get(user_data_uri)
-        if resp.status_code != requests.codes.ok:
-            raise requests.exceptions.ConnectionError("Bad response")
-
-        user_data = resp.text
+        user_data = fetch_from_url(user_data_uri)
     except requests.exceptions.MissingSchema:
         # Not a url. possibly a file.
         user_data_uri = os.path.expanduser(user_data_uri)
         user_data_uri = os.path.abspath(user_data_uri)
+
         if os.path.isabs(user_data_uri):
-            user_data = file(user_data_uri, 'r').read()
+            try:
+                user_data = file(user_data_uri, 'r').read()
+            except IOError as err:
+                raise UserDataError("Failed to read file\n%s" % err.strerror)
         else:
+            # Not url nor file.
             return None
+    except requests.exceptions.ConnectionError as err:
+        raise UserDataError("Failed to fetch user-data from URL\n%s"
+                            % err.strerror)
 
     user_data_tpl = Environment().from_string(user_data)
     return user_data_tpl.render(user_data_params)
 
 
+def fetch_from_url(url):
+    resp = requests.get(url)
+    if resp.status_code != requests.codes.ok:
+        raise requests.exceptions.ConnectionError("Bad response")
+
+    return resp.text
+
+
 def configure_instance(instance):
     instance.create_dns_entry()
-
-
-def abort(message=None):
-    if message is not None:
-        print >> sys.stderr, message
-
-    sys.exit(1)

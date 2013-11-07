@@ -6,6 +6,7 @@ from functools import partial
 import os
 import sys
 from time import sleep
+from gonzo.backends import UserDataError
 
 from gonzo.backends.base import launch_instance, configure_instance
 from gonzo.exceptions import CommandError
@@ -47,8 +48,16 @@ def main(args):
     try:
         launch(args)
     except CommandError as ex:
-        print ex
-        print
+        abort(ex.message)
+    except UserDataError as ex:
+        abort(ex.message)
+
+
+def abort(message=None):
+    if message is not None:
+        print >> sys.stderr, message
+
+    sys.exit(1)
 
 
 env_type_pair_help = """
