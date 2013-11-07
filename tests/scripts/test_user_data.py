@@ -72,16 +72,16 @@ def test_arg_specified_url_source(config, req):
         'USER_DATA_PARAMS': config_params
     }
 
-    arg_ud_params = csv_dict('key_2=argument_value_2')
-    arg_ud_uri = 'http://this.should.be.requested.com/user-data.txt'
+    params = csv_dict('key_2=argument_value_2')
+    uri = 'http://this.should.be.requested.com/user-data.txt'
 
     ud_contents = ""
     for key in desired_subs.keys():
         ud_contents += "{{%s}} " % key
     req.return_value = Mock(text=ud_contents, status_code=200)
 
-    params = build_user_data_params(hostname, arg_ud_params)
-    user_data = load_user_data(params, arg_ud_uri)
+    params = build_user_data_params(hostname, params)
+    user_data = load_user_data(params, uri)
 
-    assert req.called_with(arg_ud_uri)
+    assert req.called_with(uri)
     assert all(values in user_data for values in desired_subs.values())
