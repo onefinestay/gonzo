@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 
 from gonzo.backends.base import get_user_data
 from gonzo.scripts.launch import csv_dict
+from gonzo.test_utils import assert_called_with
 
 
 @patch('gonzo.backends.base.config')
@@ -80,5 +81,5 @@ def test_arg_specified_url_source(config, req):
 
     user_data = get_user_data(hostname, uri, params)
 
-    assert req.called_with(uri)
+    assert assert_called_with(req, uri)
     assert all(values in user_data for values in desired_subs.values())
