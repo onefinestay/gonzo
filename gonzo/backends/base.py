@@ -260,6 +260,12 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
 
         Arguments:
             env_type (string): environment-server_type
+            user_data (string): File path or URL for user data script. If None,
+                Config value will be used.
+            user_data_params (dict): Dictionary or parameters to supplement
+                the defaults when generating user-data.
+            security_groups (list): List of security groups to create (if
+                necessary) and supplement the defaults.
 
         Keyword arguments:
             username (string): username to set as owner
@@ -290,7 +296,9 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
     if username:
         tags['owner'] = username
 
-    security_groups = get_security_groups(server_type, security_groups)
+    security_groups = add_default_security_groups(server_type, security_groups)
+    for security_group in security_groups:
+        create_if_not_exist_security_group(security_group)
 
     user_data = get_user_data(name, user_data, user_data_params)
 
@@ -299,35 +307,32 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
         user_data=user_data, tags=tags)
 
 
-def get_security_groups(server_type, security_groups_arg=None):
+def add_default_security_groups(server_type, additional_security_groups=None):
     # Set defaults
     security_groups = [server_type, 'gonzo']
 
     # Add argument passed groups
-    if security_groups_arg is not None:
-        security_groups += security_groups_arg.split(",")
+    if additional_security_groups is not None:
+        security_groups += additional_security_groups
 
     # Remove Duplicates
     security_groups = list(set(security_groups))
 
-    for security_group in security_groups:
-        create_if_not_exist_security_group(security_group)
-
     return security_groups
 
 
-def get_user_data(hostname, arg_ud_uri=None, arg_ud_params=None):
-    user_data_params = build_user_data_params_dict(hostname, arg_ud_params)
+def get_user_data(hostname, user_data_uri=None, additional_params=None):
+    user_data_params = build_user_data_params(hostname, additional_params)
 
     try:
-        return load_user_data(user_data_params, arg_ud_uri)
+        return load_user_data(user_data_params, user_data_uri)
     except requests.exceptions.ConnectionError as err:
         abort("Failed to connect to user-data source\n%s" % err.strerror)
     except IOError as err:
         abort("Failed to read file\n%s" % err.strerror)
 
 
-def build_user_data_params_dict(hostname, arg_params=None):
+def build_user_data_params(hostname, additional_params=None):
     """ Returns a dictionary of parameters to use when rendering user data
      scripts from template.
 
@@ -341,10 +346,8 @@ def build_user_data_params_dict(hostname, arg_params=None):
     if 'USER_DATA_PARAMS' in config.CLOUD:
         params.update(config.CLOUD['USER_DATA_PARAMS'])
 
-    if arg_params is not None:
-        # Parse argument supplied user data params to dictionary
-        arg_params = dict(kv.split("=") for kv in arg_params.split(","))
-        params.update(arg_params)
+    if additional_params is not None:
+        params.update(additional_params)
 
     return params
 

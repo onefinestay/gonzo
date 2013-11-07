@@ -1,8 +1,9 @@
 from mock import Mock, patch
 import os
 
-from gonzo.backends.base import (build_user_data_params_dict, get_user_data,
+from gonzo.backends.base import (build_user_data_params, get_user_data,
                                  load_user_data)
+from gonzo.scripts.launch import csv_dict
 
 
 @patch('gonzo.backends.base.config')
@@ -43,7 +44,7 @@ def test_config_specified_file_source(config):
     arg_ud_params = None
     arg_ud_uri = None
 
-    params = build_user_data_params_dict(hostname, arg_ud_params)
+    params = build_user_data_params(hostname, arg_ud_params)
     user_data = load_user_data(params, arg_ud_uri)
 
     os.unlink(ud_file_path)
@@ -71,7 +72,7 @@ def test_arg_specified_url_source(config, req):
         'USER_DATA_PARAMS': config_params
     }
 
-    arg_ud_params = 'key_2=argument_value_2'
+    arg_ud_params = csv_dict('key_2=argument_value_2')
     arg_ud_uri = 'http://this.should.be.requested.com/user-data.txt'
 
     ud_contents = ""
@@ -79,8 +80,7 @@ def test_arg_specified_url_source(config, req):
         ud_contents += "{{%s}} " % key
     req.return_value = Mock(text=ud_contents, status_code=200)
 
-    params = build_user_data_params_dict(hostname, arg_ud_params)
-
+    params = build_user_data_params(hostname, arg_ud_params)
     user_data = load_user_data(params, arg_ud_uri)
 
     assert req.called_with(arg_ud_uri)

@@ -60,6 +60,11 @@ Specify additional security groups to create (if
 necessary) and assign. Environment and gonzo security
 groups will be automatically defined."""
 
+user_data_help = """
+File or URL containing user-data to be passed to new
+instances and run by cloud-init. Can utilize parameters.
+See template/userdata_template."""
+
 
 def init_parser(parser):
     parser.add_argument(
@@ -69,21 +74,27 @@ def init_parser(parser):
         help="Override instance size")
     parser.add_argument(
         '--user-data', dest='user_data',
-        help="File or URL containing user-data to be passed to new instances "
-             "and run by cloud-init. Can utilize parameters. See "
-             "template/userdata_template.")
+        help=user_data_help)
     parser.add_argument(
         '--user-data-params', dest='user_data_params',
-        metavar='key=val[,key=val..]',
+        metavar='key=val[,key=val..]', type=csv_dict,
         help='Additional parameters to be used when rendering user data.')
     parser.add_argument(
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
     parser.add_argument(
         '--additional-security-groups', dest='security_groups',
-        metavar='sg-name[,sg-name]',
+        metavar='sg-name[,sg-name]', type=csv_list,
         help=additional_security_group_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
         help='display coloured output. (default: auto)')
+
+
+def csv_list(value):
+    return value.split(',')
+
+
+def csv_dict(value):
+    return dict(kv.split('=') for kv in value.split(','))
