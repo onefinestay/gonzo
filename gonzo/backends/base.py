@@ -339,9 +339,11 @@ def build_user_data_params(hostname, additional_params=None):
      Parameter sources include gonzo defined defaults, cloud configuration and
      a comma separated key value command line argument. They are also
      overridden in that order. """
-    params = {'hostname': hostname,
-              'domain': config.CLOUD['DNS_ZONE'],
-              'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])}
+    params = {
+        'hostname': hostname,
+        'domain': config.CLOUD['DNS_ZONE'],
+        'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])
+    }
 
     if 'USER_DATA_PARAMS' in config.CLOUD:
         params.update(config.CLOUD['USER_DATA_PARAMS'])
