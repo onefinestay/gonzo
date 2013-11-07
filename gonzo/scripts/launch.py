@@ -6,10 +6,9 @@ from functools import partial
 import os
 import sys
 from time import sleep
-from gonzo.backends import UserDataError
 
 from gonzo.backends.base import launch_instance, configure_instance
-from gonzo.exceptions import CommandError
+from gonzo.exceptions import CommandError, UserDataError
 from gonzo.scripts.utils import colorize
 
 

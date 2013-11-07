@@ -6,8 +6,9 @@ import requests
 from urlparse import urlparse
 
 from gonzo.aws.route53 import Route53
-from gonzo.backends import get_current_cloud, UserDataError
+from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import UserDataError
 
 
 # For initial connection after instance creation.

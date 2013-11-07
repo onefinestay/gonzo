@@ -4,3 +4,7 @@ class ConfigurationError(Exception):
 
 class CommandError(Exception):
     pass
+
+
+class UserDataError(Exception):
+    pass
