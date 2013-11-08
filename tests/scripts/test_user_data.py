@@ -81,5 +81,6 @@ def test_arg_specified_url_source(config, req):
 
     user_data = get_user_data(hostname, uri, params)
 
-    assert assert_called_with(req, uri)
-    assert all(values in user_data for values in desired_subs.values())
+    assert_called_with(req, uri)
+    for value in desired_subs.values():
+        assert value in user_data
