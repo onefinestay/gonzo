@@ -10,6 +10,7 @@ from time import sleep
 from gonzo.backends.base import launch_instance, configure_instance
 from gonzo.exceptions import CommandError, UserDataError
 from gonzo.scripts.utils import colorize
+from gonzo.utils import abort, csv_dict, csv_list
 
 
 def wait_for_instance_boot(instance, use_color='auto'):
@@ -52,13 +53,6 @@ def main(args):
         abort(ex.message)
 
 
-def abort(message=None):
-    if message is not None:
-        print >> sys.stderr, message
-
-    sys.exit(1)
-
-
 env_type_pair_help = """
 e.g. production-platform-app, which is interpreted as
     environment: production, server_type: ecommerce-web"""
@@ -98,11 +92,3 @@ def init_parser(parser):
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
         help='display coloured output. (default: auto)')
-
-
-def csv_list(value):
-    return value.split(',')
-
-
-def csv_dict(value):
-    return dict(kv.split('=') for kv in value.split(','))

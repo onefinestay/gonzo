@@ -1,3 +1,5 @@
+import sys
+
 def last_index(list_, value):
     """ last_index(list, value) -> integer
 
@@ -12,3 +14,18 @@ def last_index(list_, value):
     if found is None:
         raise ValueError("{} is not in list {}".format(value, list_))
     return found
+
+
+def abort(message=None):
+    if message is not None:
+        print >> sys.stderr, message
+
+    sys.exit(1)
+
+
+def csv_list(value):
+    return value.split(',')
+
+
+def csv_dict(value):
+    return dict(kv.split('=') for kv in value.split(','))
