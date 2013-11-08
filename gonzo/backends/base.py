@@ -369,7 +369,7 @@ def load_user_data(user_data_params, user_data_uri=None):
 
         if os.path.isabs(user_data_uri):
             try:
-                user_data = file(user_data_uri, 'r').read()
+                user_data = open(user_data_uri, 'r').read()
             except IOError as err:
                 raise UserDataError("Failed to read file\n%s" % err.strerror)
         else:
