@@ -24,7 +24,7 @@ def test_config_specified_file_source(config):
 
     desired_subs = {
         'key_1': 'config_value_1',
-        'key_2': 'config_value_2'
+        'key_2': 'config_value_2',
     }
 
     hostname = 'staging-test-host-001'
@@ -57,18 +57,18 @@ def test_arg_specified_url_source(config, req):
     desired_subs = {
         'key_1': 'config_value_1',
         'key_2': 'argument_value_2',
-        'hostname': hostname
+        'hostname': hostname,
     }
 
     config_params = {
         'key_1': 'config_value_1',
-        'key_2': 'config_value_2'
+        'key_2': 'config_value_2',
     }
     config_ud_url = 'http://this.should.not.be.requested.com/user-data.txt'
     config.CLOUD = {
         'DNS_ZONE': 'example.com',
         'DEFAULT_USER_DATA': config_ud_url,
-        'USER_DATA_PARAMS': config_params
+        'USER_DATA_PARAMS': config_params,
     }
 
     params = csv_dict('key_2=argument_value_2')

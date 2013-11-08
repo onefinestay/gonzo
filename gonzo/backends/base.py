@@ -336,7 +336,7 @@ def build_user_data_params(hostname, additional_params=None):
     params = {
         'hostname': hostname,
         'domain': config.CLOUD['DNS_ZONE'],
-        'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE'])
+        'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE']),
     }
 
     if 'USER_DATA_PARAMS' in config.CLOUD:
