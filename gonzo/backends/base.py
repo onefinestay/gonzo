@@ -371,13 +371,15 @@ def load_user_data(user_data_params, user_data_uri=None):
             try:
                 user_data = open(user_data_uri, 'r').read()
             except IOError as err:
-                raise UserDataError("Failed to read file\n%s" % err.strerror)
+                err_msg = "Failed to read from file: {}".format(err.strerror)
+                raise UserDataError(err_msg)
         else:
             # Not url nor file.
-            return None
+            err_msg = "Unknown UserData source: %s" % user_data_uri
+            raise UserDataError(err_msg)
     except requests.exceptions.ConnectionError as err:
-        raise UserDataError("Failed to fetch user-data from URL\n%s"
-                            % err.strerror)
+        err_msg = "Failed to read from URL: {}".format(err.strerror)
+        raise UserDataError(err_msg)
 
     user_data_tpl = Environment().from_string(user_data)
     return user_data_tpl.render(user_data_params)
