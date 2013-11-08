@@ -1,12 +1,14 @@
 from abc import abstractmethod, abstractproperty
-import socket
-import time
+import os
 
-import paramiko
+from jinja2 import Environment
+import requests
+from urlparse import urlparse
 
 from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import UserDataError
 
 
 # For initial connection after instance creation.
@@ -223,7 +225,7 @@ class BaseCloud(object):
     @abstractmethod
     def launch(
             self, name, image_name, instance_type, zone, security_groups,
-            key_name, tags=None):
+            key_name, user_data=None, tags=None):
         """ Launch an instance """
         pass
 
@@ -246,19 +248,24 @@ def get_next_hostname(env_type):
     return name
 
 
-def find_or_create_security_groups(environment):
+def create_if_not_exist_security_group(group_name):
     cloud = get_current_cloud()
-    if not cloud.security_group_exists(environment):
-        cloud.create_security_group(environment)
-
-    return ['gonzo', environment]
+    if not cloud.security_group_exists(group_name):
+        cloud.create_security_group(group_name)
 
 
-def launch_instance(env_type, username=None):
+def launch_instance(env_type, user_data=None, user_data_params=None,
+                    security_groups=None, username=None):
     """ Launch instances
 
         Arguments:
             env_type (string): environment-server_type
+            user_data (string): File path or URL for user data script. If None,
+                Config value will be used.
+            user_data_params (dict): Dictionary or parameters to supplement
+                the defaults when generating user-data.
+            security_groups (list): List of security groups to create (if
+                necessary) and supplement the defaults.
 
         Keyword arguments:
             username (string): username to set as owner
@@ -279,9 +286,6 @@ def launch_instance(env_type, username=None):
 
     zone = cloud.next_az(server_type)
 
-    find_or_create_security_groups('gonzo')
-    security_groups = find_or_create_security_groups(environment)
-
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = {
@@ -292,43 +296,102 @@ def launch_instance(env_type, username=None):
     if username:
         tags['owner'] = username
 
+    security_groups = add_default_security_groups(server_type, security_groups)
+    for security_group in security_groups:
+        create_if_not_exist_security_group(security_group)
+
+    user_data = get_user_data(name, user_data, user_data_params)
+
     return cloud.launch(
         name, image_name, instance_type, zone, security_groups, key_name,
-        tags)
+        user_data=user_data, tags=tags)
 
 
-def set_hostname(instance, username='ubuntu'):
-    name = instance.name
-    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
-    cmd = """
-        echo {hostname} | sudo tee /etc/hostname;
-        echo "127.0.0.1 {name} {hostname}" | sudo tee -a /etc/hosts;
-        sudo hostname -F /etc/hostname;
-    """.format(hostname=hostname, name=name)
+def add_default_security_groups(server_type, additional_security_groups=None):
+    # Set defaults
+    security_groups = [server_type, 'gonzo']
 
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(
-        paramiko.AutoAddPolicy())
+    # Add argument passed groups
+    if additional_security_groups is not None:
+        security_groups += additional_security_groups
 
-    ssh.connect(
-        instance.internal_address(), username=username,
-        key_filename=config.CLOUD['PRIVATE_KEY_FILE'])
+    # Remove Duplicates
+    security_groups = list(set(security_groups))
 
-    # stdin, stdout, stderr
-    _, _, _ = ssh.exec_command(cmd)
+    return security_groups
+
+
+def get_user_data(hostname, user_data_uri=None, additional_params=None):
+    user_data_params = build_user_data_params(hostname, additional_params)
+    return load_user_data(user_data_params, user_data_uri)
+
+
+def build_user_data_params(hostname, additional_params=None):
+    """ Returns a dictionary of parameters to use when rendering user data
+     scripts from template.
+
+     Parameter sources include gonzo defined defaults, cloud configuration and
+     a comma separated key value command line argument. They are also
+     overridden in that order. """
+    params = {
+        'hostname': hostname,
+        'domain': config.CLOUD['DNS_ZONE'],
+        'fqdn': "%s.%s" % (hostname, config.CLOUD['DNS_ZONE']),
+    }
+
+    if 'USER_DATA_PARAMS' in config.CLOUD:
+        params.update(config.CLOUD['USER_DATA_PARAMS'])
+
+    if additional_params is not None:
+        params.update(additional_params)
+
+    return params
+
+
+def load_user_data(user_data_params, user_data_uri=None):
+    """ Attempt to fetch user data from URL or file. And render, replacing
+     parameters """
+
+    if user_data_uri is None:
+        # Look for a default in cloud config
+        if 'DEFAULT_USER_DATA' in config.CLOUD:
+            user_data_uri = config.CLOUD['DEFAULT_USER_DATA']
+        else:
+            return None
+
+    try:
+        urlparse(user_data_uri)
+        user_data = fetch_from_url(user_data_uri)
+    except requests.exceptions.MissingSchema:
+        # Not a url. possibly a file.
+        user_data_uri = os.path.expanduser(user_data_uri)
+        user_data_uri = os.path.abspath(user_data_uri)
+
+        if os.path.isabs(user_data_uri):
+            try:
+                user_data = open(user_data_uri, 'r').read()
+            except IOError as err:
+                err_msg = "Failed to read from file: {}".format(err)
+                raise UserDataError(err_msg)
+        else:
+            # Not url nor file.
+            err_msg = "Unknown UserData source: {}".format(user_data_uri)
+            raise UserDataError(err_msg)
+    except requests.exceptions.ConnectionError as err:
+        err_msg = "Failed to read from URL: {}".format(err)
+        raise UserDataError(err_msg)
+
+    user_data_tpl = Environment().from_string(user_data)
+    return user_data_tpl.render(user_data_params)
+
+
+def fetch_from_url(url):
+    resp = requests.get(url)
+    if resp.status_code != requests.codes.ok:
+        raise requests.exceptions.ConnectionError("Bad response")
+
+    return resp.text
 
 
 def configure_instance(instance):
-    """ create dns entry
-        ssh into instance and set the hostname
-    """
-
     instance.create_dns_entry()
-
-    # sometimes instances aren't quite ready to accept connections
-    for attempt in range(MAX_RETRIES):
-        try:
-            set_hostname(instance)
-            break
-        except socket.error:
-            time.sleep(5)

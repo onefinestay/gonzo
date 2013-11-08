@@ -144,18 +144,15 @@ class Cloud(BaseCloud):
 
     def launch(
             self, name, image_name, instance_type, zone,
-            security_groups, key_name, tags=None):
+            security_groups, key_name, user_data=None, tags=None):
         image = self.get_image_by_name(image_name)
         flavour = self._get_instance_type(instance_type)
+
         raw_instance = self.connection.create(
             name, image.id, flavor=flavour.id, availability_zone=zone,
-            security_groups=security_groups, key_name=key_name)
+            security_groups=security_groups, key_name=key_name, meta=tags,
+            userdata=user_data)
 
         instance = self.instance_class(raw_instance)
-
-        tags = tags or {}
-
-        for tag, value in tags.items():
-            instance.add_tag(tag, value)
 
         return instance
