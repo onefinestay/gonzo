@@ -1,5 +1,6 @@
 import sys
 
+
 def last_index(list_, value):
     """ last_index(list, value) -> integer
 
