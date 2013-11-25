@@ -23,6 +23,20 @@ def update():
 
 
 @task
+def stop(service):
+    """ Stops the sevice """
+    sudo("supervisorctl stop %s" % service)
+    status()
+
+
+@task
+def start(service):
+    """ Starts the sevice """
+    sudo("supervisorctl start %s" % service)
+    status()
+
+
+@task
 def restart(service):
     """ Restarts the sevice """
     sudo("supervisorctl restart %s" % service)
