@@ -1,120 +1,78 @@
-import datetime
-
 import boto
 from boto import ec2 as boto_ec2
+from boto import cloudformation as boto_cfn
 
-from gonzo.aws.route53 import Route53
-from gonzo.backends.base import BaseInstance, BaseCloud
+from gonzo.backends.aws.instance import Instance
+from gonzo.backends.aws.stack import Stack
+from gonzo.backends.base.cloud import BaseCloud
 from gonzo.config import config_proxy as config
-
-
-TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000Z'
-
-
-class Instance(BaseInstance):
-    running_state = 'running'
-
-    @property
-    def name(self):
-        return self._parent.tags.get('Name')
-
-    @property
-    def tags(self):
-        return self._parent.tags
-
-    @property
-    def region_name(self):
-        return self._parent.region.name
-
-    @property
-    def groups(self):
-        return self._parent.groups
-
-    @property
-    def availability_zone(self):
-        return self._parent.placement
-
-    @property
-    def instance_type(self):
-        return self._parent.instance_type
-
-    @property
-    def launch_time(self):
-        time_str = self._parent.launch_time
-        return datetime.datetime.strptime(time_str, TIME_FORMAT)
-
-    @property
-    def status(self):
-        return self._parent.state
-
-    def update(self):
-        return self._parent.update()
-
-    def add_tag(self, key, value):
-        self._parent.add_tag(key, value)
-
-    def set_name(self, name):
-        self.add_tag('Name', name)
-
-    def internal_address(self):
-        return self._parent.public_dns_name
-
-    def create_dns_entry(self):
-        cname = self.internal_address()
-        r53 = Route53()
-        r53.add_remove_record(self.name, "CNAME", cname)
-
-    def terminate(self):
-        self._parent.terminate()
 
 
 class Cloud(BaseCloud):
     instance_class = Instance
+    stack_class = Stack
 
     def _list_instances(self):
         instances = []
-        for reservation in self.connection.get_all_instances():
+        for reservation in self.compute_connection.get_all_instances():
             instances += reservation.instances
         return map(self.instance_class, instances)
 
     def list_security_groups(self):
-        return self.connection.get_all_security_groups()
+        return self.compute_connection.get_all_security_groups()
 
-    def _region(self):
+    def _credentials(self):
+        return {
+            'aws_access_key_id': config.CLOUD['AWS_ACCESS_KEY_ID'],
+            'aws_secret_access_key': config.CLOUD['AWS_SECRET_ACCESS_KEY'],
+        }
+
+    def _ec2_regions(self):
+        return boto_ec2.regions(**self._credentials())
+
+    def _cfn_regions(self):
+        return boto_cfn.regions()
+
+    def _region(self, regions):
         region_name = config.REGION
-        acces_key_id = config.CLOUD['AWS_ACCESS_KEY_ID']
-        secret_access_key = config.CLOUD['AWS_SECRET_ACCESS_KEY']
-        regions = boto.ec2.regions(
-            aws_access_key_id=acces_key_id,
-            aws_secret_access_key=secret_access_key)
         for region in regions:
             if region.name == region_name:
                 return region
         raise KeyError("%s not found in region list" % region_name)
 
-    _connection = None
+    _compute_connection = None
 
     @property
-    def connection(self):
-        if self._connection is None:
-            acces_key_id = config.CLOUD['AWS_ACCESS_KEY_ID']
-            secret_access_key = config.CLOUD['AWS_SECRET_ACCESS_KEY']
-            region = self._region()
-            self._connection = boto_ec2.connection.EC2Connection(
+    def compute_connection(self):
+        if self._compute_connection is None:
+            region = self._region(self._ec2_regions())
+            self._compute_connection = boto.connect_ec2(
                 region=region,
-                aws_access_key_id=acces_key_id,
-                aws_secret_access_key=secret_access_key)
-        return self._connection
+                **self._credentials()
+            )
+        return self._compute_connection
+
+    _orchestration_connection = None
+
+    @property
+    def orchestration_connection(self):
+        if self._orchestration_connection is None:
+            region = self._region(self._cfn_regions())
+            self._orchestration_connection = boto.connect_cloudformation(
+                region=region,
+                **self._credentials()
+            )
+        return self._orchestration_connection
 
     def create_security_group(self, sg_name):
         """ Creates a security group """
-        sg = self.connection.create_security_group(
+        sg = self.compute_connection.create_security_group(
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
     def get_image_by_name(self, name):
         """ Find image by name """
-        images = self.connection.get_all_images(filters={
+        images = self.compute_connection.get_all_images(filters={
             'name': name,
         })
         if len(images) == 0:
@@ -126,7 +84,7 @@ class Cloud(BaseCloud):
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
-        zones = self.connection.get_all_zones()
+        zones = self.compute_connection.get_all_zones()
         azs = []
         for zone in zones:
             azs.append(zone.name[-1])
@@ -162,7 +120,7 @@ class Cloud(BaseCloud):
             security_groups, key_name, user_data=None, tags=None):
 
         image = self.get_image_by_name(image_name)
-        reservation = self.connection.run_instances(
+        reservation = self.compute_connection.run_instances(
             image.id, key_name=key_name,
             security_groups=security_groups,
             instance_type=instance_type,
@@ -177,3 +135,11 @@ class Cloud(BaseCloud):
             instance.add_tag(tag, value)
 
         return instance
+
+    def launch_stack(self, name, template):
+        stack_id = self.orchestration_connection.create_stack(
+            stack_name=name,
+            template_body=template,
+        )
+
+        return self.stack_class(stack_id)

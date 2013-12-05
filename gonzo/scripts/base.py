@@ -4,7 +4,7 @@ import argcomplete
 
 import gonzo
 from gonzo.exceptions import ConfigurationError
-from gonzo.scripts import config, launch, list_, terminate
+from gonzo.scripts import config, launch, launch_stack, list_, terminate
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
         version='%(prog)s {}'.format(gonzo.VERSION))
     subparsers = parser.add_subparsers(help='subcommand help')
 
-    for module in [config, launch, list_, terminate]:
+    for module in [config, launch, launch_stack, list_, terminate]:
         module_name = module.__name__.rsplit('.', 1)[-1]
         module_alias = module_name.strip('_')
         module_parser = subparsers.add_parser(

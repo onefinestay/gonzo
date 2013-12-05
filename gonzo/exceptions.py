@@ -6,5 +6,5 @@ class CommandError(Exception):
     pass
 
 
-class UserDataError(Exception):
+class DataError(Exception):
     pass
