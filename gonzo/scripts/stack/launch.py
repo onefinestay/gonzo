@@ -36,7 +36,7 @@ def wait_for_stack_complete(window, stack):
         n += interval
 
 
-def launch_stack(args):
+def launch(args):
     """ Launch stacks """
 
     stack = backend_launch_stack(args.stack_name, args.template,
@@ -56,11 +56,9 @@ def launch_stack(args):
                 print "\t\t{}".format(output.description)
 
 
-
-
 def main(args):
     try:
-        launch_stack(args)
+        launch(args)
     except DataError as ex:
         abort(ex.message)
 

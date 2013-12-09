@@ -2,7 +2,7 @@ import datetime
 
 from mock import Mock, patch
 
-from gonzo.scripts.list_ import print_instance
+from gonzo.scripts.instance.list_ import print_instance
 
 
 @patch('gonzo.scripts.list_.colorize')

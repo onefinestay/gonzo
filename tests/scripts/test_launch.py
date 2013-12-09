@@ -1,6 +1,6 @@
 from mock import Mock, patch
 
-from gonzo.scripts.launch import launch
+from gonzo.scripts.instance import launch
 
 
 @patch('gonzo.scripts.launch.configure_instance')

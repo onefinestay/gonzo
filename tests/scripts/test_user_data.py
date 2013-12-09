@@ -1,8 +1,9 @@
-from mock import Mock, patch
 from tempfile import NamedTemporaryFile
 
+from mock import Mock, patch
+
 from gonzo.backends.base import get_user_data
-from gonzo.scripts.launch import csv_dict
+from gonzo.scripts.instance.launch import csv_dict
 from gonzo.test_utils import assert_called_with
 
 
