@@ -10,7 +10,6 @@ from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
 from gonzo.config import config_proxy as config
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
-from gonzo.exceptions import NoSuchResourceError
 
 
 class Cloud(BaseCloud):
