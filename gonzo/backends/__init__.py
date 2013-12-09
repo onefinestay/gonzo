@@ -200,3 +200,8 @@ def fetch_from_url(url):
 
 def configure_instance(instance):
     instance.create_dns_entry()
+
+
+def terminate_stack(stack_name_or_id):
+    cloud = get_current_cloud()
+    return cloud.terminate_stack(stack_name_or_id)

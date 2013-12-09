@@ -8,3 +8,7 @@ class CommandError(Exception):
 
 class DataError(Exception):
     pass
+
+
+class NoSuchResourceError(Exception):
+    pass

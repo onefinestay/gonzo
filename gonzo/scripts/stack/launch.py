@@ -5,7 +5,7 @@ import curses
 from functools import partial
 from time import sleep
 
-from gonzo.backends import launch_stack as backend_launch_stack
+from gonzo.backends import launch_stack
 from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import csv_dict, abort
@@ -39,12 +39,10 @@ def wait_for_stack_complete(window, stack):
 def launch(args):
     """ Launch stacks """
 
-    stack = backend_launch_stack(args.stack_name, args.template,
-                                 args.template_params)
+    stack = launch_stack(args.stack_name, args.template, args.template_params)
     curses.wrapper(wait_for_stack_complete, stack)
 
     colorize_ = partial(colorize, use_color=args.color)
-
     print colorize_('Created Stack', 'yellow'), stack.name
     print "{}\n".format(stack.id)
 

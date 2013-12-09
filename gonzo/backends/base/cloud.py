@@ -1,5 +1,6 @@
 from abc import abstractmethod, abstractproperty
 
+
 class BaseCloud(object):
     """ Wrapper for cloud providers
 
@@ -30,6 +31,21 @@ class BaseCloud(object):
             instances = [i for i in instances if i.status == i.running_state]
 
         return instances
+
+    @abstractmethod
+    def _list_stacks(self):
+        pass
+
+    def list_stacks(self, only_running=True):
+        stacks = self._list_stacks()
+        if only_running:
+            stacks = [s for s in stacks if s.status == s.running_state]
+
+        return stacks
+
+    @abstractmethod
+    def get_stack(self, stack_name_or_id):
+        pass
 
     @abstractmethod
     def list_security_groups(self):
@@ -128,4 +144,9 @@ class BaseCloud(object):
     @abstractmethod
     def launch_stack(self, name, template):
         """ Launch a stack """
+        pass
+
+    @abstractmethod
+    def terminate_stack(self, stack_name_or_id):
+        """ Terminate a stack """
         pass
