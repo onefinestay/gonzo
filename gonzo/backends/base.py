@@ -254,7 +254,8 @@ def create_if_not_exist_security_group(group_name):
         cloud.create_security_group(group_name)
 
 
-def launch_instance(env_type, user_data=None, user_data_params=None,
+def launch_instance(env_type, instance_type=None,
+                    user_data=None, user_data_params=None,
                     security_groups=None, username=None):
     """ Launch instances
 
@@ -280,9 +281,10 @@ def launch_instance(env_type, user_data=None, user_data_params=None,
 
     image_name = config.CLOUD['IMAGE_NAME']
 
-    sizes = config.SIZES
-    default_size = sizes['default']
-    instance_type = sizes.get(environment, default_size)
+    if instance_type is None:
+        sizes = config.SIZES
+        default_size = sizes['default']
+        instance_type = sizes.get(server_type, default_size)
 
     zone = cloud.next_az(server_type)
 
