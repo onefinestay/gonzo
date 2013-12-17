@@ -36,6 +36,7 @@ def launch(args):
 
     instance = launch_instance(args.env_type,
                                security_groups=args.security_groups,
+                               instance_type=args.size,
                                user_data=args.user_data,
                                user_data_params=args.user_data_params,
                                username=username)
