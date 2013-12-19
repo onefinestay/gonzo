@@ -1,6 +1,6 @@
 import boto
 from boto import ec2 as boto_ec2
-from boto import regioninfo
+from boto import cloudformation as boto_cfn
 
 from gonzo.backends.aws.instance import Instance
 from gonzo.backends.aws.stack import Stack
@@ -40,6 +40,9 @@ class Cloud(BaseCloud):
     def _ec2_regions(self):
         return boto_ec2.regions(**self._credentials())
 
+    def _cfn_regions(self):
+        return boto_cfn.regions()
+
     def _region(self, regions):
         region_name = config.REGION
         for region in regions:
@@ -64,12 +67,10 @@ class Cloud(BaseCloud):
     @property
     def orchestration_connection(self):
         if self._orchestration_connection is None:
+            region = self._region(self._cfn_regions())
             self._orchestration_connection = boto.connect_cloudformation(
-                region=regioninfo.RegionInfo(
-                    name=config.REGION,
-                    endpoint='cloudformation.%s.amazonaws.com' % config.REGION,
-                ),
-                **self._credentials()
+                region=region,
+                **config.CLOUD['ORCHESTRATION_CREDENTIALS']
             )
         return self._orchestration_connection
 
