@@ -36,9 +36,9 @@ def test_default_type(get_cloud,
 @patch('gonzo.backends.get_next_hostname')
 @patch('gonzo.backends.get_current_cloud')
 def test_instance_specific_type(get_cloud,
-                      get_hostname,
-                      config,
-                      create_security_group):
+                                get_hostname,
+                                config,
+                                create_security_group):
     cloud = Mock(name='cloud')
     get_cloud.return_value = cloud
     get_hostname.return_value = 'prod-100'
@@ -65,9 +65,9 @@ def test_instance_specific_type(get_cloud,
 @patch('gonzo.backends.get_next_hostname')
 @patch('gonzo.backends.get_current_cloud')
 def test_cli_specified_type(get_cloud,
-                      get_hostname,
-                      config,
-                      create_security_group):
+                            get_hostname,
+                            config,
+                            create_security_group):
     cloud = Mock(name='cloud')
     get_cloud.return_value = cloud
     get_hostname.return_value = 'prod-100'
