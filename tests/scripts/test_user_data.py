@@ -2,23 +2,24 @@ from tempfile import NamedTemporaryFile
 
 from mock import Mock, patch
 
-from gonzo.backends.base import get_user_data
+from gonzo.backends import get_data
 from gonzo.scripts.instance.launch import csv_dict
 from gonzo.test_utils import assert_called_with
 
 
-@patch('gonzo.backends.base.config')
+@patch('gonzo.backends.config')
 def test_no_user_data_specified_ok(config):
     hostname = 'staging-test-host-001'
 
     config.CLOUD = {'DNS_ZONE': 'example.com'}
 
-    user_data = get_user_data(hostname)
+    user_data = get_data(hostname,
+                         'CONFIG_URI_KEY', 'CONFIG_PARAMS_KEY')
 
     assert user_data is None
 
 
-@patch('gonzo.backends.base.config')
+@patch('gonzo.backends.config')
 def test_config_specified_file_source(config):
     """ Test that a user data file can be specified from cloud configuration
     and then rendered with config based parameters """
@@ -41,14 +42,15 @@ def test_config_specified_file_source(config):
             'USER_DATA_PARAMS': desired_subs
         }
 
-        user_data = get_user_data(hostname)
+        user_data = get_data(hostname,
+                             'DEFAULT_USER_DATA', 'USER_DATA_PARAMS')
 
     for value in desired_subs.values():
         assert value in user_data
 
 
-@patch('gonzo.backends.base.requests.get')
-@patch('gonzo.backends.base.config')
+@patch('gonzo.backends.requests.get')
+@patch('gonzo.backends.config')
 def test_arg_specified_url_source(config, req):
     """ Test that a user data file can be specified from cloud configuration
     and then rendered with config and argument based parameters"""
@@ -80,7 +82,9 @@ def test_arg_specified_url_source(config, req):
         ud_contents += "{{%s}} " % key
     req.return_value = Mock(text=ud_contents, status_code=200)
 
-    user_data = get_user_data(hostname, uri, params)
+    user_data = get_data(hostname,
+                         'DEFAULT_USER_DATA', 'USER_DATA_PARAMS',
+                         uri, params)
 
     assert_called_with(req, uri)
     for value in desired_subs.values():

@@ -14,7 +14,6 @@ def get_current_cloud():
     return cloud_module.Cloud()
 
 
-
 def get_next_hostname(env_type):
     """ Calculate the next hostname for a given environment, server_type
         returns the full hostname, including the counter, e.g.

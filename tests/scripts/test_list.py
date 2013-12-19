@@ -5,7 +5,7 @@ from mock import Mock, patch
 from gonzo.scripts.instance.list_ import print_instance
 
 
-@patch('gonzo.scripts.list_.colorize')
+@patch('gonzo.scripts.instance.list_.colorize')
 def test_print_instance(colorize):
     colorize.return_value = 'fancy-cloud'
 
