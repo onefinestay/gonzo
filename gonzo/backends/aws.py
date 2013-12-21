@@ -60,9 +60,10 @@ class Instance(BaseInstance):
         return self._parent.public_dns_name
 
     def create_dns_entry(self):
+        cloud = get_current_cloud()
         cname = self.internal_address()
-        r53 = Route53()
-        r53.add_remove_record(self.name, "CNAME", cname)
+        dns = cloud.dns
+        dns.add_remove_record(self.name, "CNAME", cname)
 
     def terminate(self):
         self._parent.terminate()

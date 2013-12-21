@@ -77,9 +77,10 @@ class Instance(BaseInstance):
         return ip
 
     def create_dns_entry(self):
+        cloud = get_current_cloud()
+        dns = cloud.dns
         ip = self.internal_address()
-        r53 = Route53()
-        r53.replace_a_record(ip, self.name)
+        dns.replace_a_record(ip, self.name)
 
     def terminate(self):
         self._parent.delete()

@@ -5,7 +5,6 @@ from jinja2 import Environment
 import requests
 from urlparse import urlparse
 
-from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import UserDataError
@@ -118,6 +117,9 @@ class BaseCloud(object):
     """
 
     instance_class = abstractproperty
+
+    def __init__(self, dns_service_provider):
+        self.dns = dns_service_provider
 
     @abstractproperty
     def connection(self):
@@ -235,15 +237,18 @@ def get_next_hostname(env_type):
         returns the full hostname, including the counter, e.g.
         production-ecommerce-web-013
     """
+    cloud = get_current_cloud()
+    dns = cloud.dns
+
     record_name = "-".join(["_count", env_type])
     next_count = 1
-    r53 = Route53()
+
     try:
-        count_value = r53.get_values_by_name(record_name)[0]
+        count_value = dns.get_values_by_name(record_name)[0]
         next_count = int(count_value.replace('\"', '')) + 1
-        r53.update_record(record_name, "TXT", "%s" % next_count)
+        dns.update_record(record_name, "TXT", "%s" % next_count)
     except:  # TODO: specify
-        r53.add_remove_record(record_name, "TXT", "%s" % next_count)
+        dns.add_remove_record(record_name, "TXT", "%s" % next_count)
     name = "%s-%03d" % (env_type, next_count)
     return name
 

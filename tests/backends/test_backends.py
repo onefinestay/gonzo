@@ -26,8 +26,8 @@ def test_launch_instance(get_cloud,
      zone, key_name, tags) = args
 
 
-@patch('gonzo.backends.base.Route53')
-def test_get_next_hostname(Route53):
+@patch('gonzo.backends.dns.route53.DNS')
+def test_route53_get_next_hostname(Route53):
     r53 = Route53()
     r53.get_values_by_name.return_value = ['9']
     name = get_next_hostname('prod')

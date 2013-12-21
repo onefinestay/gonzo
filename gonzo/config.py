@@ -127,6 +127,12 @@ class ConfigProxy(object):
     def REGION(self):
         return global_state['region']
 
+    @property
+    def DNS(self):
+        cloud = self.CLOUD
+        dns_service_name = cloud.get('DNS_SERVICE', 'dummy')
+        return dns_service_name
+
 
 config_proxy = ConfigProxy()
 global_state = GlobalState(STATE_FILE)
