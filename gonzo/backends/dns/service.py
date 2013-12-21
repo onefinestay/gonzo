@@ -3,6 +3,7 @@ import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import ConfigurationError
 
 AVAILABLE_SERVICES = ['Route53']
 
@@ -44,7 +45,7 @@ class DNSService(object):
 
 
 def get_dns_service():
-    service_name = config.DNS
+    service_name = config.DNS.lower()
     path_to_services = os.path.dirname(__file__)
 
     try:
@@ -52,7 +53,10 @@ def get_dns_service():
             service_name, [path_to_services])
     except ImportError:
         raise ConfigurationError(
-            'DNS option {} does not exist.'.format(service_name)
+            'DNS option {} does not exist. '
+            'Supported DNS services are: {} '.format(
+                service_name, ', '.join(AVAILABLE_SERVICES)
+            )
         )
 
     dns_module = imp.load_module(service_name, *module)

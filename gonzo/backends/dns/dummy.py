@@ -15,11 +15,11 @@ class DNS(DNSService):
 
         self.logger = logger
         self.logger.warning(
-            'No DNS Service is configured. '
-            'Host names will not be available. '
+            '\nNo DNS Service is configured. '
+            'Host names will not be available! \n'
             'Supported services are: {}, '
             'which you can set "DNS_SERVICE" to '
-            'in your config.py.'.format(
+            'in your config.py\n'.format(
                 ', '.join(AVAILABLE_SERVICES))
 
         )
