@@ -39,10 +39,6 @@ class DNSService(object):
     def fqdn(self, name):
         """ Utility to turn a hostname into a FQDN """
 
-    @abstractmethod
-    def clean_value(self, type, value):
-        """ TXT records, and probably others need values to be quoted"""
-
 
 def get_dns_service():
     service_name = config.DNS.lower()

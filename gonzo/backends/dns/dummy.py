@@ -1,5 +1,4 @@
 import logging
-import inspect
 
 from gonzo.backends.dns import DNSService, AVAILABLE_SERVICES
 
@@ -25,28 +24,25 @@ class DNS(DNSService):
         )
 
     def add_remove_record(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "add_remove_record"')
 
     def delete_record(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "delete_record"')
 
     def update_record(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "update_record"')
 
     def get_record_by_name(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "get_record_by_name"')
 
     def replace_a_record(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "replace_a_record"')
 
     def get_record_by_value(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "get_record_by_value"')
 
     def get_values_by_name(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "get_values_by_name"')
 
     def fqdn(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
-
-    def clean_value(self, *args, **kwargs):
-        self.logger.info('dummied: %s', inspect.stack()[0][3])
+        self.logger.info('dummied DNS service call "fqdn"')
