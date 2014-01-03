@@ -12,7 +12,11 @@ from gonzo.scripts.stack.show import print_stack
 from gonzo.utils import csv_dict, abort
 
 
-def wait_for_stack_complete(window, stack):
+def wait_for_stack_complete(stack):
+    curses.wrapper(print_stack_until_complete, stack)
+
+
+def print_stack_until_complete(window, stack):
     curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     n = 0
@@ -47,7 +51,7 @@ def launch(args):
     """ Launch stacks """
 
     stack = launch_stack(args.stack_name, args.template, args.template_params)
-    curses.wrapper(wait_for_stack_complete, stack)
+    wait_for_stack_complete(stack)
 
     colorize_ = partial(colorize, use_color=args.color)
     print_stack(stack, colorize_)
