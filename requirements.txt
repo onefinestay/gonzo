@@ -6,4 +6,3 @@ fabric==1.6
 paramiko==1.10.1
 prettytable==0.7.1
 python-novaclient==2.13.0
-python-heatclient==0.2.5
