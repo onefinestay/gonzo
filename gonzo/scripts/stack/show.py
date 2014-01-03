@@ -29,19 +29,21 @@ def build_resources_table(stack, colorize_):
     table.junction_char = " "
 
     for resource in stack.resources:
-
-        resource_color = 'red'
-        if resource.resource_status == stack.running_state:
-            resource_color = 'green'
-
-        table.add_row([
-            colorize_(resource.logical_resource_id, 'yellow'),
-            resource.physical_resource_id,
-            resource.resource_type,
-            colorize_(resource.resource_status, resource_color),
-        ])
+        table.add_row(
+            build_resource_row(resource, stack.running_state, colorize_))
 
     return table
+
+
+def build_resource_row(resource, running_state, colorize_):
+    resource_color = 'red'
+    if resource.resource_status == running_state:
+        resource_color = 'green'
+
+    return [colorize_(resource.logical_resource_id, 'yellow'),
+            resource.physical_resource_id,
+            resource.resource_type,
+            colorize_(resource.resource_status, resource_color)]
 
 
 def build_outputs_table(stack, colorize_):

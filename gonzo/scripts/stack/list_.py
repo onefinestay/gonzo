@@ -29,7 +29,7 @@ def _print_table(headers, output_list, show_header=False):
     return tableoutput.get_string()
 
 
-def print_stack(stack, use_color='auto'):
+def print_stack_summary(stack, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
     colorize_ = partial(colorize, use_color=use_color)
@@ -91,7 +91,7 @@ def list_(args):
     ]
     table_output = []
     for stack in stacks:
-        table_output.append(print_stack(stack, use_color=args.color))
+        table_output.append(print_stack_summary(stack, use_color=args.color))
 
     print _print_table(tablelist, table_output)
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from mock import Mock, patch
 
-from gonzo.scripts.stack.list_ import print_stack
+from gonzo.scripts.stack.list_ import print_stack_summary
 
 
 @patch('gonzo.scripts.stack.list_.colorize')
@@ -21,6 +21,6 @@ def test_print_stack(colorize):
         'fancy-cloud',
         'fancy-cloud',
     ]
-    result = print_stack(stack)
+    result = print_stack_summary(stack)
 
     assert result == expected
