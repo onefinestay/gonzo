@@ -8,6 +8,7 @@ from time import sleep
 from gonzo.backends import launch_stack
 from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
+from gonzo.scripts.stack.show import print_stack
 from gonzo.utils import csv_dict, abort
 
 
@@ -36,6 +37,12 @@ def wait_for_stack_complete(window, stack):
         n += interval
 
 
+def print_output(output):
+    print "\t{}: {}".format(output.key, output.value)
+    if output.description:
+        print "\t\t{}".format(output.description)
+
+
 def launch(args):
     """ Launch stacks """
 
@@ -43,15 +50,7 @@ def launch(args):
     curses.wrapper(wait_for_stack_complete, stack)
 
     colorize_ = partial(colorize, use_color=args.color)
-    print colorize_('Created Stack', 'yellow'), stack.name
-    print "{}\n".format(stack.id)
-
-    if stack.outputs:
-        print colorize_('Outputs', 'yellow')
-        for output in stack.outputs:
-            print "\t{}: {}".format(output.key, output.value)
-            if output.description:
-                print "\t\t{}".format(output.description)
+    print_stack(stack, colorize_)
 
 
 def main(args):

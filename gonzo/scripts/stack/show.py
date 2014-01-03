@@ -80,8 +80,14 @@ def show(args):
     cloud = get_current_cloud()
     stack = cloud.get_stack(args.stack_name_or_id)
 
+    show(stack, colorize_)
+
+
+default_colorize_ = partial(colorize, use_color='auto')
+
+
+def print_stack(stack, colorize_=default_colorize_):
     # Title
-    print
     print colorize_('Stack Name', 'yellow'), stack.name
     print colorize_('Stack Id', 'yellow'), stack.id
     print
