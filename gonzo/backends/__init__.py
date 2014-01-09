@@ -40,7 +40,7 @@ def create_if_not_exist_security_group(group_name):
 
 def launch_instance(env_type, instance_type=None,
                     user_data=None, user_data_params=None,
-                    security_groups=None, username=None):
+                    security_groups=None, tags=None, username=None):
     """ Launch instances
 
         Arguments:
@@ -74,10 +74,11 @@ def launch_instance(env_type, instance_type=None,
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
-    tags = {
+    tags = tags or {}
+    tags.update({
         'environment': environment,
         'server_type': server_type,
-    }
+    })
 
     if username:
         tags['owner'] = username
