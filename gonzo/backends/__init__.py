@@ -42,7 +42,7 @@ def create_if_not_exist_security_group(group_name):
 
 def launch_instance(env_type, size=None,
                     user_data=None, user_data_params=None,
-                    security_groups=None, username=None):
+                    security_groups=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -77,8 +77,8 @@ def launch_instance(env_type, size=None,
         'server_type': server_type,
     }
 
-    if username:
-        tags['owner'] = username
+    if owner:
+        tags['owner'] = owner
 
     security_groups = add_default_security_groups(server_type, security_groups)
     for security_group in security_groups:

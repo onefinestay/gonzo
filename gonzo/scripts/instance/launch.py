@@ -39,7 +39,7 @@ def launch(args):
                                size=args.size,
                                user_data=args.user_data,
                                user_data_params=args.user_data_params,
-                               username=username)
+                               owner=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
     print "Created instance {}".format(instance.name)
