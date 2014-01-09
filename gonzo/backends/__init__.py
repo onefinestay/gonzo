@@ -1,7 +1,9 @@
-from urlparse import urlparse
 import os
+from urlparse import urlparse
+
 from jinja2 import Environment
 import requests
+
 from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import DataError
@@ -38,7 +40,7 @@ def create_if_not_exist_security_group(group_name):
         cloud.create_security_group(group_name)
 
 
-def launch_instance(env_type, instance_type=None,
+def launch_instance(env_type, size=None,
                     user_data=None, user_data_params=None,
                     security_groups=None, username=None):
     """ Launch instances
@@ -51,11 +53,7 @@ def launch_instance(env_type, instance_type=None,
                 the defaults when generating user-data.
             security_groups (list): List of security groups to create (if
                 necessary) and supplement the defaults.
-
-        Keyword arguments:
             username (string): username to set as owner
-            wait (bool): don't return until instance is running.
-                (default: True)
     """
 
     cloud = get_current_cloud()
@@ -65,10 +63,10 @@ def launch_instance(env_type, instance_type=None,
 
     image_name = config.CLOUD['IMAGE_NAME']
 
-    if instance_type is None:
+    if size is None:
         sizes = config.SIZES
         default_size = sizes['default']
-        instance_type = sizes.get(server_type, default_size)
+        size = sizes.get(server_type, default_size)
 
     zone = cloud.next_az(server_type)
 
@@ -90,7 +88,7 @@ def launch_instance(env_type, instance_type=None,
                          user_data, user_data_params)
 
     return cloud.launch(
-        name, image_name, instance_type, zone, security_groups, key_name,
+        name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
 
 
