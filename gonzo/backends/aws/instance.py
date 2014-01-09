@@ -52,10 +52,23 @@ class Instance(BaseInstance):
     def internal_address(self):
         return self._parent.public_dns_name
 
-    def create_dns_entry(self):
-        cname = self.internal_address()
+    def create_dns_entry(self, name=None):
+        value = self.internal_address()
+        if name is None:
+            name = self.name
         r53 = Route53()
-        r53.add_remove_record(self.name, "CNAME", cname)
+        r53.add_remove_record(name, "CNAME", value)
+
+    def create_dns_entries_from_tag(self, key, delimiter=','):
+        if key not in self.tags:
+            return
+        names = self.tags[key].split(delimiter)
+        for name in names:
+            self.create_dns_entry(name)
+
+    def delete_dns_entries(self):
+        r53 = Route53()
+        r53.delete_dns_by_value(self.internal_address())
 
     def terminate(self):
         self._parent.terminate()

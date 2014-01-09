@@ -60,16 +60,20 @@ class Route53(object):
 
     def replace_a_record(self, ipaddress, name):
         """ replace ip address on A record """
+        self.delete_dns_by_value(ipaddress)
+        self.add_remove_record(name, "A", ipaddress, "CREATE")
+
+    def delete_dns_by_value(self, value):
+        """ replace ip address on A record """
         try:
-            dns_record = self.get_record_by_value(ipaddress)
-            for resource in dns_record.resource_records:
-                self.add_remove_record(
-                    dns_record.name, dns_record.type, resource, "DELETE",
-                    is_qualified=True)
+            dns_records = self.get_records_by_value(value)
+            for dns_record in dns_records:
+                for resource in dns_record.resource_records:
+                    self.add_remove_record(
+                        dns_record.name, dns_record.type, resource, "DELETE",
+                        is_qualified=True)
         except KeyError:
             pass
-
-        self.add_remove_record(name, "A", ipaddress, "CREATE")
 
     def get_record_by_name(self, name):
         """ Gets the Record object from the zone, based on the name """
@@ -78,12 +82,15 @@ class Route53(object):
                 return record
         return False
 
-    def get_record_by_value(self, value):
+    def get_records_by_value(self, value):
         dns_records = self.conn.get_all_rrsets(self.zone_id)
-        for dns_rec in dns_records:
-            if value in dns_rec.resource_records:
-                return dns_rec
-        raise KeyError("No Record with value %s found" % value)
+        dns_records = [rec for rec in dns_records
+                       if value in rec.resource_records]
+
+        if not dns_records:
+            raise KeyError("No Records with value %s found" % value)
+
+        return dns_records
 
     def is_this_master(self, name):
         """ TODO - check that this isn't a master before deleting """
