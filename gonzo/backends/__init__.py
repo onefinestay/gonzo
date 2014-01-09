@@ -119,10 +119,10 @@ def add_default_security_groups(server_type, additional_security_groups=None):
 
 def get_data(entity_name, config_uri_key, config_params_key, uri=None,
              additional_params=None):
-    """ Returns a document body (as string) with a parsed template as contents.
-     If specified, the template is fetched from uri (file or url), and are then
-     parametrised by a built in library, extended by config and cli provided
-     dicts.
+    """ Fetch a document from uri specified by `uri` (or `config_uri_key` if
+    `uri` fails). The document is then parsed as a template,
+    parameterized by cli and config provided dicts before being returned as
+    string. Useful for building CloudFormation templates or UserData scripts.
     """
     user_data_params = build_params_dict(entity_name, config_params_key,
                                          additional_params)
