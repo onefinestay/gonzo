@@ -64,7 +64,8 @@ class Route53(object):
         self.add_remove_record(name, "A", ipaddress, "CREATE")
 
     def delete_dns_by_value(self, value):
-        """ replace ip address on A record """
+        """ Warning! Deletes all DNS records in the current zone
+        with a matching value """
         try:
             dns_records = self.get_records_by_value(value)
             for dns_record in dns_records:
