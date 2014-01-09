@@ -53,6 +53,9 @@ def launch(args):
     stack = launch_stack(args.stack_name, args.template, args.template_params)
     wait_for_stack_complete(stack)
 
+    for instance in stack.get_instances():
+        instance.create_dns_entries_from_tag(args.dns_tag)
+
     colorize_ = partial(colorize, use_color=args.color)
     print_stack(stack, colorize_)
 
@@ -75,6 +78,12 @@ cloud provider's orchestration service, such as cloud-formation.
 Templates will be parsed as a Jinja2 template and may be supplemented
 with parameters."""
 
+dns_help = """
+If Route53 is configured and instances are launched with a matching tag, the
+tag value is parsed as a comma separated list of DNS records to create. DNS
+records are suffixed with the current cloud's DNS_ZONE config.
+(Default: cnames)"""
+
 
 def init_parser(parser):
     parser.add_argument(
@@ -86,6 +95,9 @@ def init_parser(parser):
         '--template-params', dest='template_params',
         metavar='key=val[,key=val..]', type=csv_dict,
         help='Additional parameters to be used when rendering templates.')
+    parser.add_argument(
+        '--dns-tag', dest='dns_tag', default='cnames',
+        help=dns_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
