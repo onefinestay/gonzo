@@ -217,13 +217,13 @@ argument (in that order)::
             }
             ...
 
-Using the above config values, the following stack launch::
+When using the above config values, the following command::
 
     # gonzo stack-launch \
         --template-params db_server=db-secondary.example.com \
         website-stack
 
-would result in a stack with a template fetched from
+would result in a stack being launched with a template fetched from
 ``https://example.com/cfn/website-stack.json``, parameterised by the
 dictionary::
 
