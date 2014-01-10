@@ -24,7 +24,6 @@ def test_config_specified_file_source(minimum_config_fixture):
             tmp_file.write("{{%s}} " % key)
         tmp_file.flush()
 
-        minimum_config_fixture
         config.CLOUD.update({
             'DEFAULT_USER_DATA': tmp_file.name,
             'USER_DATA_PARAMS': desired_subs

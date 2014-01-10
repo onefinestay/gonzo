@@ -1,6 +1,6 @@
-from urlparse import urlparse
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
+from urlparse import urlparse
 
 from novaclient.v1_1 import client as nova_client
 from novaclient.exceptions import NoUniqueMatch, NotFound

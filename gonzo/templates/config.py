@@ -8,6 +8,8 @@ CLOUDS = {
     'default': {
         ### For Openstack based clouds
         'BACKEND': 'gonzo.backends.openstack',
+        ### For AWS based clouds
+        #'BACKEND': 'gonzo.backends.aws',
 
         # Openstack authentication details
         'TENANT_NAME': 'service',
@@ -15,10 +17,12 @@ CLOUDS = {
         'PASSWORD': '',
         'AUTH_URL': "http://cloud-host.example.com:5000/v2.0/",
 
-        ### For AWS based clouds
-        'BACKEND': 'gonzo.backends.aws',
+
 
         # AWS authentication details
+        #
+        # Always required! When working with OpenStack, keys will be used for
+        # for recording hostnames and counting server types with Route53.
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 
@@ -34,12 +38,6 @@ CLOUDS = {
         # name for internal reference
         'PUBLIC_KEY_NAME': 'master',
         'PRIVATE_KEY_FILE': "~/.ssh/id_rsa",
-
-        # Access to Route53 for recording hostnames and counting server types
-        # This is currently required even for Openstack based clouds; if you
-        # are using AWS, you will have already specified these above
-        'AWS_ACCESS_KEY_ID': '',
-        'AWS_SECRET_ACCESS_KEY': '',
 
         # domain to hold host information
         'DNS_ZONE': 'example.com',

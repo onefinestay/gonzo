@@ -168,6 +168,7 @@ by using the command line argument ``--user-data-params key=val[,key=val..]``::
     # gonzo launch --user-data ~/.gonzo/cloudinit_web_app \
         --user-data-params puppet_address=puppetmaster2.example.com \
         production-web-app
+
 TODO
 ----
 
