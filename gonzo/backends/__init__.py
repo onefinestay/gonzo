@@ -93,16 +93,27 @@ def launch_instance(env_type, size=None,
 
 def launch_stack(stack_name, template_uri, template_params):
     """ Launch stacks """
-    stack_name = get_next_hostname(stack_name)
 
-    template_uri = config.get_cloud_config('DEFAULT_ORCHESTRATION_TEMPLATE',
-                                           override=template_uri)
-    template = get_parsed_document(stack_name, template_uri,
+    unique_stack_name = get_next_hostname(stack_name)
+
+    if template_uri is None:
+        template_uri = fetch_template_uri(stack_name)
+    template = get_parsed_document(unique_stack_name, template_uri,
                                    'ORCHESTRATION_TEMPLATE_PARAMS',
                                    template_params)
 
     cloud = get_current_cloud()
-    return cloud.launch_stack(stack_name, template)
+    return cloud.launch_stack(unique_stack_name, template)
+
+
+def fetch_template_uri(stack_name):
+    config_template_uris = config.CLOUD['ORCHESTRATION_TEMPLATE_URIS']
+    if not config_template_uris:
+        msg = 'A template must be specified by argument or in config'
+        raise ValueError(msg)
+
+    default_template_uri = config_template_uris['default']
+    return config_template_uris.get(stack_name, default_template_uri)
 
 
 def add_default_security_groups(server_type, additional_security_groups=None):

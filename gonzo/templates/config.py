@@ -17,8 +17,6 @@ CLOUDS = {
         'PASSWORD': '',
         'AUTH_URL': "http://cloud-host.example.com:5000/v2.0/",
 
-
-
         # AWS authentication details
         #
         # Always required! When working with OpenStack, keys will be used for
@@ -44,11 +42,30 @@ CLOUDS = {
 
         # Default cloud-init script to pass when creating new instances.
         # Can be overridden with --user-data.
-        # Will be passed as a template. See templates/userdata_template for
+        # Will be parsed as a template. See templates/userdata_template for
         # more info.
         'DEFAULT_USER_DATA': None,
         # Extra params to use when rendering user data template.
         'USER_DATA_PARAMS': {},
+
+        # Default CloudFormation templates to use when launching stacks.
+        # Can be overridden with --template
+        # Will be parsed as a template.
+        'ORCHESTRATION_TEMPLATE_URIS': {
+            'default': 'https://s3...',
+            'stack-name': 'https://s3...',
+        },
+        # Extra params to use when rendering CloudFormation template.
+        'ORCHESTRATION_TEMPLATE_PARAMS': {
+            'puppetmaster': 'puppetmaster.example.com',
+        },
+
+        # OpenStack only.
+        'ORCHESTRATION_URL': 'http://heat-cfn-api.example.com/v1/',
+        'ORCHESTRATION_CREDENTIALS': {
+            'aws_access_key_id': '',
+            'aws_secret_access_key': '',
+        },
     },
 }
 

@@ -50,7 +50,8 @@ def print_output(output):
 def launch(args):
     """ Launch stacks """
 
-    stack = launch_stack(args.stack_name, args.template, args.template_params)
+    stack = launch_stack(args.stack_name, args.template_uri,
+                         args.template_params)
     wait_for_stack_complete(stack)
 
     colorize_ = partial(colorize, use_color=args.color)
@@ -80,7 +81,7 @@ def init_parser(parser):
     parser.add_argument(
         'stack_name', help=stack_name_help)
     parser.add_argument(
-        '--template', dest='template',
+        '--template-uri', dest='template_uri',
         help=template_help)
     parser.add_argument(
         '--template-params', dest='template_params',
