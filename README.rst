@@ -177,11 +177,11 @@ Launching stacks is as simple as::
 
     # gonzo stack-launch website-stack
 
-This would launch a stack named ```website-stack-001``` (with a unique
+This would launch a stack named ``website-stack-001`` (with a unique
 incrementing numeric suffix). The stack's template URI is looked up from the
-```ORCHESTRATION_TEMPLATE_URIS``` config dictionary declared within your
+``ORCHESTRATION_TEMPLATE_URIS`` config dictionary declared within your
 cloud's config scope. The template used would be identified by
-```website-stack``` or, failing that, ```default```::
+``website-stack`` or, failing that, ``default``::
 
     CLOUDS = {
         'cloudname': {
@@ -195,10 +195,10 @@ cloud's config scope. The template used would be identified by
             ...
 
 The template URI can also be overriden on the command line with the
-```--template-uri``` option.
+``--template-uri`` option.
 
 Once resolved, templates are parsed as Jinja2 templates. Some variables such as
-```stackname```, ```domain``` and ```fqdn``` are provided by default but these
+``stackname``, ``domain`` and ``fqdn`` are provided by default but these
 can be supplemented and overridden by a config dictionary and command line
 argument (in that order)::
 
@@ -224,7 +224,7 @@ Using the above config values, the following stack launch::
         website-stack
 
 would result in a stack with a template fetched from
-```https://example.com/cfn/website-stack.json```, parameterised by the
+``https://example.com/cfn/website-stack.json``, parameterised by the
 dictionary::
 
     {
