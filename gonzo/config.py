@@ -127,6 +127,11 @@ class ConfigProxy(object):
     def REGION(self):
         return global_state['region']
 
+    def get_cloud_config(self, config_key, override=None):
+        if override is None:
+            return self.CLOUD.get(config_key)
+        return override
+
 
 config_proxy = ConfigProxy()
 global_state = GlobalState(STATE_FILE)

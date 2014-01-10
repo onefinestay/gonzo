@@ -37,7 +37,7 @@ def launch(args):
     instance = launch_instance(args.env_type,
                                security_groups=args.security_groups,
                                size=args.size,
-                               user_data=args.user_data,
+                               user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
                                owner=username)
     wait_for_instance_boot(instance, args.color)
@@ -76,7 +76,7 @@ def init_parser(parser):
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
     parser.add_argument(
-        '--user-data', dest='user_data',
+        '--user-data-uri', dest='user_data_uri',
         help=user_data_help)
     parser.add_argument(
         '--user-data-params', dest='user_data_params',

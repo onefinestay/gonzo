@@ -41,14 +41,15 @@ def create_if_not_exist_security_group(group_name):
 
 
 def launch_instance(env_type, size=None,
-                    user_data=None, user_data_params=None,
+                    user_data_uri=None, user_data_params=None,
                     security_groups=None, owner=None):
     """ Launch instances
 
         Arguments:
             env_type (string): environment-server_type
-            user_data (string): File path or URL for user data script. If None,
-                Config value will be used.
+            size (string): size of the instance to launch.
+            user_data_uri (string): File path or URL for user data script.
+                If None, Config value will be used.
             user_data_params (dict): Dictionary or parameters to supplement
                 the defaults when generating user-data.
             security_groups (list): List of security groups to create (if
@@ -84,23 +85,33 @@ def launch_instance(env_type, size=None,
     for security_group in security_groups:
         create_if_not_exist_security_group(security_group)
 
-    user_data = get_data(name, 'DEFAULT_USER_DATA', 'USER_DATA_PARAMS',
-                         user_data, user_data_params)
+    user_data = None
+    user_data_uri_config_key = 'DEFAULT_USER_DATA'
+    user_data_params_config_key = 'USER_DATA_PARAMS'
+    user_data_uri = config.get_cloud_config(user_data_uri_config_key,
+                                            override=user_data_uri)
+    if user_data_uri is not None:
+        user_data = get_data(name, user_data_uri, user_data_params_config_key,
+                             user_data_params)
 
     return cloud.launch(
         name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
 
 
-def launch_stack(stack_name, template_location, template_params):
+def launch_stack(stack_name, template_uri, template_params):
     """ Launch stacks """
-    unique_name = get_next_hostname(stack_name)
-    template = get_data(unique_name, 'DEFAULT_ORCHESTRATION_TEMPLATE',
-                        'ORCHESTRATION_TEMPLATE_PARAMS',
-                        template_location, template_params)
+    stack_name = get_next_hostname(stack_name)
+
+    template_uri_config_key = 'DEFAULT_ORCHESTRATION_TEMPLATE'
+    template_params_config_key = 'ORCHESTRATION_TEMPLATE_PARAMS'
+    template_uri = config.get_cloud_config(template_uri_config_key,
+                                           override=template_uri)
+    template = get_data(stack_name, template_uri,
+                        template_params_config_key, template_params)
 
     cloud = get_current_cloud()
-    return cloud.launch_stack(unique_name, template)
+    return cloud.launch_stack(stack_name, template)
 
 
 def add_default_security_groups(server_type, additional_security_groups=None):
@@ -117,25 +128,24 @@ def add_default_security_groups(server_type, additional_security_groups=None):
     return security_groups
 
 
-def get_data(entity_name, config_uri_key, config_params_key, uri=None,
+def get_data(entity_name, uri=None, config_params_key=None,
              additional_params=None):
-    """ Fetch a document from uri specified by `uri` (or `config_uri_key` if
-    `uri` fails). The document is then parsed as a template,
-    parameterized by cli and config provided dicts before being returned as
-    string. Useful for building CloudFormation templates or UserData scripts.
+    """ Fetch a document from uri specified by `uri` and parse as a template.
+    Template parameters include cli, config and predefined dictionaries.
+    Useful for building CloudFormation templates or UserData scripts.
     """
     user_data_params = build_params_dict(entity_name, config_params_key,
                                          additional_params)
-    return load_data(user_data_params, config_uri_key, uri)
+    return load_data(uri, user_data_params)
 
 
 def build_params_dict(entity_name, config_params_key, additional_params=None):
-    """ Returns a dictionary of parameters to use when rendering user data
-     scripts from template.
+    """ Returns a dictionary of parameters to use when rendering CloudFormation
+    templates or user data scripts from template.
 
-     Parameter sources include gonzo defined defaults, cloud configuration and
-     a comma separated key value command line argument. They are also
-     overridden in that order. """
+    Parameter sources include gonzo defined defaults, cloud configuration and
+    a comma separated key value command line argument. They get overridden in
+    that order. """
     params = {
         'hostname': entity_name,
         'stackname': entity_name,
@@ -152,16 +162,12 @@ def build_params_dict(entity_name, config_params_key, additional_params=None):
     return params
 
 
-def load_data(params, config_uri_key, uri=None):
+def load_data(uri, params=None):
     """ Attempt to fetch user data from URL or file. And render, replacing
      parameters """
 
     if uri is None:
-        # Look for a default in cloud config
-        if config_uri_key in config.CLOUD:
-            uri = config.CLOUD[config_uri_key]
-        else:
-            return None
+        raise ValueError("Document URI cannot be None")
 
     try:
         urlparse(uri)
@@ -184,6 +190,9 @@ def load_data(params, config_uri_key, uri=None):
     except requests.exceptions.ConnectionError as err:
         err_msg = "Failed to read from URL: {}".format(err)
         raise DataError(err_msg)
+
+    if not params:
+        return data
 
     data_tpl = Environment().from_string(data)
     return data_tpl.render(params)
