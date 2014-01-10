@@ -79,14 +79,11 @@ def list_(args):
     cloud = get_current_cloud()
     stacks = cloud.list_stacks(only_running=args.only_running)
 
-    #if args.order == 'name':
-    #    stacks.sort(key=lambda i: i.tags.get(args.order))
-
     tablelist = [
         "name",
         "description",
         "status",
-        #"owner",
+        #"owner", # TODO: support ownership of stacks
         "uptime",
     ]
     table_output = []
