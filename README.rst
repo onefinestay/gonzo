@@ -232,7 +232,7 @@ dictionary::
         'db_server': 'db-secondary.example.com'
     }
 
-and labelled with a unique name prefixed with website-stack.
+and labelled with a unique name prefixed with ``website-stack``.
 
 
 TODO
