@@ -14,9 +14,9 @@ def test_default_type(get_cloud,
 
     launch_instance('environment-server')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 
@@ -35,9 +35,9 @@ def test_instance_specific_type(get_cloud,
 
     launch_instance('environment-role-specific')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 
@@ -57,9 +57,9 @@ def test_cli_specified_type(get_cloud,
     launch_instance('environment-role-specific',
                     size="instance_type.overwritten")
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 

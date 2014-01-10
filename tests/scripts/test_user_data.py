@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile
 from mock import Mock, patch
 from gonzo.config import config_proxy as config
 
-from gonzo.backends import get_data
+from gonzo.helpers.document_loader import get_parsed_document
 from gonzo.scripts.instance.launch import csv_dict
 from gonzo.test_utils import assert_called_with
 
@@ -31,7 +31,7 @@ def test_config_specified_file_source(minimum_config_fixture):
         })
 
         uri = config.get_cloud_config('DEFAULT_USER_DATA', override=None)
-        user_data = get_data(entity_name=hostname, uri=uri,
+        user_data = get_parsed_document(entity_name=hostname, uri=uri,
                              config_params_key='USER_DATA_PARAMS',
                              additional_params=None)
 
@@ -39,7 +39,7 @@ def test_config_specified_file_source(minimum_config_fixture):
         assert value in user_data
 
 
-@patch('gonzo.backends.requests.get')
+@patch('gonzo.helpers.document_loader.requests.get')
 def test_arg_specified_url_source(req, minimum_config_fixture):
     """ Test that a user data file can be specified from cloud configuration
     and then rendered with config and argument based parameters"""
@@ -71,7 +71,7 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
         ud_contents += "{{%s}} " % key
     req.return_value = Mock(text=ud_contents, status_code=200)
 
-    user_data = get_data(entity_name=hostname, uri=uri,
+    user_data = get_parsed_document(entity_name=hostname, uri=uri,
                          config_params_key='USER_DATA_PARAMS',
                          additional_params=cli_params)
 

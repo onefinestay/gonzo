@@ -17,9 +17,9 @@ def test_launch_instance(get_cloud,
 
     launch_instance('environment-server')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 

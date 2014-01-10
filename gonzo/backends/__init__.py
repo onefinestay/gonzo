@@ -83,10 +83,10 @@ def launch_instance(env_type, size=None,
     user_data_uri = config.get_cloud_config('DEFAULT_USER_DATA',
                                             override=user_data_uri)
     if user_data_uri is not None:
-        user_data = get_parsed_document(name, user_data_uri, 'USER_DATA_PARAMS',
-                             user_data_params)
+        user_data = get_parsed_document(name, user_data_uri,
+                                        'USER_DATA_PARAMS', user_data_params)
 
-    return cloud.launch(
+    return cloud.launch_instance(
         name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
 
@@ -98,7 +98,8 @@ def launch_stack(stack_name, template_uri, template_params):
     template_uri = config.get_cloud_config('DEFAULT_ORCHESTRATION_TEMPLATE',
                                            override=template_uri)
     template = get_parsed_document(stack_name, template_uri,
-                        'ORCHESTRATION_TEMPLATE_PARAMS', template_params)
+                                   'ORCHESTRATION_TEMPLATE_PARAMS',
+                                   template_params)
 
     cloud = get_current_cloud()
     return cloud.launch_stack(stack_name, template)

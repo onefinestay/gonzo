@@ -135,7 +135,7 @@ class BaseCloud(object):
         pass
 
     @abstractmethod
-    def launch(
+    def launch_instance(
             self, name, image_name, instance_type, zone, security_groups,
             key_name, user_data=None, tags=None):
         """ Launch an instance """

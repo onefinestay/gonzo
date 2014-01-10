@@ -99,7 +99,7 @@ class Cloud(BaseCloud):
         """ Returns the next AZ to use, keeping the use of AZs balanced """
         return OPENSTACK_AVAILABILITY_ZONE
 
-    def launch(
+    def launch_instance(
             self, name, image_name, instance_type, zone,
             security_groups, key_name, user_data=None, tags=None):
         image = self.get_image_by_name(image_name)
