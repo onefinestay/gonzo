@@ -28,12 +28,6 @@ def get_next_hostname(env_type):
     return name
 
 
-def create_if_not_exist_security_group(group_name):
-    cloud = get_current_cloud()
-    if not cloud.security_group_exists(group_name):
-        cloud.create_security_group(group_name)
-
-
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
                     security_groups=None, owner=None):
@@ -91,6 +85,30 @@ def launch_instance(env_type, size=None,
         user_data=user_data, tags=tags)
 
 
+def add_default_security_groups(server_type, additional_security_groups=None):
+    # Set defaults
+    security_groups = [server_type, 'gonzo']
+
+    # Add argument passed groups
+    if additional_security_groups is not None:
+        security_groups += additional_security_groups
+
+    # Remove Duplicates
+    security_groups = list(set(security_groups))
+
+    return security_groups
+
+
+def create_if_not_exist_security_group(group_name):
+    cloud = get_current_cloud()
+    if not cloud.security_group_exists(group_name):
+        cloud.create_security_group(group_name)
+
+
+def configure_instance(instance):
+    instance.create_dns_entry()
+
+
 def launch_stack(stack_name, template_uri, template_params):
     """ Launch stacks """
 
@@ -114,24 +132,6 @@ def fetch_template_uri(stack_name):
 
     default_template_uri = config_template_uris['default']
     return config_template_uris.get(stack_name, default_template_uri)
-
-
-def add_default_security_groups(server_type, additional_security_groups=None):
-    # Set defaults
-    security_groups = [server_type, 'gonzo']
-
-    # Add argument passed groups
-    if additional_security_groups is not None:
-        security_groups += additional_security_groups
-
-    # Remove Duplicates
-    security_groups = list(set(security_groups))
-
-    return security_groups
-
-
-def configure_instance(instance):
-    instance.create_dns_entry()
 
 
 def terminate_stack(stack_name_or_id):
