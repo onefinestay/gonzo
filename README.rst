@@ -171,13 +171,13 @@ by using the command line argument ``--user-data-params key=val[,key=val..]``::
 
 Launching CloudFormation Stacks with Gonzo
 ------------------------------------------
-Gonzo can be used to launch stacks to CloudFormation compatible API's. Stacks
+Gonzo can be used to launch stacks to CloudFormation compatible APIs. Stacks
 can be launched, listed, shown (for individual detail) and terminated.
-Launching stacks is as simple as::
+Launching a stack is as simple as::
 
     # gonzo stack-launch website-stack
 
-This would launch a stack named ``website-stack-001`` (with a unique
+This would launch a stack named ``website-stack-001`` (or with another unique
 incrementing numeric suffix). The stack's template URI is looked up from the
 ``ORCHESTRATION_TEMPLATE_URIS`` config dictionary declared within your
 cloud's config scope. The template used would be identified by
@@ -194,13 +194,15 @@ cloud's config scope. The template used would be identified by
             },
             ...
 
-The template URI can also be overriden on the command line with the
-``--template-uri`` option.
+The template URI can also be overridden on the command line with the
+``--template-uri`` option. Template URIs can be a local file path or a
+resolvable web request.
 
 Once resolved, templates are parsed as Jinja2 templates. Some variables such as
 ``stackname``, ``domain`` and ``fqdn`` are provided by default but these
-can be supplemented and overridden by a config dictionary and command line
-argument (in that order)::
+can be supplemented or overridden by a config supplied dictionary and then a
+command line argument. Command line provided key-values always override others.
+For example, with the following config values defined::
 
     CLOUDS = {
         'cloudname': {
@@ -209,30 +211,35 @@ argument (in that order)::
             'ORCHESTRATION_TEMPLATE_URIS': {
                 'default': '~/gonzo/cfn_default',
                 'website-stack: 'https://example.com/cfn/website-stack.json',
-                # ^ This one would be used ^
             },
             'ORCHESTRATION_TEMPLATE_PARAMS': {
                 'puppetmaster': 'puppetmaster.example.com',
                 'db_server': 'db.example.com',
-            }
+            },
             ...
 
-When using the above config values, the following command::
+            'DNS_ZONE': 'example.com',
+
+the command::
 
     # gonzo stack-launch \
         --template-params db_server=db-secondary.example.com \
         website-stack
 
-would result in a stack being launched with a template fetched from
-``https://example.com/cfn/website-stack.json``, parameterised by the
-dictionary::
+would result in a stack being launched from a template fetched from
+``https://example.com/cfn/website-stack.json``. The template would be
+parameterised by the dictionary::
 
     {
+        'stackname': 'website-stack-001',
+        'domain': 'example.com',
+        'fqdn': 'website-stack-001.example.com',
         'puppetmaster': 'puppetmaster.example.com',
-        'db_server': 'db-secondary.example.com'
+        'db_server': 'db-secondary.example.com',
     }
 
-and labelled with a unique name prefixed with ``website-stack``.
+and the stack would be labelled with a unique name prefixed with
+``website-stack``.
 
 
 TODO
