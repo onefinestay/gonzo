@@ -22,3 +22,19 @@ def minimum_config_fixture():
                 'region': 'regionname',
             }):
                     yield get_config_module
+
+
+@pytest.yield_fixture
+def cloud_fixture():
+    create_sg_target = 'gonzo.backends.create_if_not_exist_security_group'
+    get_host_target = 'gonzo.backends.get_next_hostname'
+    get_cloud_target = 'gonzo.backends.get_current_cloud'
+
+    with patch(create_sg_target) as create_security_group:
+        with patch(get_host_target) as get_next_hostname:
+            get_next_hostname.return_value = 'prod-100'
+            with patch(get_cloud_target) as get_current_cloud:
+                get_current_cloud.return_value = Mock(name='cloud')
+                yield (get_current_cloud,
+                       get_next_hostname,
+                       create_security_group)
