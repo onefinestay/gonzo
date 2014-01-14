@@ -28,8 +28,10 @@ def wait_until_stack_deleted(window, stack):
         window.clear()
 
         window.addstr("Deleting Stack ", curses.color_pair(red_on_black))
-        window.addstr("{}... {}s\n".format(stack.name, n))
-        window.addstr("{}\n\n".format(stack.id))
+        window.addstr("""{}... {}s
+{}
+
+""".format(stack.name, n, stack.id))
 
         window.addstr("Resources\n", curses.color_pair(red_on_black))
         sort_key = lambda k: k.logical_resource_id
