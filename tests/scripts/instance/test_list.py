@@ -2,7 +2,7 @@ import datetime
 
 from mock import Mock, patch
 
-from gonzo.scripts.instance.list_ import print_instance
+from gonzo.scripts.instance.list_ import print_instance_summary
 
 
 @patch('gonzo.scripts.instance.list_.colorize')
@@ -36,6 +36,6 @@ def test_print_instance(colorize):
         'group1,group2',
         'cloud-zone',
     ]
-    result = print_instance(instance)
+    result = print_instance_summary(instance)
 
     assert result == expected

@@ -5,28 +5,18 @@
 from datetime import datetime
 from functools import partial
 
-from prettytable import PrettyTable
-
 from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
-from gonzo.scripts.utils import colorize
+from gonzo.scripts.utils import colorize, print_table
 
 
-def _print_table(headers, output_list, show_header=False):
-    tableoutput = PrettyTable(headers)
-    for column in headers:
-        tableoutput.align[column] = "l"
-
-    tableoutput.header = show_header
-    tableoutput.sortby = "name"
-    tableoutput.vertical_char = " "
-    tableoutput.horizontal_char = " "
-
-    tableoutput.junction_char = " "
-    for tableresult in output_list:
-        tableoutput.add_row(tableresult)
-
-    return tableoutput.get_string()
+headers = [
+    "name",
+    "description",
+    "status",
+    #"owner", # TODO: support ownership of stacks
+    "uptime",
+]
 
 
 def print_stack_summary(stack, use_color='auto'):
@@ -79,18 +69,7 @@ def list_(args):
     cloud = get_current_cloud()
     stacks = cloud.list_stacks(only_running=args.only_running)
 
-    tablelist = [
-        "name",
-        "description",
-        "status",
-        #"owner", # TODO: support ownership of stacks
-        "uptime",
-    ]
-    table_output = []
-    for stack in stacks:
-        table_output.append(print_stack_summary(stack, use_color=args.color))
-
-    print _print_table(tablelist, table_output)
+    print_table(print_stack_summary, headers, stacks, use_color=args.color)
 
 
 def main(args):
