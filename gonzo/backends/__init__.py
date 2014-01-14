@@ -74,8 +74,8 @@ def launch_instance(env_type, size=None,
         create_if_not_exist_security_group(security_group)
 
     user_data = None
-    user_data_uri = config.get_cloud_config('DEFAULT_USER_DATA',
-                                            override=user_data_uri)
+    user_data_uri = config.get_cloud_config_value('DEFAULT_USER_DATA',
+                                                  override=user_data_uri)
     if user_data_uri is not None:
         user_data = get_parsed_document(name, user_data_uri,
                                         'USER_DATA_PARAMS', user_data_params)
@@ -114,8 +114,12 @@ def launch_stack(stack_name, template_uri, template_params):
 
     unique_stack_name = get_next_hostname(stack_name)
 
+    template_uri = config.get_namespaced_cloud_config_value(
+        'ORCHESTRATION_TEMPLATE_URIS', stack_name, override=template_uri)
     if template_uri is None:
-        template_uri = fetch_template_uri(stack_name)
+        raise ValueError('A template must be specified by argument or '
+                         'in config')
+
     template = get_parsed_document(unique_stack_name, template_uri,
                                    'ORCHESTRATION_TEMPLATE_PARAMS',
                                    template_params)
@@ -124,11 +128,14 @@ def launch_stack(stack_name, template_uri, template_params):
     return cloud.launch_stack(unique_stack_name, template)
 
 
-def fetch_template_uri(stack_name):
+def fetch_template_uri(stack_name, override=None):
+    if override is not None:
+        return override
+
+    # No override supplied at cli, so check config.
     config_template_uris = config.CLOUD['ORCHESTRATION_TEMPLATE_URIS']
     if not config_template_uris:
-        msg = 'A template must be specified by argument or in config'
-        raise ValueError(msg)
+        return None
 
     default_template_uri = config_template_uris['default']
     return config_template_uris.get(stack_name, default_template_uri)
