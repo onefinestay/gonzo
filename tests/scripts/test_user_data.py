@@ -29,10 +29,10 @@ def test_config_specified_file_source(minimum_config_fixture):
             'USER_DATA_PARAMS': desired_subs
         })
 
-        uri = config.get_cloud_config('DEFAULT_USER_DATA', override=None)
+        uri = config.get_cloud_config_value('DEFAULT_USER_DATA', override=None)
         user_data = get_parsed_document(entity_name=hostname, uri=uri,
-                             config_params_key='USER_DATA_PARAMS',
-                             additional_params=None)
+                                        config_params_key='USER_DATA_PARAMS',
+                                        additional_params=None)
 
     for value in desired_subs.values():
         assert value in user_data
@@ -63,7 +63,7 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
 
     cli_params = csv_dict('key_2=argument_value_2')
     cli_uri = 'http://this.should.be.requested.com/user-data.txt'
-    uri = config.get_cloud_config('DEFAULT_USER_DATA', override=cli_uri)
+    uri = config.get_cloud_config_value('DEFAULT_USER_DATA', override=cli_uri)
 
     ud_contents = ""
     for key in desired_subs.keys():
@@ -71,8 +71,8 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
     req.return_value = Mock(text=ud_contents, status_code=200)
 
     user_data = get_parsed_document(entity_name=hostname, uri=uri,
-                         config_params_key='USER_DATA_PARAMS',
-                         additional_params=cli_params)
+                                    config_params_key='USER_DATA_PARAMS',
+                                    additional_params=cli_params)
 
     assert_called_with(req, uri)
     for value in desired_subs.values():
