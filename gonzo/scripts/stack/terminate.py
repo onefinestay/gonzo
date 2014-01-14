@@ -20,17 +20,18 @@ def show_delete_progress(stack):
 
 
 def wait_until_stack_deleted(window, stack):
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    red_on_black = 1  # Curses colour pair id for this window
+    curses.init_pair(red_on_black, curses.COLOR_RED, curses.COLOR_BLACK)
     n = 0
     interval = 1
     while not stack.is_complete:
         window.clear()
 
-        window.addstr("Deleting Stack ", curses.color_pair(1))
+        window.addstr("Deleting Stack ", curses.color_pair(red_on_black))
         window.addstr("{}... {}s\n".format(stack.name, n))
         window.addstr("{}\n\n".format(stack.id))
 
-        window.addstr("Resources\n", curses.color_pair(1))
+        window.addstr("Resources\n", curses.color_pair(red_on_black))
         sort_key = lambda k: k.logical_resource_id
         for resource in sorted(stack.resources, key=sort_key):
             window.addstr("\t{}\t{}\t{}\n".format(
