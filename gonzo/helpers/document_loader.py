@@ -71,9 +71,6 @@ def get_document(uri, params=None):
         err_msg = "Failed to read from URL: {}".format(err)
         raise DataError(err_msg)
 
-    if not params:
-        return data
-
     data_tpl = Environment().from_string(data)
     return data_tpl.render(params)
 
