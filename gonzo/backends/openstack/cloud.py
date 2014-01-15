@@ -1,9 +1,8 @@
-from urlparse import urlparse
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
-
 from novaclient.v1_1 import client as nova_client
 from novaclient.exceptions import NoUniqueMatch, NotFound
+from urlparse import urlparse
 
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
@@ -99,7 +98,7 @@ class Cloud(BaseCloud):
         """ Returns the next AZ to use, keeping the use of AZs balanced """
         return OPENSTACK_AVAILABILITY_ZONE
 
-    def launch(
+    def launch_instance(
             self, name, image_name, instance_type, zone,
             security_groups, key_name, user_data=None, tags=None):
         image = self.get_image_by_name(image_name)

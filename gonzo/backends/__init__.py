@@ -1,10 +1,6 @@
-from urlparse import urlparse
-import os
-from jinja2 import Environment
-import requests
 from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import DataError
+from gonzo.helpers.document_loader import get_parsed_document
 
 
 def get_current_cloud():
@@ -32,30 +28,21 @@ def get_next_hostname(env_type):
     return name
 
 
-def create_if_not_exist_security_group(group_name):
-    cloud = get_current_cloud()
-    if not cloud.security_group_exists(group_name):
-        cloud.create_security_group(group_name)
-
-
-def launch_instance(env_type, instance_type=None,
-                    user_data=None, user_data_params=None,
-                    security_groups=None, tags=None, username=None):
+def launch_instance(env_type, size=None,
+                    user_data_uri=None, user_data_params=None,
+                    security_groups=None, tags=None, owner=None):
     """ Launch instances
 
         Arguments:
             env_type (string): environment-server_type
-            user_data (string): File path or URL for user data script. If None,
-                Config value will be used.
+            size (string): size of the instance to launch.
+            user_data_uri (string): File path or URL for user data script.
+                If None, Config value will be used.
             user_data_params (dict): Dictionary or parameters to supplement
                 the defaults when generating user-data.
             security_groups (list): List of security groups to create (if
                 necessary) and supplement the defaults.
-
-        Keyword arguments:
-            username (string): username to set as owner
-            wait (bool): don't return until instance is running.
-                (default: True)
+            owner (string): username to set as owner
     """
 
     cloud = get_current_cloud()
@@ -65,10 +52,10 @@ def launch_instance(env_type, instance_type=None,
 
     image_name = config.CLOUD['IMAGE_NAME']
 
-    if instance_type is None:
+    if size is None:
         sizes = config.SIZES
         default_size = sizes['default']
-        instance_type = sizes.get(server_type, default_size)
+        size = sizes.get(server_type, default_size)
 
     zone = cloud.next_az(server_type)
 
@@ -80,30 +67,23 @@ def launch_instance(env_type, instance_type=None,
         'server_type': server_type,
     })
 
-    if username:
-        tags['owner'] = username
+    if owner:
+        tags['owner'] = owner
 
     security_groups = add_default_security_groups(server_type, security_groups)
     for security_group in security_groups:
         create_if_not_exist_security_group(security_group)
 
-    user_data = get_data(name, 'DEFAULT_USER_DATA', 'USER_DATA_PARAMS',
-                         user_data, user_data_params)
+    user_data = None
+    user_data_uri = config.get_cloud_config_value('DEFAULT_USER_DATA',
+                                                  override=user_data_uri)
+    if user_data_uri is not None:
+        user_data = get_parsed_document(name, user_data_uri,
+                                        'USER_DATA_PARAMS', user_data_params)
 
-    return cloud.launch(
-        name, image_name, instance_type, zone, security_groups, key_name,
+    return cloud.launch_instance(
+        name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
-
-
-def launch_stack(stack_name, template_location, template_params):
-    """ Launch stacks """
-    unique_name = get_next_hostname(stack_name)
-    template = get_data(unique_name, 'DEFAULT_ORCHESTRATION_TEMPLATE',
-                        'ORCHESTRATION_TEMPLATE_PARAMS',
-                        template_location, template_params)
-
-    cloud = get_current_cloud()
-    return cloud.launch_stack(unique_name, template)
 
 
 def add_default_security_groups(server_type, additional_security_groups=None):
@@ -120,88 +100,46 @@ def add_default_security_groups(server_type, additional_security_groups=None):
     return security_groups
 
 
-def get_data(entity_name, config_uri_key, config_params_key, uri=None,
-             additional_params=None):
-    """ Returns a document body (as string) with a parsed template as contents.
-     If specified, the template is fetched from uri (file or url), and are then
-     parametrised by a built in library, extended by config and cli provided
-     dicts.
-    """
-    user_data_params = build_params_dict(entity_name, config_params_key,
-                                         additional_params)
-    return load_data(user_data_params, config_uri_key, uri)
-
-
-def build_params_dict(entity_name, config_params_key, additional_params=None):
-    """ Returns a dictionary of parameters to use when rendering user data
-     scripts from template.
-
-     Parameter sources include gonzo defined defaults, cloud configuration and
-     a comma separated key value command line argument. They are also
-     overridden in that order. """
-    params = {
-        'hostname': entity_name,
-        'stackname': entity_name,
-        'domain': config.CLOUD['DNS_ZONE'],
-        'fqdn': "%s.%s" % (entity_name, config.CLOUD['DNS_ZONE']),
-    }
-
-    if config_params_key in config.CLOUD:
-        params.update(config.CLOUD[config_params_key])
-
-    if additional_params is not None:
-        params.update(additional_params)
-
-    return params
-
-
-def load_data(params, config_uri_key, uri=None):
-    """ Attempt to fetch user data from URL or file. And render, replacing
-     parameters """
-
-    if uri is None:
-        # Look for a default in cloud config
-        if config_uri_key in config.CLOUD:
-            uri = config.CLOUD[config_uri_key]
-        else:
-            return None
-
-    try:
-        urlparse(uri)
-        data = fetch_from_url(uri)
-    except requests.exceptions.MissingSchema:
-        # Not a url. possibly a file.
-        uri = os.path.expanduser(uri)
-        uri = os.path.abspath(uri)
-
-        if os.path.isabs(uri):
-            try:
-                data = open(uri, 'r').read()
-            except IOError as err:
-                err_msg = "Failed to read from file: {}".format(err)
-                raise DataError(err_msg)
-        else:
-            # Not url nor file.
-            err_msg = "Unknown UserData source: {}".format(uri)
-            raise DataError(err_msg)
-    except requests.exceptions.ConnectionError as err:
-        err_msg = "Failed to read from URL: {}".format(err)
-        raise DataError(err_msg)
-
-    data_tpl = Environment().from_string(data)
-    return data_tpl.render(params)
-
-
-def fetch_from_url(url):
-    resp = requests.get(url)
-    if resp.status_code != requests.codes.ok:
-        raise requests.exceptions.ConnectionError("Bad response")
-
-    return resp.text
+def create_if_not_exist_security_group(group_name):
+    cloud = get_current_cloud()
+    if not cloud.security_group_exists(group_name):
+        cloud.create_security_group(group_name)
 
 
 def configure_instance(instance):
     instance.create_dns_entry()
+
+
+def launch_stack(stack_name, template_uri, template_params):
+    """ Launch stacks """
+
+    unique_stack_name = get_next_hostname(stack_name)
+
+    template_uri = config.get_namespaced_cloud_config_value(
+        'ORCHESTRATION_TEMPLATE_URIS', stack_name, override=template_uri)
+    if template_uri is None:
+        raise ValueError('A template must be specified by argument or '
+                         'in config')
+
+    template = get_parsed_document(unique_stack_name, template_uri,
+                                   'ORCHESTRATION_TEMPLATE_PARAMS',
+                                   template_params)
+
+    cloud = get_current_cloud()
+    return cloud.launch_stack(unique_stack_name, template)
+
+
+def fetch_template_uri(stack_name, override=None):
+    if override is not None:
+        return override
+
+    # No override supplied at cli, so check config.
+    config_template_uris = config.CLOUD['ORCHESTRATION_TEMPLATE_URIS']
+    if not config_template_uris:
+        return None
+
+    default_template_uri = config_template_uris['default']
+    return config_template_uris.get(stack_name, default_template_uri)
 
 
 def terminate_stack(stack_name_or_id):

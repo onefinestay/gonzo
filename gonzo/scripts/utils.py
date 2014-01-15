@@ -1,4 +1,5 @@
 import sys
+from prettytable import PrettyTable
 
 
 def colorize(msg, colour, use_color='auto'):
@@ -20,3 +21,21 @@ def colorize(msg, colour, use_color='auto'):
         return "%s%s%s" % (colour, msg, reset)
     else:
         return msg
+
+
+def print_table(row_definer, headers, objects, show_header=False,
+                use_color='auto'):
+    tableoutput = PrettyTable(headers)
+    for column in headers:
+        tableoutput.align[column] = "l"
+
+    tableoutput.header = show_header
+    tableoutput.sortby = "name"
+    tableoutput.vertical_char = " "
+    tableoutput.horizontal_char = " "
+
+    tableoutput.junction_char = " "
+    for object in objects:
+        tableoutput.add_row(row_definer(object, use_color))
+
+    print tableoutput.get_string()

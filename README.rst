@@ -6,7 +6,7 @@ Instance and release management made easy
 Manage instances running in *Amazon Web Services* or using *Openstack* using
 a single consistent interface::
 
-    $ gonzo launch production-web-app
+    $ gonzo instance-launch production-web-app
     ...
     $ gonzo list
 
@@ -59,7 +59,7 @@ To see a list of all running instance in the region::
 To add a new instance to the region, specifying the server type - having defined
 server types, and their sizes in your config::
 
-    $ gonzo launch production-web
+    $ gonzo instance-launch production-web
 
 To get more info on the commands available::
 
@@ -143,7 +143,7 @@ each cloud by using the ``DEFAULT_USER_DATA`` config item in config.py::
 Additionally, user data scripts can be specified per instance by using the
 launch argument ``--user-data <file | url>``::
 
-    # gonzo launch --user-data ~/.gonzo/cloudinit_web_app production-web-app
+    # gonzo instance-launch --user-data ~/.gonzo/cloudinit_web_app production-web-app
 
 User data scripts can be specified as a file path or URL.
 
@@ -165,9 +165,83 @@ defining a ``USER_DATA_PARAMS`` cloud config dictionary::
 Again, these parameters can also be supplemented or overridden at launch time
 by using the command line argument ``--user-data-params key=val[,key=val..]``::
 
-    # gonzo launch --user-data ~/.gonzo/cloudinit_web_app \
+    # gonzo instance-launch --user-data ~/.gonzo/cloudinit_web_app \
         --user-data-params puppet_address=puppetmaster2.example.com \
         production-web-app
+
+Launching CloudFormation Stacks with Gonzo
+------------------------------------------
+Gonzo can be used to launch stacks to CloudFormation compatible APIs. Stacks
+can be launched, listed, shown (for individual detail) and terminated.
+Launching a stack is as simple as::
+
+    # gonzo stack-launch website-stack
+
+This would launch a stack named ``website-stack-001`` (or with another unique
+incrementing numeric suffix). The stack's template URI is looked up from the
+``ORCHESTRATION_TEMPLATE_URIS`` config dictionary declared within your
+cloud's config scope. The template used would be identified by
+``website-stack`` or, failing that, ``default``::
+
+    CLOUDS = {
+        'cloudname': {
+
+            ...
+            'ORCHESTRATION_TEMPLATE_URIS': {
+                'default': '~/gonzo/cfn_default',
+                'website-stack: 'https://example.com/cfn/website-stack.json',
+                # ^ This one would be used ^
+            },
+            ...
+
+The template URI can also be overridden on the command line with the
+``--template-uri`` option. Template URIs can be a local file path or a
+resolvable web request.
+
+Once resolved, templates are parsed as Jinja2 templates. Some variables such as
+``stackname``, ``domain`` and ``fqdn`` are provided by default but these
+can be supplemented or overridden by a config supplied dictionary and then a
+command line argument. Command line provided key-values always override others.
+For example, with the following config values defined::
+
+    CLOUDS = {
+        'cloudname': {
+
+            ...
+            'ORCHESTRATION_TEMPLATE_URIS': {
+                'default': '~/gonzo/cfn_default',
+                'website-stack: 'https://example.com/cfn/website-stack.json',
+            },
+            'ORCHESTRATION_TEMPLATE_PARAMS': {
+                'puppetmaster': 'puppetmaster.example.com',
+                'db_server': 'db.example.com',
+            },
+            ...
+
+            'DNS_ZONE': 'example.com',
+
+the command::
+
+    # gonzo stack-launch \
+        --template-params db_server=db-secondary.example.com \
+        website-stack
+
+would result in a stack being launched from a template fetched from
+``https://example.com/cfn/website-stack.json``. The template would be
+parameterised by the dictionary::
+
+    {
+        'stackname': 'website-stack-001',
+        'domain': 'example.com',
+        'fqdn': 'website-stack-001.example.com',
+        'puppetmaster': 'puppetmaster.example.com',
+        'db_server': 'db-secondary.example.com',
+    }
+
+and the stack would be labelled with a unique name prefixed with
+``website-stack``.
+
+
 TODO
 ----
 

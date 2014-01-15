@@ -1,89 +1,46 @@
-from mock import Mock, patch
 from gonzo.backends import launch_instance
 
 
-@patch('gonzo.backends.create_if_not_exist_security_group')
-@patch('gonzo.backends.config')
-@patch('gonzo.backends.get_next_hostname')
-@patch('gonzo.backends.get_current_cloud')
-def test_default_type(get_cloud,
-                      get_hostname,
-                      config,
-                      create_security_group):
-    cloud = Mock(name='cloud')
-    get_cloud.return_value = cloud
-    get_hostname.return_value = 'prod-100'
-
-    config.SIZES = {
-        'default': 'instance_type.default',
-        'role-specific': 'instance_type.role_specific',
-        'role-extra': 'instance_type.role_specific',
-    }
+def test_default_type(cloud_fixture, minimum_config_fixture):
+    (get_cloud, get_hostname, create_security_group) = cloud_fixture
+    cloud = get_cloud.return_value
 
     launch_instance('environment-server')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = get_cloud.return_value.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 
     assert instance_type == 'instance_type.default'
 
 
-@patch('gonzo.backends.create_if_not_exist_security_group')
-@patch('gonzo.backends.config')
-@patch('gonzo.backends.get_next_hostname')
-@patch('gonzo.backends.get_current_cloud')
-def test_instance_specific_type(get_cloud,
-                                get_hostname,
-                                config,
-                                create_security_group):
-    cloud = Mock(name='cloud')
-    get_cloud.return_value = cloud
-    get_hostname.return_value = 'prod-100'
-
-    config.SIZES = {
-        'default': 'instance_type.default',
-        'role-specific': 'instance_type.role_specific',
-        'role-extra': 'instance_type.role_specific',
-    }
+def test_instance_specific_type(cloud_fixture, minimum_config_fixture):
+    (get_cloud, get_hostname, create_security_group) = cloud_fixture
+    cloud = get_cloud.return_value
 
     launch_instance('environment-role-specific')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 
     assert instance_type == 'instance_type.role_specific'
 
 
-@patch('gonzo.backends.create_if_not_exist_security_group')
-@patch('gonzo.backends.config')
-@patch('gonzo.backends.get_next_hostname')
-@patch('gonzo.backends.get_current_cloud')
-def test_cli_specified_type(get_cloud,
-                            get_hostname,
-                            config,
-                            create_security_group):
-    cloud = Mock(name='cloud')
-    get_cloud.return_value = cloud
-    get_hostname.return_value = 'prod-100'
-
-    config.SIZES = {
-        'default': 'instance_type.default',
-        'role-specific': 'instance_type.role_specific',
-        'role-extra': 'instance_type.role_specific',
-    }
+def test_cli_specified_type(cloud_fixture, minimum_config_fixture):
+    (get_cloud, get_hostname, create_security_group) = cloud_fixture
+    cloud = get_cloud.return_value
 
     launch_instance('environment-role-specific',
-                    instance_type="instance_type.overwritten")
+                    size="instance_type.overwritten")
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 

@@ -8,6 +8,8 @@ CLOUDS = {
     'default': {
         ### For Openstack based clouds
         'BACKEND': 'gonzo.backends.openstack',
+        ### For AWS based clouds
+        #'BACKEND': 'gonzo.backends.aws',
 
         # Openstack authentication details
         'TENANT_NAME': 'service',
@@ -15,10 +17,10 @@ CLOUDS = {
         'PASSWORD': '',
         'AUTH_URL': "http://cloud-host.example.com:5000/v2.0/",
 
-        ### For AWS based clouds
-        'BACKEND': 'gonzo.backends.aws',
-
         # AWS authentication details
+        #
+        # Always required! When working with OpenStack, keys will be used for
+        # for recording hostnames and counting server types with Route53.
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 
@@ -35,22 +37,35 @@ CLOUDS = {
         'PUBLIC_KEY_NAME': 'master',
         'PRIVATE_KEY_FILE': "~/.ssh/id_rsa",
 
-        # Access to Route53 for recording hostnames and counting server types
-        # This is currently required even for Openstack based clouds; if you
-        # are using AWS, you will have already specified these above
-        'AWS_ACCESS_KEY_ID': '',
-        'AWS_SECRET_ACCESS_KEY': '',
-
         # domain to hold host information
         'DNS_ZONE': 'example.com',
 
         # Default cloud-init script to pass when creating new instances.
         # Can be overridden with --user-data.
-        # Will be passed as a template. See templates/userdata_template for
+        # Will be parsed as a template. See templates/userdata_template for
         # more info.
         'DEFAULT_USER_DATA': None,
         # Extra params to use when rendering user data template.
         'USER_DATA_PARAMS': {},
+
+        # Default CloudFormation templates to use when launching stacks.
+        # Can be overridden with --template
+        # Will be parsed as a template.
+        'ORCHESTRATION_TEMPLATE_URIS': {
+            'default': 'https://s3...',
+            'stack-name': 'https://s3...',
+        },
+        # Extra params to use when rendering CloudFormation template.
+        'ORCHESTRATION_TEMPLATE_PARAMS': {
+            'puppetmaster': 'puppetmaster.example.com',
+        },
+
+        # OpenStack only.
+        'ORCHESTRATION_URL': 'http://heat-cfn-api.example.com/v1/',
+        'ORCHESTRATION_CREDENTIALS': {
+            'aws_access_key_id': '',
+            'aws_secret_access_key': '',
+        },
     },
 }
 

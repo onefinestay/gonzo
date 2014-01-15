@@ -17,18 +17,21 @@ def wait_for_stack_complete(stack):
 
 
 def print_stack_until_complete(window, stack):
-    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    yellow_on_black = 1  # Curses colour pair id for this window
+    curses.init_pair(yellow_on_black, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
     n = 0
     interval = 1
     while not stack.is_complete:
         window.clear()
 
-        window.addstr("Creating Stack ", curses.color_pair(1))
-        window.addstr("{}... {}s\n".format(stack.name, n))
-        window.addstr("{}\n\n".format(stack.id))
+        window.addstr("Creating Stack ", curses.color_pair(yellow_on_black))
+        window.addstr("""{}... {}s
+{}
 
-        window.addstr("Resources\n", curses.color_pair(1))
+""".format(stack.name, n, stack.id))
+
+        window.addstr("Resources\n", curses.color_pair(yellow_on_black))
         sort_key = lambda k: k.logical_resource_id
         for resource in sorted(stack.resources, key=sort_key):
             window.addstr("\t{}\t{}\t{}\n".format(
@@ -50,7 +53,8 @@ def print_output(output):
 def launch(args):
     """ Launch stacks """
 
-    stack = launch_stack(args.stack_name, args.template, args.template_params)
+    stack = launch_stack(args.stack_name, args.template_uri,
+                         args.template_params)
     wait_for_stack_complete(stack)
 
     for instance in stack.get_instances():
@@ -89,7 +93,7 @@ def init_parser(parser):
     parser.add_argument(
         'stack_name', help=stack_name_help)
     parser.add_argument(
-        '--template', dest='template',
+        '--template-uri', dest='template_uri',
         help=template_help)
     parser.add_argument(
         '--template-params', dest='template_params',

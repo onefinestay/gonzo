@@ -6,22 +6,20 @@ from gonzo.backends import (get_next_hostname,
 
 
 @patch('gonzo.backends.create_if_not_exist_security_group')
-@patch('gonzo.backends.config')
 @patch('gonzo.backends.get_next_hostname')
 @patch('gonzo.backends.get_current_cloud')
 def test_launch_instance(get_cloud,
                          get_hostname,
-                         config,
-                         create_security_group):
+                         create_security_group, minimum_config_fixture):
     cloud = Mock(name='cloud')
     get_cloud.return_value = cloud
     get_hostname.return_value = 'prod-100'
 
     launch_instance('environment-server')
 
-    assert cloud.launch.called
+    assert cloud.launch_instance.called
 
-    args, kwargs = cloud.launch.call_args
+    args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
 

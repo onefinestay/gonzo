@@ -36,11 +36,11 @@ def launch(args):
 
     instance = launch_instance(args.env_type,
                                security_groups=args.security_groups,
-                               instance_type=args.size,
-                               user_data=args.user_data,
+                               size=args.size,
+                               user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
                                tags=args.tags,
-                               username=username)
+                               owner=username)
     instance.create_dns_entries_from_tag(args.dns_tag)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
@@ -88,7 +88,7 @@ def init_parser(parser):
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
     parser.add_argument(
-        '--user-data', dest='user_data',
+        '--user-data-uri', dest='user_data_uri',
         help=user_data_help)
     parser.add_argument(
         '--user-data-params', dest='user_data_params',
