@@ -87,6 +87,14 @@ class BaseInstance(object):
         pass
 
     @abstractmethod
+    def create_dns_entries_from_tag(self, key, delimiter=','):
+        pass
+
+    @abstractmethod
+    def delete_dns_entries(self):
+        pass
+
+    @abstractmethod
     def update(self):
         pass
 

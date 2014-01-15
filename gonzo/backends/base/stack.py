@@ -64,10 +64,15 @@ class BaseStack(object):
     def delete(self):
         pass
 
+    @abstractmethod
+    def get_instances(self):
+        pass
+
 
 class BotoCfnStack(BaseStack):
 
     running_state = 'CREATE_COMPLETE'
+    instance_type = 'AWS::EC2::Instance'
 
     @property
     def description(self):
@@ -117,3 +122,11 @@ class BotoCfnStack(BaseStack):
 
     def delete(self):
         self._parent.delete()
+
+    def get_instances(self):
+        instance_refs = [res for res in self.resources
+                         if res.resource_type == self.instance_type]
+
+        cloud = get_current_cloud()
+        return [cloud.get_instance_by_id(ref.physical_resource_id)
+                for ref in instance_refs]
