@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 from prettytable import PrettyTable
 
 
@@ -17,7 +18,7 @@ def colorize(msg, colour, use_color='auto'):
     auto_color = (use_color == 'auto')
     color_recommended = sys.stdout.isatty()
 
-    if (force_color or (auto_color and color_recommended)):
+    if force_color or (auto_color and color_recommended):
         return "%s%s%s" % (colour, msg, reset)
     else:
         return msg
@@ -39,3 +40,22 @@ def print_table(row_definer, headers, objects, show_header=False,
         tableoutput.add_row(row_definer(object, use_color))
 
     print tableoutput.get_string()
+
+
+def format_uptime(start_time):
+    try:
+        delta = datetime.now() - start_time
+        days = delta.days
+        hours = delta.seconds / 3600
+        minutes = (delta.seconds % 3600) / 60
+        seconds = (delta.seconds % 3600) % 60
+        return "%dd %dh %dm %ds" % (days, hours, minutes, seconds)
+    except TypeError:
+        return 'n/a'
+
+
+def ellipsize(text, max_length):
+    if len(text) <= max_length:
+        return text
+
+    return "%s.." % text[:(max_length - 2)]

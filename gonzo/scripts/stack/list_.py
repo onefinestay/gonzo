@@ -2,12 +2,11 @@
 """ List stacks
 """
 
-from datetime import datetime
 from functools import partial
 
 from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
-from gonzo.scripts.utils import colorize, print_table
+from gonzo.scripts.utils import colorize, print_table, format_uptime, ellipsize
 
 
 headers = [
@@ -26,28 +25,14 @@ def print_stack_summary(stack, use_color='auto'):
 
     name = colorize_(stack.name, "yellow")
 
-    description = stack.description
-    description = (description[:75] + '..') if len(description) > 75\
-        else description
+    description = ellipsize(stack.description, 75)
 
-    stack_color = "red"
-    if stack.is_complete:
-        stack_color = "green"
-    status = colorize_(stack.status, stack_color)
+    status_colour = "green" if stack.is_complete else "red"
+    status = colorize_(stack.status, status_colour)
 
     #owner = stack.tags.get("owner", "--")
 
-    start_time = stack.launch_time
-    try:
-        delta = datetime.now() - start_time
-        days = delta.days
-        hours = delta.seconds / 3600
-        minutes = (delta.seconds % 3600) / 60
-        seconds = (delta.seconds % 3600) % 60
-        uptime = "%dd %dh %dm %ds" % (days, hours, minutes, seconds)
-    except TypeError:
-        uptime = 'n/a'
-
+    uptime = format_uptime(stack.launch_time)
     uptime = colorize_(uptime, "blue")
 
     result_list = [
