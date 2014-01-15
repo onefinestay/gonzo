@@ -129,19 +129,6 @@ def launch_stack(stack_name, template_uri, template_params):
     return cloud.launch_stack(unique_stack_name, template)
 
 
-def fetch_template_uri(stack_name, override=None):
-    if override is not None:
-        return override
-
-    # No override supplied at cli, so check config.
-    config_template_uris = config.CLOUD['ORCHESTRATION_TEMPLATE_URIS']
-    if not config_template_uris:
-        return None
-
-    default_template_uri = config_template_uris['default']
-    return config_template_uris.get(stack_name, default_template_uri)
-
-
 def terminate_stack(stack_name_or_id):
     cloud = get_current_cloud()
     return cloud.terminate_stack(stack_name_or_id)
