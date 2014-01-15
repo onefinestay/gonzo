@@ -147,7 +147,7 @@ class ConfigProxy(object):
         if not namespaced_dict:
             return None
 
-        default_value = namespaced_dict['default']
+        default_value = namespaced_dict.get('default')
         return namespaced_dict.get(namespace, default_value)
 
 
