@@ -2,12 +2,11 @@
 """ List instances
 """
 
-from datetime import datetime
 from functools import partial
 
 from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
-from gonzo.scripts.utils import colorize, print_table
+from gonzo.scripts.utils import colorize, print_table, format_uptime
 
 
 headers = [
@@ -27,29 +26,18 @@ def print_instance_summary(instance, use_color='auto'):
     colorize_ = partial(colorize, use_color=use_color)
 
     name = colorize_(instance.name, "yellow")
+
     instance_type = instance.instance_type
 
-    instance_colour = "red"
-    if instance.is_running():
-        instance_colour = "green"
+    status_colour = "green" if instance.is_running() else "red"
+    status = colorize_(instance.status, status_colour)
 
-    status = colorize_(instance.status, instance_colour)
     owner = instance.tags.get("owner", "--")
 
-    start_time = instance.launch_time
-    try:
-        delta = datetime.now() - start_time
-        days = delta.days
-        hours = delta.seconds / 3600
-        minutes = (delta.seconds % 3600) / 60
-        seconds = (delta.seconds % 3600) % 60
-        uptime = "%dd %dh %dm %ds" % (days, hours, minutes, seconds)
-    except TypeError:
-        uptime = 'n/a'
-
+    uptime = format_uptime(instance.launch_time)
     uptime = colorize_(uptime, "blue")
-    group_list = [group.name for group in instance.groups]
 
+    group_list = [group.name for group in instance.groups]
     group_list.sort()
     group_name_list = ",".join(group_list)
 
