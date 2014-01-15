@@ -1,4 +1,4 @@
-from gonzo.backends.base import add_default_security_groups
+from gonzo.backends import add_default_security_groups
 
 
 def test_default_security_groups():

@@ -3,7 +3,8 @@ import pytest
 from mock import patch, call, sentinel, Mock, PropertyMock
 
 from gonzo.scripts.config import (set_cloud, available_regions,
-    available_clouds, set_region, set_project, print_config, main, init_parser)
+                                  available_clouds, set_region, set_project,
+                                  print_config, main, init_parser)
 from gonzo.exceptions import ConfigurationError
 from gonzo.test_utils import assert_has_calls, assert_called_once_with
 
