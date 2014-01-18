@@ -1,5 +1,4 @@
 from gonzo.backends.dns import get_dns_service
-from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
 
@@ -18,13 +17,15 @@ def get_next_hostname(env_type):
     """
     record_name = "-".join(["_count", env_type])
     next_count = 1
-    r53 = Route53()
+    cloud = get_current_cloud()
+    dns_provider = cloud.dns
+    dns = dns_provider()
     try:
-        count_value = r53.get_values_by_name(record_name)[0]
+        count_value = dns.get_values_by_name(record_name)[0]
         next_count = int(count_value.replace('\"', '')) + 1
-        r53.update_record(record_name, "TXT", "%s" % next_count)
+        dns.update_record(record_name, "TXT", "%s" % next_count)
     except:  # TODO: specify
-        r53.add_remove_record(record_name, "TXT", "%s" % next_count)
+        dns.add_remove_record(record_name, "TXT", "%s" % next_count)
     name = "%s-%03d" % (env_type, next_count)
     return name
 
