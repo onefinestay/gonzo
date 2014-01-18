@@ -1,5 +1,7 @@
 from abc import abstractmethod, abstractproperty
 
+from gonzo.backends.dns import get_dns_service
+
 
 class BaseCloud(object):
     """ Wrapper for cloud providers
@@ -11,6 +13,9 @@ class BaseCloud(object):
 
     instance_class = abstractproperty
     stack_class = abstractproperty
+
+    def __init__(self):
+        self.dns = get_dns_service()
 
     @abstractproperty
     def compute_connection(self):

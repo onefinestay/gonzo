@@ -5,15 +5,10 @@ from gonzo.helpers.document_loader import get_parsed_document
 
 
 def get_current_cloud():
-    cloud_config = config.CLOUD
-    backend = cloud_config['BACKEND']
-    cloud_module = __import__("%s" % backend, globals(), locals(), ['Cloud'])
-
-    cloud = cloud_module.Cloud(
-        dns_service_provider=get_dns_service()
-    )
-
-    return cloud
+    backend = config.CLOUD['BACKEND']
+    cloud_module = __import__(
+        "%s.cloud" % backend, globals(), locals(), ['Cloud'])
+    return cloud_module.Cloud()
 
 
 def get_next_hostname(env_type):
