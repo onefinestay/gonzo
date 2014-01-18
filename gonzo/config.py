@@ -133,6 +133,29 @@ class ConfigProxy(object):
         dns_service_name = cloud.get('DNS_SERVICE', 'dummy')
         return dns_service_name
 
+    def get_cloud_config_value(self, config_key, override=None):
+        if override is None:
+            return self.CLOUD.get(config_key)
+        return override
+
+    def get_namespaced_cloud_config_value(self,
+                                          config_key, namespace,
+                                          override=None):
+        """ Fetch a value from config nested in a namespaced dictionary.
+        Override is returned first, then namespace lookup, then 'default'
+        value.
+        """
+        if override is not None:
+            return override
+
+        # No override supplied, so check config.
+        namespaced_dict = self.CLOUD[config_key]
+        if not namespaced_dict:
+            return None
+
+        default_value = namespaced_dict.get('default')
+        return namespaced_dict.get(namespace, default_value)
+
 
 config_proxy = ConfigProxy()
 global_state = GlobalState(STATE_FILE)

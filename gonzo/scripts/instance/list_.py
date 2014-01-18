@@ -2,62 +2,42 @@
 """ List instances
 """
 
-from datetime import datetime
 from functools import partial
-
-from prettytable import PrettyTable
 
 from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
-from gonzo.scripts.utils import colorize
+from gonzo.scripts.utils import colorize, print_table, format_uptime
 
 
-def _print_table(headers, output_list, show_header=False):
-    tableoutput = PrettyTable(headers)
-    for column in headers:
-        tableoutput.align[column] = "l"
-
-    tableoutput.header = show_header
-    tableoutput.sortby = "name"
-    tableoutput.vertical_char = " "
-    tableoutput.horizontal_char = " "
-
-    tableoutput.junction_char = " "
-    for tableresult in output_list:
-        tableoutput.add_row(tableresult)
-
-    return tableoutput
+headers = [
+    "name",
+    "type",
+    "location",
+    "status",
+    "owner",
+    "uptime",
+    "group_name_list",
+]
 
 
-def print_instance(instance, use_color='auto'):
+def print_instance_summary(instance, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
     colorize_ = partial(colorize, use_color=use_color)
 
     name = colorize_(instance.name, "yellow")
+
     instance_type = instance.instance_type
 
-    instancecolour = "red"
-    if instance.is_running():
-        instancecolour = "green"
+    status_colour = "green" if instance.is_running() else "red"
+    status = colorize_(instance.status, status_colour)
 
-    status = colorize_(instance.status, instancecolour)
     owner = instance.tags.get("owner", "--")
 
-    start_time = instance.launch_time
-    try:
-        delta = datetime.now() - start_time
-        days = delta.days
-        hours = delta.seconds / 3600
-        minutes = (delta.seconds % 3600) / 60
-        seconds = (delta.seconds % 3600) % 60
-        uptime = "%dd %dh %dm %ds" % (days, hours, minutes, seconds)
-    except TypeError:
-        uptime = 'n/a'
-
+    uptime = format_uptime(instance.launch_time)
     uptime = colorize_(uptime, "blue")
-    group_list = [group.name for group in instance.groups]
 
+    group_list = [group.name for group in instance.groups]
     group_list.sort()
     group_name_list = ",".join(group_list)
 
@@ -87,20 +67,8 @@ def list_(args):
     if args.order == 'name':
         instances.sort(key=lambda i: i.tags.get(args.order))
 
-    tablelist = [
-        "name",
-        "type",
-        "location",
-        "status",
-        "owner",
-        "uptime",
-        "group_name_list",
-    ]
-    table_output = []
-    for instance in instances:
-        table_output.append(print_instance(instance, use_color=args.color))
-
-    print _print_table(tablelist, table_output)
+    print_table(print_instance_summary, headers, instances,
+                use_color=args.color)
 
 
 def main(args):

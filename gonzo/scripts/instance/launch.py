@@ -7,8 +7,8 @@ import os
 import sys
 from time import sleep
 
-from gonzo.backends.base import launch_instance, configure_instance
-from gonzo.exceptions import CommandError, UserDataError
+from gonzo.backends import launch_instance, configure_instance
+from gonzo.exceptions import CommandError, DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
 
@@ -36,9 +36,10 @@ def launch(args):
 
     instance = launch_instance(args.env_type,
                                security_groups=args.security_groups,
-                               user_data=args.user_data,
+                               size=args.size,
+                               user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
-                               username=username)
+                               owner=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
     print "Created instance {}".format(instance.name)
@@ -49,7 +50,7 @@ def main(args):
         launch(args)
     except CommandError as ex:
         abort(ex.message)
-    except UserDataError as ex:
+    except DataError as ex:
         abort(ex.message)
 
 
@@ -75,7 +76,7 @@ def init_parser(parser):
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
     parser.add_argument(
-        '--user-data', dest='user_data',
+        '--user-data-uri', dest='user_data_uri',
         help=user_data_help)
     parser.add_argument(
         '--user-data-params', dest='user_data_params',
