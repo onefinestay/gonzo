@@ -1,3 +1,0 @@
-
-class NoDnsException(Exception):
-    pass

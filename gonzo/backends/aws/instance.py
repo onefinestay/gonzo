@@ -56,7 +56,7 @@ class Instance(BaseInstance):
     def create_dns_entry(self):
         cname = self.internal_address()
         cloud = get_current_cloud()
-        dns_provider = cloud.dns()
+        dns_provider = cloud.dns
         dns_provider.add_remove_record(self.name, "CNAME", cname)
 
     def terminate(self):

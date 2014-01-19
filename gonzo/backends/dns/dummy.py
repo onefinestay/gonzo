@@ -13,8 +13,8 @@ class DNS(DNSService):
 
     def warn(self):
         sys.stdout(
-            '\nNo DNS Service is configured. '
-            'Host names will not be available!\n'
+            'No DNS Service is configured. '
+            'Host names will not be available!'
         )
 
     def add_remove_record(self, *args, **kwargs):
