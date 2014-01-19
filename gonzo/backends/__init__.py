@@ -32,6 +32,7 @@ def get_next_hostname(env_type):
     try:
         dns.update_record(record_name, "TXT", "%s" % next_count)
     except exceptions.DNSRecordUpdateError as exc:
+        logger.exception('Failed updating DNS record %s: %s', record_name, exc)
         # TODO: should we really be removing a record just
         # because we can't update it??
         logger.warn('removing DNS record "%s"', record_name)
