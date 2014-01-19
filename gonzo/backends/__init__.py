@@ -1,5 +1,6 @@
 from gonzo.backends.dns import get_dns_service
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import ConfigurationError
 from gonzo.helpers.document_loader import get_parsed_document
 
 
@@ -24,6 +25,9 @@ def get_next_hostname(env_type):
         count_value = dns.get_values_by_name(record_name)[0]
         next_count = int(count_value.replace('\"', '')) + 1
         dns.update_record(record_name, "TXT", "%s" % next_count)
+    except IndexError:
+        # no values yet
+        next_count = 1
     except:  # TODO: specify
         dns.add_remove_record(record_name, "TXT", "%s" % next_count)
     name = "%s-%03d" % (env_type, next_count)

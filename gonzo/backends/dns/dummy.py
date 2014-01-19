@@ -37,10 +37,7 @@ class DNS(DNSService):
 
     def get_values_by_name(self, *args, **kwargs):
         logger.info('no DNS handler for "get_values_by_name"')
-        # TOTHINK: not sure what to do here.
-        # i don't like the auto-generation of names in the first place.
-        # TODO: look at why callers of this assume things of the list values
-        return [-1]
+        return []
 
     def fqdn(self, *args, **kwargs):
         logger.info('no DNS handler for "fqdn"')
