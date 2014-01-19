@@ -1,6 +1,6 @@
 import datetime
 
-from gonzo.aws.route53 import Route53
+from gonzo.backends import get_current_cloud
 from gonzo.backends.base.instance import BaseInstance
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE, TIME_FORMAT
 from gonzo.config import config_proxy as config

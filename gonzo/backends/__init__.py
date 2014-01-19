@@ -1,6 +1,4 @@
-from gonzo.backends.dns import get_dns_service
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import ConfigurationError
 from gonzo.helpers.document_loader import get_parsed_document
 
 

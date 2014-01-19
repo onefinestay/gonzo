@@ -1,17 +1,16 @@
 import logging
 import sys
 
-from gonzo.backends.dns import DNSService, AVAILABLE_SERVICES
-from gonzo.backends.dns import exceptions
+from gonzo.backends.dns import DNSService
 
 logger = logging.getLogger(__name__)
 
 
 class DNS(DNSService):
     def __init__(self):
-        self.warn()
+        self._warn()
 
-    def warn(self):
+    def _warn(self):
         sys.stdout(
             'No DNS Service is configured. '
             'Host names will not be available!'
