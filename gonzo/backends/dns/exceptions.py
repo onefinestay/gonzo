@@ -1,0 +1,3 @@
+
+class DNSRecordUpdateError(Exception):
+    pass

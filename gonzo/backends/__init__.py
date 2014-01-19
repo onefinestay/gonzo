@@ -1,5 +1,10 @@
+import logging
+
+from gonzo.backends.dns import exceptions
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_cloud():
@@ -15,19 +20,23 @@ def get_next_hostname(env_type):
         production-ecommerce-web-013
     """
     record_name = "-".join(["_count", env_type])
-    next_count = 1
     cloud = get_current_cloud()
-    dns_provider = cloud.dns
-    dns = dns_provider()
+    dns  cloud.dns
+
     try:
         count_value = dns.get_values_by_name(record_name)[0]
         next_count = int(count_value.replace('\"', '')) + 1
-        dns.update_record(record_name, "TXT", "%s" % next_count)
-    except IndexError:
-        # no values yet
+    except (IndexError, ValueError):
         next_count = 1
-    except:  # TODO: specify
+
+    try:
+        dns.update_record(record_name, "TXT", "%s" % next_count)
+    except exceptions.DNSRecordUpdateError as exc:
+        # TODO: should we really be removing a record just
+        # because we can't update it??
+        logger.warn('removing DNS record "%s"', record_name)
         dns.add_remove_record(record_name, "TXT", "%s" % next_count)
+
     name = "%s-%03d" % (env_type, next_count)
     return name
 
