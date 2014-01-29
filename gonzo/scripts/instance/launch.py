@@ -39,6 +39,7 @@ def launch(args):
                                size=args.size,
                                user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
+                               image_name=args.image_name,
                                owner=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
@@ -72,6 +73,9 @@ See template/userdata_template."""
 def init_parser(parser):
     parser.add_argument(
         'env_type', metavar='environment-server_type', help=env_type_pair_help)
+    parser.add_argument(
+        '--image-name', dest='image_name',
+        help="Name of image to boot from")
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
