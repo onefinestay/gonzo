@@ -30,7 +30,7 @@ def get_next_hostname(env_type):
 
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
-                    security_groups=None, owner=None):
+                    print_user_data=False, security_groups=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -79,6 +79,9 @@ def launch_instance(env_type, size=None,
     if user_data_uri is not None:
         user_data = get_parsed_document(name, user_data_uri,
                                         'USER_DATA_PARAMS', user_data_params)
+
+        if print_user_data:
+            print user_data
 
     return cloud.launch_instance(
         name, image_name, size, zone, security_groups, key_name,
