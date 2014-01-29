@@ -80,6 +80,20 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance.id, name, no_reboot=True)
+        return self.get_image_by_name(name)
+
+    def delete_image_by_name(self, name):
+        try:
+            image = self.get_image_by_name(name)
+        except KeyError as err:
+            if "not found" not in err.message:
+                raise
+        else:
+            self.compute_connection.deregister_image(
+                image.id, delete_snapshot=True)
+
     def get_image_by_name(self, name):
         """ Find image by name """
         images = self.compute_connection.get_all_images(filters={

@@ -42,6 +42,19 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance, name)
+        return self.get_image_by_name(name)
+
+    def delete_image_by_name(self, name):
+        try:
+            image = self.get_image_by_name(name)
+        except NotFound:
+            # No such image to delete
+            pass
+        else:
+            self.imaging_connection.delete(image)
+
     def get_image_by_name(self, name):
         """ Find image by name """
         try:
@@ -54,20 +67,26 @@ class Cloud(BaseCloud):
         """ Return a list of AZs - as single characters, no region info"""
         return [OPENSTACK_AVAILABILITY_ZONE]
 
-    _compute_connection = None
+    _nova_client = None
 
     @property
-    def compute_connection(self):
-        if self._compute_connection is None:
-
-            client = nova_client.Client(
+    def nova_client(self):
+        if self._nova_client is None:
+            self._nova_client = nova_client.Client(
                 config.CLOUD['USERNAME'],
                 config.CLOUD['PASSWORD'],
                 config.CLOUD['TENANT_NAME'],
                 config.CLOUD['AUTH_URL'],
                 service_type="compute")
-            self._compute_connection = client.servers
-        return self._compute_connection
+        return self._nova_client
+
+    @property
+    def compute_connection(self):
+        return self.nova_client.servers
+
+    @property
+    def imaging_connection(self):
+        return self.nova_client.images
 
     _orchestration_connection = None
 
