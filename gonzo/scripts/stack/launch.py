@@ -54,7 +54,7 @@ def launch(args):
     """ Launch stacks """
 
     stack = launch_stack(args.stack_name, args.template_uri,
-                         args.template_params)
+                         args.template_params, args.print_template)
     wait_for_stack_complete(stack)
 
     colorize_ = partial(colorize, use_color=args.color)
@@ -90,6 +90,10 @@ def init_parser(parser):
         '--template-params', dest='template_params',
         metavar='key=val[,key=val..]', type=csv_dict,
         help='Additional parameters to be used when rendering templates.')
+    parser.add_argument(
+        '--print-template', dest='print_template', default=False,
+        action='store_true',
+        help='Print the rendered stack template')
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],

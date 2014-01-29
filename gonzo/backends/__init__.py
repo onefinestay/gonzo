@@ -109,7 +109,8 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
 
-def launch_stack(stack_name, template_uri, template_params):
+def launch_stack(stack_name, template_uri, template_params,
+                 print_template=False):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
@@ -123,6 +124,9 @@ def launch_stack(stack_name, template_uri, template_params):
     template = get_parsed_document(unique_stack_name, template_uri,
                                    'ORCHESTRATION_TEMPLATE_PARAMS',
                                    template_params)
+
+    if print_template:
+        print template
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)
