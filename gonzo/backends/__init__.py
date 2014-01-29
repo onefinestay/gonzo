@@ -50,8 +50,8 @@ def launch_instance(env_type, size=None,
 
     name = get_next_hostname(env_type)
 
-    image_name = config.get_namespaced_cloud_config_value('IMAGE_NAME',
-                                                          override=image_name)
+    image_name = config.get_cloud_config_value('IMAGE_NAME',
+                                               override=image_name)
 
     if size is None:
         sizes = config.SIZES
