@@ -66,15 +66,12 @@ class Route53(object):
     def delete_dns_by_value(self, value):
         """ Warning! Deletes all DNS records in the current zone
         with a matching value """
-        try:
-            dns_records = self.get_records_by_value(value)
-            for dns_record in dns_records:
-                for resource in dns_record.resource_records:
-                    self.add_remove_record(
-                        dns_record.name, dns_record.type, resource, "DELETE",
-                        is_qualified=True)
-        except KeyError:
-            pass
+        dns_records = self.get_records_by_value(value)
+        for dns_record in dns_records:
+            for resource in dns_record.resource_records:
+                self.add_remove_record(
+                    dns_record.name, dns_record.type, resource, "DELETE",
+                    is_qualified=True)
 
     def get_record_by_name(self, name):
         """ Gets the Record object from the zone, based on the name """
@@ -84,14 +81,9 @@ class Route53(object):
         return False
 
     def get_records_by_value(self, value):
+        """ Get a list of dns records for which the value or target matches """
         dns_records = self.conn.get_all_rrsets(self.zone_id)
-        dns_records = [rec for rec in dns_records
-                       if value in rec.resource_records]
-
-        if not dns_records:
-            raise KeyError("No Records with value %s found" % value)
-
-        return dns_records
+        return [rec for rec in dns_records if value in rec.resource_records]
 
     def is_this_master(self, name):
         """ TODO - check that this isn't a master before deleting """
