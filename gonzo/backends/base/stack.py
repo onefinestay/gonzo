@@ -11,6 +11,7 @@ class BaseStack(object):
     running_state = abstractproperty
 
     def __init__(self, stack_id):
+        self._cloud = get_current_cloud()
         self._stack_id = stack_id
         self._refresh()
 
@@ -27,6 +28,10 @@ class BaseStack(object):
     @property
     def id(self):
         return self._stack_id
+
+    @property
+    def cloud(self):
+        return self._cloud
 
     @abstractproperty
     def name(self):
@@ -127,6 +132,5 @@ class BotoCfnStack(BaseStack):
         instance_refs = [res for res in self.resources
                          if res.resource_type == self.instance_type]
 
-        cloud = get_current_cloud()
-        return [cloud.get_instance_by_id(ref.physical_resource_id)
+        return [self.cloud.get_instance_by_id(ref.physical_resource_id)
                 for ref in instance_refs]
