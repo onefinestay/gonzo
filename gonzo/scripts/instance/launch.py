@@ -39,7 +39,7 @@ def launch(args):
                                size=args.size,
                                user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
-                               tags=args.tags,
+                               extra_tags=args.extra_tags,
                                owner=username)
     instance.create_dns_entries_from_tag(args.dns_tag)
     wait_for_instance_boot(instance, args.color)
@@ -102,10 +102,9 @@ def init_parser(parser):
         metavar='sg-name[,sg-name]', type=csv_list,
         help=additional_security_group_help)
     parser.add_argument(
-        '--additional-tags', dest='tags',
+        '--extra-tags', dest='extra_tags',
         metavar='key=val[,key=val..]', type=csv_dict,
-        help=additional_tags_help
-    )
+        help=additional_tags_help)
     parser.add_argument(
         '--dns-tag', dest='dns_tag', default='cnames',
         help=dns_help)

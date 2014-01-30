@@ -30,7 +30,7 @@ def get_next_hostname(env_type):
 
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
-                    security_groups=None, tags=None, owner=None):
+                    security_groups=None, extra_tags=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -61,7 +61,7 @@ def launch_instance(env_type, size=None,
 
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
-    tags = tags or {}
+    tags = extra_tags or {}
     tags.update({
         'environment': environment,
         'server_type': server_type,
