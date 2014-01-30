@@ -14,7 +14,6 @@ class BaseInstance(object):
 
     def __init__(self, parent):
         self._parent = parent
-        self._cloud = get_current_cloud()
 
     def __repr__(self):
         return "<%s.%s %s>" % (
@@ -23,10 +22,6 @@ class BaseInstance(object):
     @property
     def id(self):
         return self._parent.id
-
-    @property
-    def cloud(self):
-        return self._cloud
 
     @abstractproperty
     def name(self):
