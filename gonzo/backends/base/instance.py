@@ -1,7 +1,6 @@
 from abc import abstractproperty, abstractmethod
 
 from gonzo.aws.route53 import Route53
-from gonzo.backends import get_current_cloud
 
 
 class BaseInstance(object):
