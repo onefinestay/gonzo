@@ -6,6 +6,7 @@ from gonzo.backends.base.instance import BaseInstance
 
 class Instance(BaseInstance):
     running_state = 'running'
+    internal_address_dns_type = 'CNAME'
 
     @property
     def name(self):
@@ -51,9 +52,6 @@ class Instance(BaseInstance):
 
     def internal_address(self):
         return self._parent.public_dns_name
-
-    def internal_address_dns_type(self):
-        return "CNAME"
 
     def terminate(self):
         self._parent.terminate()

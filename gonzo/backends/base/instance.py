@@ -10,6 +10,7 @@ class BaseInstance(object):
         Interrogate these for name, tags and other properties
     """
     running_state = abstractproperty
+    internal_address_dns_type = abstractproperty
 
     def __init__(self, parent):
         self._parent = parent
@@ -90,11 +91,6 @@ class BaseInstance(object):
     def internal_address(self):
         pass
 
-    @abstractproperty
-    def internal_address_dns_type(self):
-        """ 'A' or 'CNAME' """
-        pass
-
     def create_dns_entry(self, name=None):
         address = self.internal_address()
         record_type = self.internal_address_dns_type
@@ -112,7 +108,7 @@ class BaseInstance(object):
 
     def delete_dns_entries(self):
         r53 = Route53()
-        value, _ = self.internal_address()
+        value = self.internal_address()
         r53.delete_dns_by_value(value)
 
     @abstractmethod
