@@ -77,10 +77,10 @@ class Instance(BaseInstance):
         r53 = Route53()
         r53.add_remove_record(name, "A", ip, "CREATE")
 
-    def create_dns_entries_from_tag(self, key='cnames', delimiter=','):
+    def create_dns_entries_from_tag(self, key='cnames'):
         if key not in self.tags:
             return
-        names = self.tags[key].split(delimiter)
+        names = self.tags[key].split(',')
         for name in names:
             self.create_dns_entry(name)
 

@@ -94,7 +94,7 @@ class BaseInstance(object):
         pass
 
     @abstractmethod
-    def create_dns_entries_from_tag(self, key, delimiter=','):
+    def create_dns_entries_from_tag(self, key):
         pass
 
     @abstractmethod
