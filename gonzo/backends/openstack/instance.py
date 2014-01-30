@@ -1,6 +1,5 @@
 import datetime
 
-from gonzo.aws.route53 import Route53
 from gonzo.backends.base.instance import BaseInstance
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE, TIME_FORMAT
 from gonzo.config import config_proxy as config
@@ -70,23 +69,8 @@ class Instance(BaseInstance):
         ip = private['addr']
         return ip
 
-    def create_dns_entry(self, name=None):
-        ip = self.internal_address()
-        if name is None:
-            name = self.name
-        r53 = Route53()
-        r53.add_remove_record(name, "A", ip, "CREATE")
-
-    def create_dns_entries_from_tag(self, key='cnames'):
-        if key not in self.tags:
-            return
-        names = self.tags[key].split(',')
-        for name in names:
-            self.create_dns_entry(name)
-
-    def delete_dns_entries(self):
-        r53 = Route53()
-        r53.delete_dns_by_value(self.internal_address())
+    def internal_address_dns_type(self):
+        return "A"
 
     def terminate(self):
         self._parent.delete()

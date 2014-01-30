@@ -1,5 +1,6 @@
 from abc import abstractproperty, abstractmethod
 
+from gonzo.aws.route53 import Route53
 from gonzo.backends import get_current_cloud
 
 
@@ -89,17 +90,30 @@ class BaseInstance(object):
     def internal_address(self):
         pass
 
-    @abstractmethod
-    def create_dns_entry(self):
+    @abstractproperty
+    def internal_address_dns_type(self):
+        """ 'A' or 'CNAME' """
         pass
 
-    @abstractmethod
-    def create_dns_entries_from_tag(self, key):
-        pass
+    def create_dns_entry(self, name=None):
+        address = self.internal_address()
+        record_type = self.internal_address_dns_type
+        if name is None:
+            name = self.name
+        r53 = Route53()
+        r53.add_remove_record(name, record_type, address)
 
-    @abstractmethod
+    def create_dns_entries_from_tag(self, key='cnames'):
+        if key not in self.tags:
+            return
+        names = self.tags[key].split(',')
+        for name in names:
+            self.create_dns_entry(name)
+
     def delete_dns_entries(self):
-        pass
+        r53 = Route53()
+        value, _ = self.internal_address()
+        r53.delete_dns_by_value(value)
 
     @abstractmethod
     def update(self):
