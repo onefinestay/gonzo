@@ -1,7 +1,6 @@
 from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
-from gonzo.scripts.stack.template import generate_template
 
 
 def get_current_cloud():
@@ -109,6 +108,18 @@ def create_if_not_exist_security_group(group_name):
 
 def configure_instance(instance):
     instance.create_dns_entry()
+
+
+def generate_template(stack_type, stack_name, template_uri, template_params):
+    template_uri = config.get_namespaced_cloud_config_value(
+        'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
+    if template_uri is None:
+        raise ValueError('A template must be specified by argument or '
+                         'in config')
+
+    return get_parsed_document(stack_name, template_uri,
+                               'ORCHESTRATION_TEMPLATE_PARAMS',
+                               template_params)
 
 
 def launch_stack(stack_name, template_uri, template_params):

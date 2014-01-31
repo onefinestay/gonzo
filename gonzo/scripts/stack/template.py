@@ -5,22 +5,10 @@
 import json
 from boto.exception import BotoServerError
 
+from gonzo.backends import generate_template
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import CommandError
-from gonzo.helpers.document_loader import get_parsed_document
 from gonzo.utils import csv_dict
-
-
-def generate_template(stack_type, stack_name, template_uri, template_params):
-    template_uri = config.get_namespaced_cloud_config_value(
-        'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
-    if template_uri is None:
-        raise ValueError('A template must be specified by argument or '
-                         'in config')
-
-    return get_parsed_document(stack_name, template_uri,
-                               'ORCHESTRATION_TEMPLATE_PARAMS',
-                               template_params)
 
 
 def template(args):
