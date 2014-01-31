@@ -30,7 +30,7 @@ def get_next_hostname(env_type):
 
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
-                    print_user_data=False, security_groups=None, owner=None):
+                    security_groups=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -80,9 +80,6 @@ def launch_instance(env_type, size=None,
         user_data = get_parsed_document(name, user_data_uri,
                                         'USER_DATA_PARAMS', user_data_params)
 
-        if print_user_data:
-            print user_data
-
     return cloud.launch_instance(
         name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
@@ -112,8 +109,7 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
 
-def launch_stack(stack_name, template_uri, template_params,
-                 print_template=False):
+def launch_stack(stack_name, template_uri, template_params):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
@@ -127,9 +123,6 @@ def launch_stack(stack_name, template_uri, template_params,
     template = get_parsed_document(unique_stack_name, template_uri,
                                    'ORCHESTRATION_TEMPLATE_PARAMS',
                                    template_params)
-
-    if print_template:
-        print template
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)

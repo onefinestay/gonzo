@@ -39,7 +39,6 @@ def launch(args):
                                size=args.size,
                                user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
-                               print_user_data=args.print_user_data,
                                owner=username)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
@@ -83,10 +82,6 @@ def init_parser(parser):
         '--user-data-params', dest='user_data_params',
         metavar='key=val[,key=val..]', type=csv_dict,
         help='Additional parameters to be used when rendering user data.')
-    parser.add_argument(
-        '--print-user-data', dest='print_user_data', default=False,
-        action='store_true',
-        help='Print the rendered user data script')
     parser.add_argument(
         '--availability-zone', dest='az',
         help="Override availability zone. (defaults to balancing)")
