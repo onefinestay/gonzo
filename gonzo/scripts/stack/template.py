@@ -5,8 +5,7 @@
 import json
 from boto.exception import BotoServerError
 
-from gonzo.backends import generate_stack_template
-from gonzo.config import config_proxy as config
+from gonzo.backends import generate_stack_template, get_current_cloud
 from gonzo.exceptions import CommandError
 from gonzo.utils import csv_dict
 
@@ -17,10 +16,7 @@ def template(args):
 
     """
 
-    backend = config.CLOUD['BACKEND']
-    cloud_module = __import__(
-        "%s.cloud" % backend, globals(), locals(), ['Cloud'])
-    cloud = cloud_module.Cloud()
+    cloud = get_current_cloud()
     stack_name = args.stack_name_or_id
 
     try:
