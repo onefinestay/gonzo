@@ -61,6 +61,9 @@ def launch(args):
                          args.template_params)
     wait_for_stack_complete(stack)
 
+    for instance in stack.get_instances():
+        instance.create_dns_entries_from_tag(args.dns_tag)
+
     colorize_ = partial(colorize, use_color=args.color)
     print_stack(stack, colorize_)
 
@@ -76,6 +79,12 @@ stack_name_help = """
 Non-unique name to be appended with an incrementing number and then
 used as a stack identifier."""
 
+dns_help = """
+If Route53 is configured and instances are launched with a matching tag, the
+tag value is parsed as a comma separated list of DNS records to create. DNS
+records are suffixed with the current cloud's DNS_ZONE config.
+(Default: cnames)"""
+
 
 def init_parser(parser):
     parser.add_argument(
@@ -84,6 +93,9 @@ def init_parser(parser):
                         **template_uri_option_kwargs)
     parser.add_argument(*template_params_option_args,
                         **template_params_option_kwargs)
+    parser.add_argument(
+        '--dns-tag', dest='dns_tag', default='cnames',
+        help=dns_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
