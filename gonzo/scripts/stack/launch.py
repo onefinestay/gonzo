@@ -7,9 +7,13 @@ from time import sleep
 
 from gonzo.backends import launch_stack
 from gonzo.exceptions import DataError
-from gonzo.scripts.utils import colorize
+from gonzo.scripts.stack.template import (template_uri_option_kwargs,
+                                          template_uri_option_args,
+                                          template_params_option_args,
+                                          template_params_option_kwargs)
 from gonzo.scripts.stack.show import print_stack
-from gonzo.utils import csv_dict, abort
+from gonzo.scripts.utils import colorize
+from gonzo.utils import abort
 
 
 def wait_for_stack_complete(stack):
@@ -73,23 +77,13 @@ Non-unique name to be appended with an incrementing number and then
 used as a stack identifier."""
 
 
-template_help = """
-File or URL containing a template to be passed to the selected
-cloud provider's orchestration service, such as cloud-formation.
-Templates will be parsed as a Jinja2 template and may be supplemented
-with parameters."""
-
-
 def init_parser(parser):
     parser.add_argument(
         'stack_name', help=stack_name_help)
-    parser.add_argument(
-        '--template-uri', dest='template_uri',
-        help=template_help)
-    parser.add_argument(
-        '--template-params', dest='template_params',
-        metavar='key=val[,key=val..]', type=csv_dict,
-        help='Additional parameters to be used when rendering templates.')
+    parser.add_argument(*template_uri_option_args,
+                        **template_uri_option_kwargs)
+    parser.add_argument(*template_params_option_args,
+                        **template_params_option_kwargs)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
