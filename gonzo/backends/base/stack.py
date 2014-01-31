@@ -1,7 +1,6 @@
 from abc import abstractproperty, abstractmethod
 from boto.exception import BotoServerError
 
-from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import NoSuchResourceError
 
@@ -10,8 +9,8 @@ class BaseStack(object):
 
     running_state = abstractproperty
 
-    def __init__(self, stack_id):
-        self._cloud = get_current_cloud()
+    def __init__(self, cloud, stack_id=None):
+        self.cloud = cloud
         self._stack_id = stack_id
         self._refresh()
 
@@ -20,7 +19,7 @@ class BaseStack(object):
             self.__class__.__module__, self.__class__.__name__, self.id)
 
     def _refresh(self):
-        orchestration_connection = get_current_cloud().orchestration_connection
+        orchestration_connection = self.cloud.orchestration_connection
         self._parent = orchestration_connection.describe_stacks(
             stack_name_or_id=self.id
         )[0]
@@ -28,10 +27,6 @@ class BaseStack(object):
     @property
     def id(self):
         return self._stack_id
-
-    @property
-    def cloud(self):
-        return self._cloud
 
     @abstractproperty
     def name(self):
@@ -101,7 +96,7 @@ class BotoCfnStack(BaseStack):
 
     @property
     def resources(self):
-        orchestration_connection = get_current_cloud().orchestration_connection
+        orchestration_connection = self.cloud.orchestration_connection
         return orchestration_connection.describe_stack_resources(
             stack_name_or_id=self.name,
         )

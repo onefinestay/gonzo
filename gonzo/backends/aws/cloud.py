@@ -20,13 +20,13 @@ class Cloud(BaseCloud):
 
     def _list_stacks(self):
         stacks = self.orchestration_connection.list_stacks()
-        return map(self.stack_class, [s.stack_id for s in stacks])
+        return map(self._instantiate_stack, [s.stack_id for s in stacks])
 
     def get_stack(self, stack_name_or_id):
         potential_stacks = self.orchestration_connection.describe_stacks(
             stack_name_or_id=stack_name_or_id)
 
-        return self.stack_class(potential_stacks[0].stack_id)
+        return self._instantiate_stack(potential_stacks[0].stack_id)
 
     def list_security_groups(self):
         return self.compute_connection.get_all_security_groups()
@@ -152,9 +152,9 @@ class Cloud(BaseCloud):
             template_body=template,
         )
 
-        return self.stack_class(stack_id)
+        return self._instantiate_stack(stack_id)
 
     def terminate_stack(self, stack_name_or_id):
-        stack = self.stack_class(stack_name_or_id)
+        stack = self._instantiate_stack(stack_name_or_id)
         stack.delete()
         return stack
