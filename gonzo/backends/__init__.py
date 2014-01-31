@@ -110,7 +110,8 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
 
-def generate_template(stack_type, stack_name, template_uri, template_params):
+def generate_stack_template(stack_type, stack_name,
+                            template_uri, template_params):
     template_uri = config.get_namespaced_cloud_config_value(
         'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
     if template_uri is None:
@@ -127,8 +128,8 @@ def launch_stack(stack_name, template_uri, template_params):
 
     unique_stack_name = get_next_hostname(stack_name)
 
-    template = generate_template(stack_name, unique_stack_name,
-                                 template_uri, template_params)
+    template = generate_stack_template(stack_name, unique_stack_name,
+                                       template_uri, template_params)
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)

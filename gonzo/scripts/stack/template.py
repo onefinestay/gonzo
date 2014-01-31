@@ -5,7 +5,7 @@
 import json
 from boto.exception import BotoServerError
 
-from gonzo.backends import generate_template
+from gonzo.backends import generate_stack_template
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import CommandError
 from gonzo.utils import csv_dict
@@ -30,7 +30,7 @@ def template(args):
     except BotoServerError:
         # Stack doesn't exist. Generate a new template.
         stack_type = stack_name
-        template_ = generate_template(
+        template_ = generate_stack_template(
             stack_type, stack_name, args.template_uri, args.template_params)
 
     print template_
