@@ -1,12 +1,12 @@
 import datetime
 
-from gonzo.aws.route53 import Route53
 from gonzo.backends.aws import TIME_FORMAT
 from gonzo.backends.base.instance import BaseInstance
 
 
 class Instance(BaseInstance):
     running_state = 'running'
+    internal_address_dns_type = 'CNAME'
 
     @property
     def name(self):
@@ -52,11 +52,6 @@ class Instance(BaseInstance):
 
     def internal_address(self):
         return self._parent.public_dns_name
-
-    def create_dns_entry(self):
-        cname = self.internal_address()
-        r53 = Route53()
-        r53.add_remove_record(self.name, "CNAME", cname)
 
     def terminate(self):
         self._parent.terminate()

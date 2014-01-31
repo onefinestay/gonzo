@@ -1,7 +1,6 @@
 from abc import abstractproperty, abstractmethod
 from boto.exception import BotoServerError
 
-from gonzo.backends import get_current_cloud
 from gonzo.config import config_proxy as config
 from gonzo.exceptions import NoSuchResourceError
 
@@ -10,7 +9,8 @@ class BaseStack(object):
 
     running_state = abstractproperty
 
-    def __init__(self, stack_id):
+    def __init__(self, cloud, stack_id=None):
+        self.cloud = cloud
         self._stack_id = stack_id
         self._refresh()
 
@@ -19,7 +19,7 @@ class BaseStack(object):
             self.__class__.__module__, self.__class__.__name__, self.id)
 
     def _refresh(self):
-        orchestration_connection = get_current_cloud().orchestration_connection
+        orchestration_connection = self.cloud.orchestration_connection
         self._parent = orchestration_connection.describe_stacks(
             stack_name_or_id=self.id
         )[0]
@@ -64,10 +64,15 @@ class BaseStack(object):
     def delete(self):
         pass
 
+    @abstractmethod
+    def get_instances(self):
+        pass
+
 
 class BotoCfnStack(BaseStack):
 
     running_state = 'CREATE_COMPLETE'
+    instance_type = 'AWS::EC2::Instance'
 
     @property
     def description(self):
@@ -91,7 +96,7 @@ class BotoCfnStack(BaseStack):
 
     @property
     def resources(self):
-        orchestration_connection = get_current_cloud().orchestration_connection
+        orchestration_connection = self.cloud.orchestration_connection
         return orchestration_connection.describe_stack_resources(
             stack_name_or_id=self.name,
         )
@@ -117,3 +122,10 @@ class BotoCfnStack(BaseStack):
 
     def delete(self):
         self._parent.delete()
+
+    def get_instances(self):
+        instance_refs = [res for res in self.resources
+                         if res.resource_type == self.instance_type]
+
+        return [self.cloud.get_instance_by_id(ref.physical_resource_id)
+                for ref in instance_refs]

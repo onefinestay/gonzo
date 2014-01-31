@@ -6,9 +6,9 @@ from urlparse import urlparse
 
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
-from gonzo.config import config_proxy as config
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
+from gonzo.config import config_proxy as config
 
 
 class Cloud(BaseCloud):
@@ -27,14 +27,14 @@ class Cloud(BaseCloud):
         return self.compute_connection.api.flavors.list()
 
     def _list_stacks(self):
-        stacks = self.orchestration_connection.list_stacks()
-        return map(self.stack_class, [s.stack_id for s in stacks])
+        raw_stacks = self.orchestration_connection.list_stacks()
+        return map(self._instantiate_stack, [s.stack_id for s in raw_stacks])
 
     def get_stack(self, stack_name_or_id):
-        potential_stacks = self.orchestration_connection.describe_stacks(
+        raw_stacks = self.orchestration_connection.describe_stacks(
             stack_name_or_id=stack_name_or_id)
 
-        return self.stack_class(potential_stacks[0].stack_id)
+        return self._instantiate_stack(raw_stacks[0].stack_id)
 
     def create_security_group(self, sg_name):
         """ Creates a security group """
@@ -138,9 +138,9 @@ class Cloud(BaseCloud):
             template_body=template,
         )
 
-        return self.stack_class(stack_id)
+        return self._instantiate_stack(stack_id)
 
     def terminate_stack(self, stack_name_or_id):
-        stack = self.stack_class(stack_name_or_id)
+        stack = self._instantiate_stack(stack_name_or_id)
         stack.delete()
         return stack

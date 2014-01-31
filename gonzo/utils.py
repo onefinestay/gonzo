@@ -1,3 +1,4 @@
+import csv
 import sys
 
 
@@ -25,8 +26,10 @@ def abort(message=None):
 
 
 def csv_list(value):
-    return value.split(',')
+    for line in csv.reader([value], skipinitialspace=True):
+        return line
 
 
 def csv_dict(value):
-    return dict(kv.split('=') for kv in value.split(','))
+    for line in csv.reader([value], skipinitialspace=True):
+        return dict(kv.split('=') for kv in line)
