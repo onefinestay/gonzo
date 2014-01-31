@@ -14,6 +14,11 @@ def test_launch(get_parsed_doc, wait_for_stack_complete, print_stack,
     cloud = get_cloud.return_value
     unique_name = get_hostname.return_value
 
+    instance = Mock(name='instance')
+    stack = Mock(name='stack')
+    stack.get_instances.return_value = [instance]
+    cloud.launch_stack.return_value = stack
+
     params = Mock(stack_name='stackname', template_uri=None,
                   template_params=None)
 
@@ -30,5 +35,6 @@ def test_launch(get_parsed_doc, wait_for_stack_complete, print_stack,
     assert_called_with(get_parsed_doc, unique_name, desired_template_uri,
                        'ORCHESTRATION_TEMPLATE_PARAMS', None)
     assert cloud.launch_stack.called
+    assert instance.create_dns_entries_from_tag.called
     assert wait_for_stack_complete.called
     assert print_stack.called

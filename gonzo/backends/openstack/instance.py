@@ -1,6 +1,5 @@
 import datetime
 
-from gonzo.aws.route53 import Route53
 from gonzo.backends.base.instance import BaseInstance
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE, TIME_FORMAT
 from gonzo.config import config_proxy as config
@@ -8,6 +7,7 @@ from gonzo.config import config_proxy as config
 
 class Instance(BaseInstance):
     running_state = 'ACTIVE'
+    internal_address_dns_type = 'A'
 
     def _refresh(self):
         self._parent = self._parent.manager.get(self._parent.id)
@@ -69,11 +69,6 @@ class Instance(BaseInstance):
         private = privates[0]
         ip = private['addr']
         return ip
-
-    def create_dns_entry(self):
-        ip = self.internal_address()
-        r53 = Route53()
-        r53.replace_a_record(ip, self.name)
 
     def terminate(self):
         self._parent.delete()
