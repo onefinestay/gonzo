@@ -10,7 +10,13 @@ from gonzo.config import config_proxy as config
 class DNS(DNSService):
     """ CRUD record sets on route53.
     Attempting to mask how convoluted the boto implementaton for dealing with
-    R53 is at the moment """
+    R53 is at the moment
+
+    config usage:
+
+        ``'DNS_SERVICE': 'route53'``
+
+    """
 
     def __init__(
             self, zone_name=None, aws_access_key_id=None,
