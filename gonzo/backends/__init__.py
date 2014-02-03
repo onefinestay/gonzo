@@ -1,6 +1,8 @@
+import imp
 import logging
+import os
 
-from gonzo.backends.dns import exceptions
+from gonzo import exceptions
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
 
@@ -14,6 +16,26 @@ def get_current_cloud():
     return cloud_module.Cloud()
 
 
+def get_dns_service():
+    service_name = config.DNS.lower()
+    path_to_services = os.path.join(os.path.dirname(__file__), 'dns')
+
+    try:
+        module = imp.find_module(
+            service_name, [path_to_services])
+    except ImportError:
+        raise exceptions.ConfigurationError(
+            'DNS option {dns_provider} does not exist. '.format(
+                dns_provider=service_name,
+            )
+        )
+
+    dns_module = imp.load_module(service_name, *module)
+    dns_service = dns_module.DNS()
+
+    return dns_service
+
+
 def get_next_hostname(env_type):
     """ Calculate the next hostname for a given environment, server_type
         returns the full hostname, including the counter, e.g.
@@ -21,7 +43,7 @@ def get_next_hostname(env_type):
     """
     record_name = "-".join(["_count", env_type])
     cloud = get_current_cloud()
-    dns  cloud.dns
+    dns = cloud.dns
 
     try:
         count_value = dns.get_values_by_name(record_name)[0]

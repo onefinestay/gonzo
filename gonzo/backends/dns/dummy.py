@@ -1,12 +1,18 @@
 import logging
 import sys
 
-from gonzo.backends.dns import DNSService
+from gonzo.backends.base.dns import DNSService
 
 logger = logging.getLogger(__name__)
 
 
 class DNS(DNSService):
+    """ "BlackHole" for DNS record requests.
+
+    config usage:
+        ``'DNS_SERVICE': 'dummy'``
+
+    """
     def __init__(self):
         self._warn()
 

@@ -2,7 +2,7 @@ from boto.route53.connection import Route53Connection
 from boto.route53.record import ResourceRecordSets
 from boto.route53.exception import DNSServerError
 
-from gonzo.backends.dns import DNSService
+from gonzo.backends.base.dns import DNSService
 from gonzo.config import config_proxy as config
 
 

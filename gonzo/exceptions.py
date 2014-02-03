@@ -12,3 +12,7 @@ class DataError(Exception):
 
 class NoSuchResourceError(Exception):
     pass
+
+
+class DNSRecordUpdateError(Exception):
+    pass
