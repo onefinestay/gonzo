@@ -18,7 +18,7 @@ def get_current_cloud():
 
 def get_dns_service():
     service_name = config.DNS.lower()
-    path_to_services = os.path.join(os.path.dirname(__file__), 'dns')
+    path_to_services = os.path.join(os.path.dirname(__file__), 'dns_services')
 
     try:
         module = imp.find_module(
