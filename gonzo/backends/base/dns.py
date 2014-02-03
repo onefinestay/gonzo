@@ -31,3 +31,7 @@ class DNSService(object):
     @abstractmethod
     def fqdn(self, name):
         """ Utility to turn a hostname into a FQDN """
+
+    @abstractmethod
+    def delete_dns_entries(self):
+        """ Delete all DNS records for an instance """
