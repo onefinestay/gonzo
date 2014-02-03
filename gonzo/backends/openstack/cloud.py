@@ -9,6 +9,7 @@ from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
 
 
 class Cloud(BaseCloud):
@@ -59,9 +60,12 @@ class Cloud(BaseCloud):
         """ Find image by name """
         try:
             return self.compute_connection.api.images.find(name=name)
-        except (NotFound, NoUniqueMatch):
-            # in case we want to do/throw something else later
-            raise
+        except NotFound:
+            raise NoSuchResourceError(
+                "No images found with name {}".format(name))
+        except NoUniqueMatch:
+            raise TooManyResultsError(
+                "More than one image found with name {}".format(name))
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
