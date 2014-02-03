@@ -1,7 +1,5 @@
 from abc import abstractproperty, abstractmethod
 
-from gonzo.aws.route53 import Route53
-
 
 class BaseInstance(object):
     """ Wrapper for cloud instances
@@ -85,9 +83,15 @@ class BaseInstance(object):
     def internal_address(self):
         pass
 
-    @abstractmethod
     def create_dns_entry(self, name=None):
-        pass
+        address = self.internal_address()
+        record_type = self.internal_address_dns_type
+        if name is None:
+            name = self.name
+
+        cloud = get_current_cloud()
+        dns_service = cloud.dns
+        dns_service.add_remove_record(name, record_type, address)
 
     def create_dns_entries_from_tag(self, key='cnames'):
         if key not in self.tags:
@@ -97,9 +101,10 @@ class BaseInstance(object):
             self.create_dns_entry(name)
 
     def delete_dns_entries(self):
-        r53 = Route53()
+        cloud = get_current_cloud()
+        dns_service = cloud.dns
         value = self.internal_address()
-        r53.delete_dns_by_value(value)
+        dns_service.delete_dns_by_value(value)
 
     @abstractmethod
     def update(self):

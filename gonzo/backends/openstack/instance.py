@@ -71,11 +71,5 @@ class Instance(BaseInstance):
         ip = private['addr']
         return ip
 
-    def create_dns_entry(self):
-        cloud = get_current_cloud()
-        dns = cloud.dns
-        ip = self.internal_address()
-        dns.replace_a_record(ip, self.name)
-
     def terminate(self):
         self._parent.delete()
