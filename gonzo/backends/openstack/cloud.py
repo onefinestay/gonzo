@@ -47,14 +47,8 @@ class Cloud(BaseCloud):
         self.compute_connection.create_image(instance, name)
         return self.get_image_by_name(name)
 
-    def delete_image_by_name(self, name):
-        try:
-            image = self.get_image_by_name(name)
-        except NotFound:
-            # No such image to delete
-            pass
-        else:
-            self.imaging_connection.delete(image)
+    def delete_image(self, image):
+        self.imaging_connection.delete(image)
 
     def get_image_by_name(self, name):
         """ Find image by name """

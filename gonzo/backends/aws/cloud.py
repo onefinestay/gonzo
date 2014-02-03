@@ -85,15 +85,9 @@ class Cloud(BaseCloud):
         self.compute_connection.create_image(instance.id, name, no_reboot=True)
         return self.get_image_by_name(name)
 
-    def delete_image_by_name(self, name):
-        try:
-            image = self.get_image_by_name(name)
-        except KeyError as err:
-            if "not found" not in err.message:
-                raise
-        else:
-            self.compute_connection.deregister_image(
-                image.id, delete_snapshot=True)
+    def delete_image(self, image):
+        self.compute_connection.deregister_image(
+            image.id, delete_snapshot=True)
 
     def get_image_by_name(self, name):
         """ Find image by name """
