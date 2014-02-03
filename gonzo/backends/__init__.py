@@ -46,17 +46,19 @@ def get_next_hostname(env_type):
     dns_service = cloud.dns
 
     try:
-        count_value = dns_service.get_values_by_name(record_name)[0]
+        values = dns_service.get_values_by_name(record_name)
+    except exceptions.DNSRecordNotFoundError:
+        dns_service.add_remove_record(record_name, "TXT", "1")
+    else:
+        count_value = values[0]
         next_count = int(count_value.replace('\"', '')) + 1
-    except (IndexError, ValueError):
-        next_count = 1
 
-    try:
-        dns.update_record(record_name, "TXT", "%s" % next_count)
-    except exceptions.DNSRecordUpdateError as exc:
-        logger.exception(
-            'Failed updating DNS record %s: %s', record_name, exc)
-        raise
+        try:
+            dns_service.update_record(record_name, "TXT", "%s" % next_count)
+        except exceptions.DNSRecordUpdateError as exc:
+            logger.exception(
+                'Failed updating DNS record %s: %s', record_name, exc)
+            raise
 
     name = "%s-%03d" % (env_type, next_count)
     logger.debug('next host name is "{}"'.format(name))
