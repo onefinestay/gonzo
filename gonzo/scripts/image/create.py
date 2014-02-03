@@ -3,6 +3,7 @@
 """
 from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
+from gonzo.utils import abort
 
 
 def image_create(args):
@@ -18,8 +19,7 @@ def main(args):
     try:
         image_create(args)
     except CommandError as ex:
-        print ex
-        print
+        abort(ex.message)
 
 
 def init_parser(parser):

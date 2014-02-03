@@ -3,6 +3,7 @@
 """
 
 from gonzo.exceptions import CommandError
+from gonzo.utils import abort
 
 
 def terminate(args):
@@ -13,8 +14,7 @@ def main(args):
     try:
         terminate(args)
     except CommandError as ex:
-        print ex
-        print
+        abort(ex.message)
 
 
 def init_parser(parser):

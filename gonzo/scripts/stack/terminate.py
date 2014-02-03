@@ -8,6 +8,7 @@ from time import sleep
 from gonzo.exceptions import CommandError, NoSuchResourceError
 from gonzo.scripts.utils import colorize
 from gonzo.backends import get_current_cloud
+from gonzo.utils import abort
 
 
 def show_delete_progress(stack):
@@ -67,8 +68,7 @@ def main(args):
     try:
         terminate(args)
     except CommandError as ex:
-        print ex
-        print
+        abort(ex.message)
 
 
 def init_parser(parser):

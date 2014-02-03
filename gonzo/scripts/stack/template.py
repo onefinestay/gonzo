@@ -7,7 +7,7 @@ from boto.exception import BotoServerError
 
 from gonzo.backends import generate_stack_template, get_current_cloud
 from gonzo.exceptions import CommandError
-from gonzo.utils import csv_dict
+from gonzo.utils import csv_dict, abort
 
 
 def template(args):
@@ -36,8 +36,7 @@ def main(args):
     try:
         template(args)
     except CommandError as ex:
-        print ex
-        print
+        abort(ex.message)
 
 
 template_help = """
