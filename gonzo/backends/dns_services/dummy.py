@@ -37,9 +37,6 @@ class DNS(DNSService):
     def replace_a_record(self, *args, **kwargs):
         logger.info('no DNS handler for "replace_a_record"')
 
-    def get_record_by_value(self, *args, **kwargs):
-        logger.info('no DNS handler for "get_record_by_value"')
-
     def get_values_by_name(self, *args, **kwargs):
         logger.info('no DNS handler for "get_values_by_name"')
         return []
@@ -47,5 +44,5 @@ class DNS(DNSService):
     def fqdn(self, *args, **kwargs):
         logger.info('no DNS handler for "fqdn"')
 
-    def delete_dns_entries(self):
-        logger.info('no DNS handler for "delete_dns_entries"')
+    def delete_dns_by_value(self, get_values_by_name):
+        logger.info('no DNS handler for "delete_dns_by_value"')

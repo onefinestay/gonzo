@@ -43,10 +43,10 @@ def get_next_hostname(env_type):
     """
     record_name = "-".join(["_count", env_type])
     cloud = get_current_cloud()
-    dns = cloud.dns
+    dns_service = cloud.dns
 
     try:
-        count_value = dns.get_values_by_name(record_name)[0]
+        count_value = dns_service.get_values_by_name(record_name)[0]
         next_count = int(count_value.replace('\"', '')) + 1
     except (IndexError, ValueError):
         next_count = 1
@@ -59,6 +59,7 @@ def get_next_hostname(env_type):
         raise
 
     name = "%s-%03d" % (env_type, next_count)
+    logger.debug('next host name is "{}"'.format(name))
     return name
 
 

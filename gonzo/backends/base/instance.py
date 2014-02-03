@@ -1,5 +1,7 @@
 from abc import abstractproperty, abstractmethod
 
+from gonzo.backends import get_current_cloud
+
 
 class BaseInstance(object):
     """ Wrapper for cloud instances

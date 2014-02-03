@@ -21,10 +21,6 @@ class DNSService(object):
         """ replace ip address on A record """
 
     @abstractmethod
-    def get_record_by_value(self, value):
-        """ Returns the record with value """
-
-    @abstractmethod
     def get_values_by_name(self, name):
         """ Returns the values all records by name """
 
@@ -33,5 +29,5 @@ class DNSService(object):
         """ Utility to turn a hostname into a FQDN """
 
     @abstractmethod
-    def delete_dns_entries(self):
-        """ Delete all DNS records for an instance """
+    def delete_dns_by_value(self, value):
+        """ Delete DNS record """

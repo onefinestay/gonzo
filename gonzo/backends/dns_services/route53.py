@@ -2,6 +2,7 @@ from boto.route53.connection import Route53Connection
 from boto.route53.record import ResourceRecordSets
 from boto.route53.exception import DNSServerError
 
+from gonzo import exceptions
 from gonzo.backends.base.dns import DNSService
 from gonzo.config import config_proxy as config
 
@@ -93,6 +94,8 @@ class DNS(DNSService):
     def get_values_by_name(self, name):
         """ Returns the values in a named record """
         record = self.get_record_by_name(name)
+        if not record:
+            raise exceptions.DNSRecordNotFoundError(name)
         return record.resource_records  # pylint: disable=E1103
 
     def fqdn(self, name):
