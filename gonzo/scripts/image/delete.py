@@ -5,8 +5,8 @@ from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
 
 
-def image_create(args):
-    """ Create an image for a given instance, identified by name
+def image_delete(args):
+    """ Delete an image for a given instance, identified by name
     """
 
     cloud = get_current_cloud()
@@ -15,7 +15,7 @@ def image_create(args):
 
 def main(args):
     try:
-        image_create(args)
+        image_delete(args)
     except CommandError as ex:
         print ex
         print
