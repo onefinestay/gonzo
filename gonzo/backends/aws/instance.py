@@ -7,6 +7,7 @@ from gonzo.backends.base.instance import BaseInstance
 
 class Instance(BaseInstance):
     running_state = 'running'
+    internal_address_dns_type = 'CNAME'
 
     @property
     def name(self):
@@ -54,10 +55,14 @@ class Instance(BaseInstance):
         return self._parent.public_dns_name
 
     def create_dns_entry(self):
-        cname = self.internal_address()
+        address = self.internal_address()
+        record_type = self.internal_address_dns_type
+        if name is None:
+            name = self.name
+
         cloud = get_current_cloud()
-        dns_provider = cloud.dns
-        dns_provider.add_remove_record(self.name, "CNAME", cname)
+        r53 = cloud.dns
+        r53.add_remove_record(name, record_type, address)
 
     def terminate(self):
         self._parent.terminate()

@@ -17,6 +17,9 @@ class BaseCloud(object):
     def __init__(self):
         self.dns = get_dns_service()
 
+    def _instantiate_stack(self, stack_name_or_id):
+        return self.stack_class(self, stack_id=stack_name_or_id)
+
     @abstractproperty
     def compute_connection(self):
         pass

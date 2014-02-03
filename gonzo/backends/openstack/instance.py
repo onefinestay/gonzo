@@ -8,6 +8,7 @@ from gonzo.config import config_proxy as config
 
 class Instance(BaseInstance):
     running_state = 'ACTIVE'
+    internal_address_dns_type = 'A'
 
     def _refresh(self):
         self._parent = self._parent.manager.get(self._parent.id)

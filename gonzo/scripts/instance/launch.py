@@ -39,7 +39,9 @@ def launch(args):
                                size=args.size,
                                user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
+                               extra_tags=args.extra_tags,
                                owner=username)
+    instance.create_dns_entries_from_tag(args.dns_tag)
     wait_for_instance_boot(instance, args.color)
     configure_instance(instance)
     print "Created instance {}".format(instance.name)
@@ -63,10 +65,20 @@ Specify additional security groups to create (if
 necessary) and assign. Server type and gonzo security
 groups will be automatically defined."""
 
+additional_tags_help = """
+Specify additional tags to assign (if necessary). server_type, environment and
+owner will be automatically defined."""
+
 user_data_help = """
 File or URL containing user-data to be passed to new
 instances and run by cloud-init. Can utilize parameters.
 See template/userdata_template."""
+
+dns_help = """
+If Route53 is configured and instances are launched with a matching tag, the
+tag value is parsed as a comma separated list of DNS records to create. DNS
+records are suffixed with the current cloud's DNS_ZONE config.
+(Default: cnames)"""
 
 
 def init_parser(parser):
@@ -89,6 +101,13 @@ def init_parser(parser):
         '--additional-security-groups', dest='security_groups',
         metavar='sg-name[,sg-name]', type=csv_list,
         help=additional_security_group_help)
+    parser.add_argument(
+        '--extra-tags', dest='extra_tags',
+        metavar='key=val[,key=val..]', type=csv_dict,
+        help=additional_tags_help)
+    parser.add_argument(
+        '--dns-tag', dest='dns_tag', default='cnames',
+        help=dns_help)
     parser.add_argument(
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],

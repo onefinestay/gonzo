@@ -7,7 +7,7 @@ from time import sleep
 
 from gonzo.exceptions import CommandError, NoSuchResourceError
 from gonzo.scripts.utils import colorize
-from gonzo.backends import terminate_stack
+from gonzo.backends import get_current_cloud
 
 
 def show_delete_progress(stack):
@@ -49,8 +49,14 @@ def wait_until_stack_deleted(window, stack):
 def terminate(args):
     """ Launch stacks """
 
-    stack = terminate_stack(args.stack_name)
+    cloud = get_current_cloud()
+    stack = cloud.get_stack(args.stack_name)
     stack_name = stack.name  # Get the name before it's deleted
+
+    for instance in stack.get_instances():
+        instance.delete_dns_entries()
+
+    stack.delete()
     show_delete_progress(stack)
 
     colorize_ = partial(colorize, use_color=args.color)
