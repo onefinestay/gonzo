@@ -50,8 +50,12 @@ def get_next_hostname(env_type):
     except exceptions.DNSRecordNotFoundError:
         dns_service.add_remove_record(record_name, "TXT", "1")
     else:
-        count_value = values[0]
-        next_count = int(count_value.replace('\"', '')) + 1
+
+        try:
+            count_value = values[0]
+            next_count = int(count_value.replace('\"', '')) + 1
+        except (IndexError, ValueError):
+            next_count = 1
 
         try:
             dns_service.update_record(record_name, "TXT", "%s" % next_count)

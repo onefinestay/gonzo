@@ -13,36 +13,32 @@ class DNS(DNSService):
         ``'DNS_SERVICE': 'dummy'``
 
     """
-    def __init__(self):
-        self._warn()
-
-    def _warn(self):
+    def _warn(self, handler_name):
         sys.stdout.write(
-            'No DNS Service is configured. '
-            'Host names will not be available!'
+            'No DNS handler is configured for "{}"\n'.format(handler_name)
         )
 
     def add_remove_record(self, *args, **kwargs):
-        logger.info('no DNS handler for "add_remove_record"')
+        self._warn("add_remove_record")
 
     def delete_record(self, *args, **kwargs):
-        logger.info('no DNS handler for "delete_record"')
+        self._warn("delete_record")
 
     def update_record(self, *args, **kwargs):
-        logger.info('no DNS handler for "update_record"')
+        self._warn("update_record")
 
     def get_record_by_name(self, *args, **kwargs):
-        logger.info('no DNS handler for "get_record_by_name"')
+        self._warn("get_record_by_name")
 
     def replace_a_record(self, *args, **kwargs):
-        logger.info('no DNS handler for "replace_a_record"')
+        self._warn("replace_a_record")
 
     def get_values_by_name(self, *args, **kwargs):
-        logger.info('no DNS handler for "get_values_by_name"')
+        self._warn("get_values_by_name")
         return []
 
     def fqdn(self, *args, **kwargs):
-        logger.info('no DNS handler for "fqdn"')
+        self._warn("fqdn")
 
     def delete_dns_by_value(self, get_values_by_name):
-        logger.info('no DNS handler for "delete_dns_by_value"')
+        self._warn("delete_dns_by_value")
