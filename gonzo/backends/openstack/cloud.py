@@ -67,26 +67,26 @@ class Cloud(BaseCloud):
         """ Return a list of AZs - as single characters, no region info"""
         return [OPENSTACK_AVAILABILITY_ZONE]
 
-    _nova_client = None
+    _nova_client_instance = None
 
     @property
-    def nova_client(self):
-        if self._nova_client is None:
-            self._nova_client = nova_client.Client(
+    def _nova_client(self):
+        if self._nova_client_instance is None:
+            self._nova_client_instance = nova_client.Client(
                 config.CLOUD['USERNAME'],
                 config.CLOUD['PASSWORD'],
                 config.CLOUD['TENANT_NAME'],
                 config.CLOUD['AUTH_URL'],
                 service_type="compute")
-        return self._nova_client
+        return self._nova_client_instance
 
     @property
     def compute_connection(self):
-        return self.nova_client.servers
+        return self._nova_client.servers
 
     @property
     def imaging_connection(self):
-        return self.nova_client.images
+        return self._nova_client.images
 
     _orchestration_connection = None
 
