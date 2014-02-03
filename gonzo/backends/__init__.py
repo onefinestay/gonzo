@@ -112,20 +112,26 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
 
+def generate_stack_template(stack_type, stack_name,
+                            template_uri, template_params):
+    template_uri = config.get_namespaced_cloud_config_value(
+        'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
+    if template_uri is None:
+        raise ValueError('A template must be specified by argument or '
+                         'in config')
+
+    return get_parsed_document(stack_name, template_uri,
+                               'ORCHESTRATION_TEMPLATE_PARAMS',
+                               template_params)
+
+
 def launch_stack(stack_name, template_uri, template_params):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
 
-    template_uri = config.get_namespaced_cloud_config_value(
-        'ORCHESTRATION_TEMPLATE_URIS', stack_name, override=template_uri)
-    if template_uri is None:
-        raise ValueError('A template must be specified by argument or '
-                         'in config')
-
-    template = get_parsed_document(unique_stack_name, template_uri,
-                                   'ORCHESTRATION_TEMPLATE_PARAMS',
-                                   template_params)
+    template = generate_stack_template(stack_name, unique_stack_name,
+                                       template_uri, template_params)
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)
