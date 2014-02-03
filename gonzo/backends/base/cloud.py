@@ -1,5 +1,4 @@
 from abc import abstractmethod, abstractproperty
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
 
 
 class BaseCloud(object):
@@ -81,18 +80,6 @@ class BaseCloud(object):
     @abstractmethod
     def create_image(self, instance, name):
         """ Capture an image of an instance and name it """
-
-    def delete_image_by_name(self, name):
-        """ Find image by name and delete it. Do nothing if no image found """
-        try:
-            image = self.get_image_by_name(name)
-        except NoSuchResourceError:
-            # No such image to delete
-            pass
-        except TooManyResultsError:
-            raise
-        else:
-            self.delete_image(image)
 
     @abstractmethod
     def delete_image(self, image):
