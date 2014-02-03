@@ -78,6 +78,14 @@ class BaseCloud(object):
         pass
 
     @abstractmethod
+    def create_image(self, instance, name):
+        """ Capture an image of an instance and name it """
+
+    @abstractmethod
+    def delete_image(self, image):
+        """ Delete a given image. """
+
+    @abstractmethod
     def get_image_by_name(self, name):
         """ Find image by name """
 

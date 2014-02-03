@@ -9,6 +9,7 @@ from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
 
 
 class Cloud(BaseCloud):
@@ -42,32 +43,48 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance, name)
+        return self.get_image_by_name(name)
+
+    def delete_image(self, image):
+        self.imaging_connection.delete(image)
+
     def get_image_by_name(self, name):
         """ Find image by name """
         try:
             return self.compute_connection.api.images.find(name=name)
-        except (NotFound, NoUniqueMatch):
-            # in case we want to do/throw something else later
-            raise
+        except NotFound:
+            raise NoSuchResourceError(
+                "No images found with name {}".format(name))
+        except NoUniqueMatch:
+            raise TooManyResultsError(
+                "More than one image found with name {}".format(name))
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
         return [OPENSTACK_AVAILABILITY_ZONE]
 
-    _compute_connection = None
+    _nova_client_instance = None
 
     @property
-    def compute_connection(self):
-        if self._compute_connection is None:
-
-            client = nova_client.Client(
+    def _nova_client(self):
+        if self._nova_client_instance is None:
+            self._nova_client_instance = nova_client.Client(
                 config.CLOUD['USERNAME'],
                 config.CLOUD['PASSWORD'],
                 config.CLOUD['TENANT_NAME'],
                 config.CLOUD['AUTH_URL'],
                 service_type="compute")
-            self._compute_connection = client.servers
-        return self._compute_connection
+        return self._nova_client_instance
+
+    @property
+    def compute_connection(self):
+        return self._nova_client.servers
+
+    @property
+    def imaging_connection(self):
+        return self._nova_client.images
 
     _orchestration_connection = None
 

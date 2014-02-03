@@ -30,7 +30,8 @@ def get_next_hostname(env_type):
 
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
-                    security_groups=None, extra_tags=None, owner=None):
+                    security_groups=None, extra_tags=None,
+                    image_name=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -50,7 +51,8 @@ def launch_instance(env_type, size=None,
 
     name = get_next_hostname(env_type)
 
-    image_name = config.CLOUD['IMAGE_NAME']
+    image_name = config.get_cloud_config_value('IMAGE_NAME',
+                                               override=image_name)
 
     if size is None:
         sizes = config.SIZES

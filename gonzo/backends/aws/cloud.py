@@ -6,6 +6,7 @@ from gonzo.backends.aws.instance import Instance
 from gonzo.backends.aws.stack import Stack
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
 
 
 class Cloud(BaseCloud):
@@ -80,15 +81,24 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance.id, name, no_reboot=True)
+        return self.get_image_by_name(name)
+
+    def delete_image(self, image):
+        self.compute_connection.deregister_image(
+            image.id, delete_snapshot=True)
+
     def get_image_by_name(self, name):
         """ Find image by name """
         images = self.compute_connection.get_all_images(filters={
             'name': name,
         })
         if len(images) == 0:
-            raise KeyError("{} not found in image list".format(name))
+            raise NoSuchResourceError(
+                "No images found with name {}".format(name))
         if len(images) > 1:
-            raise KeyError(
+            raise TooManyResultsError(
                 "More than one image found with name {}".format(name))
         return images[0]
 

@@ -6,7 +6,6 @@ from functools import partial
 
 from prettytable import PrettyTable
 
-from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
 from gonzo.scripts.utils import colorize
 
@@ -105,11 +104,7 @@ def print_stack(stack, colorize_=default_colorize_):
 
 
 def main(args):
-    try:
-        show(args)
-    except CommandError as ex:
-        print ex
-        print
+    show(args)
 
 
 def init_parser(parser):
