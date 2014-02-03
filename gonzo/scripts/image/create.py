@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 """ Create instance images
 """
-from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
-from gonzo.utils import abort
 
 
 def image_create(args):
@@ -16,10 +14,7 @@ def image_create(args):
 
 
 def main(args):
-    try:
-        image_create(args)
-    except CommandError as ex:
-        abort(ex.message)
+    image_create(args)
 
 
 def init_parser(parser):

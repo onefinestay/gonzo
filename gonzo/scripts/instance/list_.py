@@ -4,10 +4,8 @@
 
 from functools import partial
 
-from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
 from gonzo.scripts.utils import colorize, print_table, format_uptime
-from gonzo.utils import abort
 
 
 headers = [
@@ -73,10 +71,7 @@ def list_(args):
 
 
 def main(args):
-    try:
-        list_(args)
-    except CommandError as ex:
-        abort(ex.message)
+    list_(args)
 
 
 def init_parser(parser):

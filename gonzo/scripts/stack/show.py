@@ -6,10 +6,8 @@ from functools import partial
 
 from prettytable import PrettyTable
 
-from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
 from gonzo.scripts.utils import colorize
-from gonzo.utils import abort
 
 
 def build_resources_table(stack, colorize_):
@@ -106,10 +104,7 @@ def print_stack(stack, colorize_=default_colorize_):
 
 
 def main(args):
-    try:
-        show(args)
-    except CommandError as ex:
-        abort(ex.message)
+    show(args)
 
 
 def init_parser(parser):

@@ -2,19 +2,13 @@
 """ Terminate instances
 """
 
-from gonzo.exceptions import CommandError
-from gonzo.utils import abort
-
 
 def terminate(args):
     print "Terminating", args  # TODO: add terminate
 
 
 def main(args):
-    try:
-        terminate(args)
-    except CommandError as ex:
-        abort(ex.message)
+    terminate(args)
 
 
 def init_parser(parser):
