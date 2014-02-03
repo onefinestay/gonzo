@@ -54,7 +54,7 @@ class Instance(BaseInstance):
     def internal_address(self):
         return self._parent.public_dns_name
 
-    def create_dns_entry(self):
+    def create_dns_entry(self, name=None):
         address = self.internal_address()
         record_type = self.internal_address_dns_type
         if name is None:
