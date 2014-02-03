@@ -17,7 +17,7 @@ class DNS(DNSService):
         self._warn()
 
     def _warn(self):
-        sys.stdout(
+        sys.stdout.write(
             'No DNS Service is configured. '
             'Host names will not be available!'
         )
@@ -46,3 +46,6 @@ class DNS(DNSService):
 
     def fqdn(self, *args, **kwargs):
         logger.info('no DNS handler for "fqdn"')
+
+    def delete_dns_entries(self):
+        logger.info('no DNS handler for "delete_dns_entries"')

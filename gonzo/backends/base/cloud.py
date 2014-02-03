@@ -1,6 +1,6 @@
 from abc import abstractmethod, abstractproperty
 
-from gonzo.backends.dns import get_dns_service
+from gonzo.backends import get_dns_service
 
 
 class BaseCloud(object):
