@@ -1,3 +1,4 @@
+from time import sleep
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
 from novaclient.v1_1 import client as nova_client
@@ -6,14 +7,16 @@ from urlparse import urlparse
 
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
+from gonzo.backends.openstack.image import Image
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
+from gonzo.exceptions import NoSuchResourceError, TooManyResultsError, UnhealthyResourceError
 
 
 class Cloud(BaseCloud):
 
+    image_class = Image
     instance_class = Instance
     stack_class = Stack
 
@@ -45,21 +48,43 @@ class Cloud(BaseCloud):
 
     def create_image(self, instance, name):
         self.compute_connection.create_image(instance, name)
-        return self.get_image_by_name(name)
+
+        image = None
+        retries = 0
+        while image is None and retries < 5:
+            try:
+                image = self.get_image_by_name(name)
+                break
+            except NoSuchResourceError:
+                retries += 1
+                sleep(5)
+
+        if image is None:
+            raise UnhealthyResourceError(
+                "Could not find image {} after creation request".format(name))
+
+        return image
 
     def delete_image(self, image):
         self.imaging_connection.delete(image)
 
     def get_image_by_name(self, name):
         """ Find image by name """
-        try:
-            return self.compute_connection.api.images.find(name=name)
-        except NotFound:
+        raw_images = self.imaging_connection.list()
+        raw_images = [raw_image for raw_image in raw_images
+                      if raw_image.name == name]
+
+        if len(raw_images) == 0:
             raise NoSuchResourceError(
                 "No images found with name {}".format(name))
-        except NoUniqueMatch:
+        if len(raw_images) > 1:
             raise TooManyResultsError(
                 "More than one image found with name {}".format(name))
+
+        return self._instantiate_image(raw_images[0])
+
+    def get_raw_image(self, image_id):
+        return self.imaging_connection.get(image_id)
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""

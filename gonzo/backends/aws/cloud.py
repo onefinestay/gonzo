@@ -2,6 +2,7 @@ import boto
 from boto import ec2 as boto_ec2
 from boto import cloudformation as boto_cfn
 
+from gonzo.backends.aws.image import Image
 from gonzo.backends.aws.instance import Instance
 from gonzo.backends.aws.stack import Stack
 from gonzo.backends.base.cloud import BaseCloud
@@ -12,6 +13,7 @@ from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
 class Cloud(BaseCloud):
     instance_class = Instance
     stack_class = Stack
+    image_class = Image
 
     def _list_instances(self):
         instances = []
@@ -91,16 +93,20 @@ class Cloud(BaseCloud):
 
     def get_image_by_name(self, name):
         """ Find image by name """
-        images = self.compute_connection.get_all_images(filters={
+        raw_images = self.compute_connection.get_all_images(filters={
             'name': name,
         })
-        if len(images) == 0:
+        if len(raw_images) == 0:
             raise NoSuchResourceError(
                 "No images found with name {}".format(name))
-        if len(images) > 1:
+        if len(raw_images) > 1:
             raise TooManyResultsError(
                 "More than one image found with name {}".format(name))
-        return images[0]
+        return self._instantiate_image(raw_images[0])
+
+    def get_raw_image(self, image_id):
+        """ Find image by id """
+        return self.compute_connection.get_image(image_id)
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""

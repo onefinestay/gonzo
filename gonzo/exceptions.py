@@ -12,3 +12,7 @@ class NoSuchResourceError(Exception):
 
 class TooManyResultsError(Exception):
     pass
+
+
+class UnhealthyResourceError(Exception):
+    pass

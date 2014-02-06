@@ -14,7 +14,7 @@ def image_delete(args):
     image = cloud.get_image_by_name(args.image_name)
 
     if image is not None:
-        cloud.delete_image(image)
+        image.delete()
 
 
 def main(args):
