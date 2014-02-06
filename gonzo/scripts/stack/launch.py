@@ -4,6 +4,7 @@
 import curses
 from functools import partial
 from time import sleep
+import os
 
 from gonzo.backends import launch_stack
 from gonzo.exceptions import DataError
@@ -57,8 +58,10 @@ def print_output(output):
 def launch(args):
     """ Launch stacks """
 
+    username = os.environ.get('USER')
+
     stack = launch_stack(args.stack_name, args.template_uri,
-                         args.template_params)
+                         args.template_params, owner=username)
     wait_for_stack_complete(stack)
 
     for instance in stack.get_instances():

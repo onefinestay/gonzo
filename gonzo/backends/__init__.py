@@ -1,3 +1,4 @@
+import json
 from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
@@ -111,25 +112,45 @@ def configure_instance(instance):
 
 
 def generate_stack_template(stack_type, stack_name,
-                            template_uri, template_params):
+                            template_uri, template_params,
+                            owner=None):
     template_uri = config.get_namespaced_cloud_config_value(
         'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
     if template_uri is None:
         raise ValueError('A template must be specified by argument or '
                          'in config')
 
-    return get_parsed_document(stack_name, template_uri,
+    template = get_parsed_document(stack_name, template_uri,
                                'ORCHESTRATION_TEMPLATE_PARAMS',
                                template_params)
+    if owner:
+        template = insert_stack_owner_output(template, owner)
+
+    return template
 
 
-def launch_stack(stack_name, template_uri, template_params):
+def insert_stack_owner_output(template, owner):
+    """ Adds a stack output to a template with key "owner" """
+    json_template = json.loads(template)
+
+    template_outputs = json_template.get('Outputs', {})
+    template_outputs['owner'] = {
+        'Value': owner,
+        'Description': "This stack's launcher"
+    }
+    json_template.update({'Outputs': template_outputs})
+
+    return json.dumps(json_template)
+
+
+def launch_stack(stack_name, template_uri, template_params, owner=None):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
 
     template = generate_stack_template(stack_name, unique_stack_name,
-                                       template_uri, template_params)
+                                       template_uri, template_params,
+                                       owner)
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)

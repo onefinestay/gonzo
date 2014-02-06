@@ -7,9 +7,10 @@ from gonzo.test_utils import assert_called_with
 
 @patch('gonzo.scripts.stack.launch.print_stack')
 @patch('gonzo.scripts.stack.launch.wait_for_stack_complete')
+@patch('gonzo.backends.insert_stack_owner_output')
 @patch('gonzo.backends.get_parsed_document')
-def test_launch(get_parsed_doc, wait_for_stack_complete, print_stack,
-                cloud_fixture, minimum_config_fixture):
+def test_launch(get_parsed_doc, stack_ownership, wait_for_stack_complete,
+                print_stack, cloud_fixture, minimum_config_fixture):
     (get_cloud, get_hostname, create_security_group) = cloud_fixture
     cloud = get_cloud.return_value
     unique_name = get_hostname.return_value

@@ -60,6 +60,10 @@ class BaseStack(object):
     def region(self):
         pass
 
+    @abstractproperty
+    def owner(self):
+        pass
+
     @abstractmethod
     def delete(self):
         pass
@@ -104,6 +108,13 @@ class BotoCfnStack(BaseStack):
     @property
     def outputs(self):
         return self._parent.outputs
+
+    @property
+    def owner(self):
+        for output in self.outputs:
+            if output.key == "owner":
+                return output.value
+        return None
 
     @property
     def is_complete(self):

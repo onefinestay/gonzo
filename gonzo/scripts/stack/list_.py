@@ -13,7 +13,7 @@ headers = [
     "name",
     "description",
     "status",
-    #"owner", # TODO: support ownership of stacks
+    "owner",
     "uptime",
 ]
 
@@ -30,7 +30,7 @@ def print_stack_summary(stack, use_color='auto'):
     status_colour = "green" if stack.is_complete else "red"
     status = colorize_(stack.status, status_colour)
 
-    #owner = stack.tags.get("owner", "--")
+    owner = stack.owner
 
     uptime = format_uptime(stack.launch_time)
     uptime = colorize_(uptime, "blue")
@@ -39,7 +39,7 @@ def print_stack_summary(stack, use_color='auto'):
         name,
         description,
         status,
-        #owner,
+        owner,
         uptime,
     ]
     return result_list
