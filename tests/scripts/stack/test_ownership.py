@@ -4,7 +4,7 @@ from gonzo.backends import insert_stack_owner_output
 
 def test_ownership():
 
-    template = '''
+    template = """
 {
   "Resources" : {
     "existing_resource": {}
@@ -16,10 +16,10 @@ def test_ownership():
       "Description" : "existing description"
     }
   }
-}'''
+}"""
 
     template = insert_stack_owner_output(template=template,
-                                         owner='test-user')
+                                         owner="test-user")
     json_template = json.loads(template)
 
     resources = json_template.get("Resources", None)
@@ -32,8 +32,8 @@ def test_ownership():
 
     existing_output = outputs.get("existing_output", None)
     assert existing_output is not None
-    assert existing_output['Value'] == "existing value"
+    assert existing_output["Value"] == "existing value"
 
     owner_output = outputs.get("owner", None)
     assert owner_output is not None
-    assert owner_output['Value'] == "test-user"
+    assert owner_output["Value"] == "test-user"
