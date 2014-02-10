@@ -1,4 +1,3 @@
-from time import sleep
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
 from novaclient.v1_1 import client as nova_client
@@ -10,9 +9,7 @@ from gonzo.backends.openstack.image import Image
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import (NoSuchResourceError,
-                              MultipleResourcesError,
-                              UnhealthyResourceError)
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
@@ -49,22 +46,7 @@ class Cloud(BaseCloud):
 
     def create_image(self, instance, name):
         self.compute_connection.create_image(instance, name)
-
-        image = None
-        retries = 0
-        while image is None and retries < 5:
-            try:
-                image = self.get_image_by_name(name)
-                break
-            except NoSuchResourceError:
-                retries += 1
-                sleep(5)
-
-        if image is None:
-            raise UnhealthyResourceError(
-                "Could not find image {} after creation request".format(name))
-
-        return image
+        return self.get_image_by_name(name)
 
     def delete_image(self, image):
         self.imaging_connection.delete(image)
