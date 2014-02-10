@@ -1,9 +1,6 @@
-from abc import abstractproperty, abstractmethod
-
-
 class BaseImage(object):
 
-    available_state = abstractproperty
+    available_state = 'ACTIVE'
 
     def __init__(self, cloud, image_id=None):
         self.cloud = cloud
@@ -14,23 +11,24 @@ class BaseImage(object):
         return "<%s.%s %s>" % (
             self.__class__.__module__, self.__class__.__name__, self.id)
 
-    @abstractproperty
+    @property
     def name(self):
-        pass
+        return self._parent.name
 
-    @abstractmethod
     def _refresh(self):
         """ responsible for updating the details of this resource from the
         resource's cloud """
+        self._parent = self.cloud.get_raw_image(self.id)
 
-    @abstractproperty
+    @property
     def is_complete(self):
-        pass
+        self._refresh()
+        return self._parent.status in [self.available_state, 'FAILED']
 
-    @abstractproperty
+    @property
     def is_healthy(self):
-        pass
+        self._refresh()
+        return self._parent.status == self.available_state
 
-    @abstractmethod
     def delete(self):
-        pass
+        self.cloud.delete_image(self._parent)
