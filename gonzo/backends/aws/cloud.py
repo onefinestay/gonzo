@@ -102,7 +102,8 @@ class Cloud(BaseCloud):
         if len(raw_images) > 1:
             raise TooManyResultsError(
                 "More than one image found with name {}".format(name))
-        return self._instantiate_image(raw_images[0])
+
+        return self._instantiate_image(raw_images[0].id)
 
     def get_raw_image(self, image_id):
         """ Find image by id """
@@ -146,6 +147,7 @@ class Cloud(BaseCloud):
             security_groups, key_name, user_data=None, tags=None):
 
         image = self.get_image_by_name(image_name)
+
         reservation = self.compute_connection.run_instances(
             image.id, key_name=key_name,
             security_groups=security_groups,
