@@ -123,16 +123,18 @@ def generate_stack_template(stack_type, stack_name,
     template = get_parsed_document(stack_name, template_uri,
                                'ORCHESTRATION_TEMPLATE_PARAMS',
                                template_params)
-    if owner:
-        template = insert_stack_owner_output(template, owner)
 
-    return template
-
-
-def insert_stack_owner_output(template, owner):
-    """ Adds a stack output to a template with key "owner" """
+    # Parse as json for validation and for injecting gonzo defaults
     json_template = json.loads(template)
 
+    if owner:
+        json_template = insert_stack_owner_output(json_template, owner)
+
+    return json.dumps(json_template)
+
+
+def insert_stack_owner_output(json_template, owner):
+    """ Adds a stack output to a template with key "owner" """
     template_outputs = json_template.get('Outputs', {})
     template_outputs['owner'] = {
         'Value': owner,
@@ -140,7 +142,7 @@ def insert_stack_owner_output(template, owner):
     }
     json_template.update({'Outputs': template_outputs})
 
-    return json.dumps(json_template)
+    return json_template
 
 
 def launch_stack(stack_name, template_uri, template_params, owner=None):
