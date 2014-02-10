@@ -169,7 +169,7 @@ class BotoCfnStack(BaseStack):
     @property
     def is_healthy(self):
         return self.is_complete and \
-            self._parent.stack_status == 'CREATE_COMPLETE'
+            self._parent.stack_status == self.running_state
 
     def delete(self):
         self._parent.delete()
