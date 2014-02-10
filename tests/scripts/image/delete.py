@@ -11,7 +11,7 @@ def test_no_image_to_delete(cloud_fixture):
     params = Mock(image_name='image_name')
     try:
         image_delete(params)
-    except:
+    except NoSuchResourceError:
         pass
 
     assert not cloud_fixture.delete_image.called
@@ -24,7 +24,7 @@ def test_no_unique_image_to_delete(cloud_fixture):
     params = Mock(image_name='image_name')
     try:
         image_delete(params)
-    except:
+    except MultipleResourcesError:
         pass
 
     assert not cloud_fixture.delete_image.called
