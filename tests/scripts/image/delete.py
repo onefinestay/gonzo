@@ -1,5 +1,5 @@
 from mock import Mock
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 from gonzo.scripts.image.delete import image_delete
 from gonzo.test_utils import assert_called_with
 
@@ -19,7 +19,7 @@ def test_no_image_to_delete(cloud_fixture):
 
 def test_no_unique_image_to_delete(cloud_fixture):
 
-    cloud_fixture.get_image_by_name = Mock(side_effect=TooManyResultsError)
+    cloud_fixture.get_image_by_name = Mock(side_effect=MultipleResourcesError)
 
     params = Mock(image_name='image_name')
     try:

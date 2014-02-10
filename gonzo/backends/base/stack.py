@@ -2,7 +2,7 @@ from abc import abstractproperty, abstractmethod
 from boto.exception import BotoServerError
 
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class BaseStack(object):
@@ -123,7 +123,7 @@ class BotoCfnStack(BaseStack):
                     physical_resource_id))
 
         if len(resources) > 1:
-            raise TooManyResultsError(
+            raise MultipleResourcesError(
                 "Found more that one resource with physical id {}".format(
                     physical_resource_id))
 

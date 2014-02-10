@@ -7,7 +7,7 @@ from gonzo.backends.aws.instance import Instance
 from gonzo.backends.aws.stack import Stack
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
@@ -100,7 +100,7 @@ class Cloud(BaseCloud):
             raise NoSuchResourceError(
                 "No images found with name {}".format(name))
         if len(raw_images) > 1:
-            raise TooManyResultsError(
+            raise MultipleResourcesError(
                 "More than one image found with name {}".format(name))
 
         return self._instantiate_image(raw_images[0].id)

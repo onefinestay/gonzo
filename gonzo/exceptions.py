@@ -10,7 +10,7 @@ class NoSuchResourceError(Exception):
     pass
 
 
-class TooManyResultsError(Exception):
+class MultipleResourcesError(Exception):
     pass
 
 

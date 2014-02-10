@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Delete instance images
 """
-from gonzo.exceptions import TooManyResultsError, NoSuchResourceError
+from gonzo.exceptions import MultipleResourcesError, NoSuchResourceError
 from gonzo.backends import get_current_cloud
 from gonzo.utils import abort
 
@@ -22,7 +22,7 @@ def main(args):
         image_delete(args)
     except NoSuchResourceError as ex:
         print ex.message
-    except TooManyResultsError as ex:
+    except MultipleResourcesError as ex:
         abort(ex.message)
 
 

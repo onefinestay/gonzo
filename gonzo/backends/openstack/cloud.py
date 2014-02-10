@@ -2,7 +2,6 @@ from time import sleep
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
 from novaclient.v1_1 import client as nova_client
-from novaclient.exceptions import NoUniqueMatch, NotFound
 from urlparse import urlparse
 
 from gonzo.backends.base.cloud import BaseCloud
@@ -11,7 +10,9 @@ from gonzo.backends.openstack.image import Image
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import NoSuchResourceError, TooManyResultsError, UnhealthyResourceError
+from gonzo.exceptions import (NoSuchResourceError,
+                              MultipleResourcesError,
+                              UnhealthyResourceError)
 
 
 class Cloud(BaseCloud):
@@ -78,7 +79,7 @@ class Cloud(BaseCloud):
             raise NoSuchResourceError(
                 "No images found with name {}".format(name))
         if len(raw_images) > 1:
-            raise TooManyResultsError(
+            raise MultipleResourcesError(
                 "More than one image found with name {}".format(name))
 
         return self._instantiate_image(raw_images[0])
