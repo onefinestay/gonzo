@@ -3,7 +3,7 @@ from gonzo.backends.base.image import BaseImage
 
 class Image(BaseImage):
 
-    running_state = 'ACTIVE'
+    available_state = 'ACTIVE'
 
     @property
     def name(self):
@@ -15,12 +15,12 @@ class Image(BaseImage):
     @property
     def is_complete(self):
         self._refresh()
-        return self._parent.status in [self.running_state]
+        return self._parent.status in [self.available_state]
 
     @property
     def is_healthy(self):
         self._refresh()
-        return self._parent.status == self.running_state
+        return self._parent.status == self.available_state
 
     def delete(self):
         self.cloud.delete_image(self._parent)

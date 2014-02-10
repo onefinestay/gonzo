@@ -3,7 +3,7 @@ from abc import abstractproperty, abstractmethod
 
 class BaseImage(object):
 
-    running_state = abstractproperty
+    available_state = abstractproperty
 
     def __init__(self, cloud, image_id=None):
         self.cloud = cloud
@@ -20,7 +20,8 @@ class BaseImage(object):
 
     @abstractmethod
     def _refresh(self):
-        pass
+        """ responsible for updating the details of this resource from the
+        resource's cloud """
 
     @abstractproperty
     def is_complete(self):
