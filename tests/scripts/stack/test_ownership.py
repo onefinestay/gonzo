@@ -4,7 +4,7 @@ from gonzo.backends import generate_stack_template
 
 
 @patch("gonzo.backends.get_parsed_document")
-def test_ownership(get_parsed_doc, minimum_config_fixture):
+def test_ownership(get_parsed_doc):
 
     template = """
 {
