@@ -1,20 +1,18 @@
 import json
-from mock import patch, Mock
-from gonzo.backends import generate_stack_template
+
+from mock import patch
+
+from gonzo.backends.template_utils import generate_stack_template
 
 
-@patch("gonzo.backends.get_default_instance_tags_dict")
-@patch("gonzo.backends.get_parsed_document")
-def test_instance_tagging(get_parsed_doc, get_tags_dict, cloud_fixture):
+@patch("gonzo.backends.template_utils.get_default_instance_tags_dict")
+@patch("gonzo.backends.template_utils.get_parsed_document")
+def test_instance_tagging(get_parsed_doc, get_tags_dict):
     tags_dict = {
         "environment": "overwritten",
         "extra": "value",
     }
     get_tags_dict.return_value = tags_dict
-
-    (get_cloud, get_hostname, create_security_group) = cloud_fixture
-    cloud = get_cloud.return_value
-    cloud.stack_class = Mock(instance_type="instance-type")
 
     template = """
 {
@@ -47,6 +45,7 @@ def test_instance_tagging(get_parsed_doc, get_tags_dict, cloud_fixture):
     get_parsed_doc.return_value = template
 
     template = generate_stack_template(None, None, "template_uri", None,
+                                       instance_resource_type="instance-type",
                                        owner="test-user")
     template_dict = json.loads(template)
 

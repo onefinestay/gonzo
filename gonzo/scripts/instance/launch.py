@@ -7,8 +7,9 @@ import os
 import sys
 from time import sleep
 
-from gonzo.backends import launch_instance, configure_instance
+from gonzo.backends import launch_instance
 from gonzo.exceptions import CommandError, DataError
+from gonzo.backends.instance_utils import configure_instance
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
 
