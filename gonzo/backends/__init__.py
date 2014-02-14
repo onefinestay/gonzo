@@ -3,7 +3,7 @@ from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
 from gonzo.backends.instance_utils import add_default_security_groups
 from gonzo.backends.template_utils import (generate_stack_template,
-                                          get_default_instance_tags_dict)
+                                           get_default_instance_tags_dict)
 
 
 def get_current_cloud():
