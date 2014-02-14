@@ -1,8 +1,10 @@
 import json
-from gonzo.backends import insert_stack_owner_output
+from mock import patch
+from gonzo.backends import generate_stack_template
 
 
-def test_ownership():
+@patch("gonzo.backends.get_parsed_document")
+def test_ownership(get_parsed_doc, minimum_config_fixture):
 
     template = """
 {
@@ -17,13 +19,14 @@ def test_ownership():
     }
   }
 }"""
+    get_parsed_doc.return_value = template
 
-    template = insert_stack_owner_output(template=template,
-                                         owner="test-user")
-    json_template = json.loads(template)
+    template = generate_stack_template(None, None, "template_uri", None,
+                                       owner="test-user")
+    template_dict = json.loads(template)
 
-    resources = json_template.get("Resources", None)
-    outputs = json_template.get("Outputs", None)
+    resources = template_dict.get("Resources", None)
+    outputs = template_dict.get("Outputs", None)
 
     assert resources is not None
     assert outputs is not None
