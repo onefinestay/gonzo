@@ -125,24 +125,24 @@ def generate_stack_template(stack_type, stack_name,
                                template_params)
 
     # Parse as json for validation and for injecting gonzo defaults
-    json_template = json.loads(template)
+    template_dict = json.loads(template)
 
     if owner:
-        json_template = insert_stack_owner_output(json_template, owner)
+        template_dict = insert_stack_owner_output(template_dict, owner)
 
-    return json.dumps(json_template)
+    return json.dumps(template_dict)
 
 
-def insert_stack_owner_output(json_template, owner):
+def insert_stack_owner_output(template_dict, owner):
     """ Adds a stack output to a template with key "owner" """
-    template_outputs = json_template.get('Outputs', {})
+    template_outputs = template_dict.get('Outputs', {})
     template_outputs['owner'] = {
         'Value': owner,
-        'Description': "This stack's launcher"
+        'Description': "This stack's launcher (Managed by Gonzo)"
     }
-    json_template.update({'Outputs': template_outputs})
+    template_dict.update({'Outputs': template_outputs})
 
-    return json_template
+    return template_dict
 
 
 def launch_stack(stack_name, template_uri, template_params, owner=None):
