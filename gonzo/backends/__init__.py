@@ -29,6 +29,19 @@ def get_next_hostname(env_type):
     return name
 
 
+def get_default_instance_tags_dict(environment, server_type, owner=None):
+    """ Generate a tag dictionary suitable for identifying instance ownership
+     and for identifying instances for gonzo releases.
+    """
+    default_tags = {
+        'environment': environment,
+        'server_type': server_type,
+    }
+    if owner:
+        default_tags['owner'] = owner
+    return default_tags
+
+
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
                     security_groups=None, extra_tags=None, owner=None):
@@ -63,13 +76,8 @@ def launch_instance(env_type, size=None,
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = extra_tags or {}
-    tags.update({
-        'environment': environment,
-        'server_type': server_type,
-    })
-
-    if owner:
-        tags['owner'] = owner
+    tags.update(
+        get_default_instance_tags_dict(environment, server_type, owner))
 
     security_groups = add_default_security_groups(server_type, security_groups)
     for security_group in security_groups:
@@ -130,6 +138,10 @@ def generate_stack_template(stack_type, stack_name,
     if owner:
         template_dict = insert_stack_owner_output(template_dict, owner)
 
+    template_dict = insert_stack_instance_tags(template_dict,
+                                               stack_name,
+                                               owner)
+
     return json.dumps(template_dict)
 
 
@@ -141,6 +153,39 @@ def insert_stack_owner_output(template_dict, owner):
         'Description': "This stack's launcher (Managed by Gonzo)"
     }
     template_dict.update({'Outputs': template_outputs})
+
+    return template_dict
+
+
+def insert_stack_instance_tags(template_dict, environment, owner):
+    """ Updates tags of each instance resource to include gonzo defaults
+    """
+    resource_type = get_current_cloud().stack_class.instance_type
+
+    resources = template_dict.get('Resources', {})
+    for resource_name, resource_details in resources.items():
+        if resource_details['Type'] != resource_type:
+            # We only care about tagging instances
+            continue
+
+        # Ensure proper tag structure exists
+        if 'Properties' not in resource_details:
+            resource_details['Properties'] = {}
+        if 'Tags' not in resource_details['Properties']:
+            resource_details['Properties']['Tags'] = []
+
+        existing_tags = resource_details['Properties']['Tags']
+        default_tags = get_default_instance_tags_dict(
+            environment, resource_name, owner)
+
+        # Remove potential duplicates
+        for existing_tag in existing_tags:
+            if existing_tag['Key'] in default_tags.keys():
+                existing_tags.remove(existing_tag)
+
+        # Add defaults
+        for key, value in default_tags.iteritems():
+            existing_tags.append({'Key': key, 'Value': value})
 
     return template_dict
 

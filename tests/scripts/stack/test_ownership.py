@@ -9,7 +9,9 @@ def test_ownership(get_parsed_doc):
     template = """
 {
   "Resources" : {
-    "existing_resource": {}
+    "existing_resource": {
+        "Type": "moot"
+    }
   },
 
   "Outputs" : {
