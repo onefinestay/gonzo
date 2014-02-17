@@ -4,11 +4,8 @@
 import curses
 from functools import partial
 from time import sleep
-<<<<<<< HEAD
 import sys
-=======
 import os
->>>>>>> master
 
 from gonzo.backends import launch_stack
 from gonzo.exceptions import DataError, UnhealthyResourceError
