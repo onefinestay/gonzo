@@ -22,7 +22,8 @@ def test_launch(get_parsed_doc, wait_for_stack_complete,
     cloud.launch_stack.return_value = stack
 
     params = Mock(stack_name='stackname', template_uri=None,
-                  template_params=None)
+                  template_params=None, create_images=False,
+                  delete_after_complete=False, quiet=False)
 
     desired_template_uri = 'do-want-this'
     config.CLOUD.update({

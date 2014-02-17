@@ -2,7 +2,7 @@ from abc import abstractproperty, abstractmethod
 from boto.exception import BotoServerError
 
 from gonzo.config import config_proxy as config
-from gonzo.exceptions import NoSuchResourceError
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class BaseStack(object):
@@ -40,12 +40,24 @@ class BaseStack(object):
     def resources(self):
         pass
 
+    @abstractmethod
+    def get_resource(self, physical_resource_id):
+        pass
+
+    @abstractmethod
+    def create_or_update_images(self):
+        pass
+
     @abstractproperty
     def outputs(self):
         pass
 
     @abstractproperty
     def is_complete(self):
+        pass
+
+    @abstractproperty
+    def is_healthy(self):
         pass
 
     @abstractproperty
@@ -105,6 +117,40 @@ class BotoCfnStack(BaseStack):
             stack_name_or_id=self.name,
         )
 
+    def get_resource(self, physical_resource_id):
+        resources = [resource for resource in self.resources
+                     if resource.physical_resource_id == physical_resource_id]
+
+        if len(resources) == 0:
+            raise NoSuchResourceError(
+                "Could not find stack resource with physical id {}".format(
+                    physical_resource_id))
+
+        if len(resources) > 1:
+            raise MultipleResourcesError(
+                "Found more that one resource with physical id {}".format(
+                    physical_resource_id))
+
+        return resources[0]
+
+    def create_or_update_images(self):
+        requested_images = []
+        for instance in self.get_instances():
+            instance_resource = self.get_resource(
+                physical_resource_id=instance.id)
+            image_name = instance_resource.logical_resource_id
+
+            try:
+                existing_image = self.cloud.get_image_by_name(image_name)
+                existing_image.delete()
+            except NoSuchResourceError:
+                pass
+
+            requested_images.append(
+                self.cloud.create_image(instance, image_name))
+
+        return requested_images
+
     @property
     def outputs(self):
         return self._parent.outputs
@@ -130,6 +176,11 @@ class BotoCfnStack(BaseStack):
                 raise NoSuchResourceError
             else:
                 raise err
+
+    @property
+    def is_healthy(self):
+        return self.is_complete and \
+            self._parent.stack_status == self.running_state
 
     def delete(self):
         self._parent.delete()

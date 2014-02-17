@@ -2,15 +2,18 @@ import boto
 from boto import ec2 as boto_ec2
 from boto import cloudformation as boto_cfn
 
+from gonzo.backends.aws.image import Image
 from gonzo.backends.aws.instance import Instance
 from gonzo.backends.aws.stack import Stack
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
     instance_class = Instance
     stack_class = Stack
+    image_class = Image
 
     def _list_instances(self):
         instances = []
@@ -80,17 +83,31 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance.id, name, no_reboot=True)
+        return self.get_image_by_name(name)
+
+    def delete_image(self, image):
+        self.compute_connection.deregister_image(
+            image.id, delete_snapshot=True)
+
     def get_image_by_name(self, name):
         """ Find image by name """
-        images = self.compute_connection.get_all_images(filters={
+        raw_images = self.compute_connection.get_all_images(filters={
             'name': name,
         })
-        if len(images) == 0:
-            raise KeyError("{} not found in image list".format(name))
-        if len(images) > 1:
-            raise KeyError(
+        if len(raw_images) == 0:
+            raise NoSuchResourceError(
+                "No images found with name {}".format(name))
+        if len(raw_images) > 1:
+            raise MultipleResourcesError(
                 "More than one image found with name {}".format(name))
-        return images[0]
+
+        return self._instantiate_image(raw_images[0].id)
+
+    def get_raw_image(self, image_id):
+        """ Find image by id """
+        return self.compute_connection.get_image(image_id)
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
@@ -130,6 +147,7 @@ class Cloud(BaseCloud):
             security_groups, key_name, user_data=None, tags=None):
 
         image = self.get_image_by_name(image_name)
+
         reservation = self.compute_connection.run_instances(
             image.id, key_name=key_name,
             security_groups=security_groups,

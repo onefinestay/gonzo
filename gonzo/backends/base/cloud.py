@@ -9,11 +9,15 @@ class BaseCloud(object):
         availability zones
     """
 
+    image_class = abstractproperty
     instance_class = abstractproperty
     stack_class = abstractproperty
 
     def _instantiate_stack(self, stack_name_or_id):
         return self.stack_class(self, stack_id=stack_name_or_id)
+
+    def _instantiate_image(self, image_id):
+        return self.image_class(self, image_id=image_id)
 
     @abstractproperty
     def compute_connection(self):
@@ -78,8 +82,20 @@ class BaseCloud(object):
         pass
 
     @abstractmethod
+    def create_image(self, instance, name):
+        """ Capture an image of an instance and name it """
+
+    @abstractmethod
+    def delete_image(self, image):
+        """ Delete a given image. """
+
+    @abstractmethod
     def get_image_by_name(self, name):
         """ Find image by name """
+
+    @abstractmethod
+    def get_raw_image(self, image_id):
+        """ Fetch an image from this cloud """
 
     def get_instance_by_name(self, name):
         """ Return instance having given name """
