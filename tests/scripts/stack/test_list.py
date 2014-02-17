@@ -12,6 +12,7 @@ def test_print_stack(colorize):
         name='name',
         description="description",
         status="status",
+        owner='owner',
         uptime=datetime(2000, 01, 01),
     )
 
@@ -19,6 +20,7 @@ def test_print_stack(colorize):
         'fancy-cloud',
         'description',
         'fancy-cloud',
+        'owner',
         'fancy-cloud',
     ]
     result = print_stack_summary(stack)
