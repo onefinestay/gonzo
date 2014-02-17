@@ -1,15 +1,19 @@
 import json
+
 from mock import patch
-from gonzo.backends import generate_stack_template
+
+from gonzo.backends.template_utils import generate_stack_template
 
 
-@patch("gonzo.backends.get_parsed_document")
+@patch("gonzo.backends.template_utils.get_parsed_document")
 def test_ownership(get_parsed_doc):
 
     template = """
 {
   "Resources" : {
-    "existing_resource": {}
+    "existing_resource": {
+        "Type": "moot"
+    }
   },
 
   "Outputs" : {
@@ -22,6 +26,7 @@ def test_ownership(get_parsed_doc):
     get_parsed_doc.return_value = template
 
     template = generate_stack_template(None, None, "template_uri", None,
+                                       instance_resource_type="",
                                        owner="test-user")
     template_dict = json.loads(template)
 

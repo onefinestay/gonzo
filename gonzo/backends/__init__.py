@@ -1,7 +1,9 @@
-import json
 from gonzo.aws.route53 import Route53
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
+from gonzo.backends.instance_utils import add_default_security_groups
+from gonzo.backends.template_utils import (generate_stack_template,
+                                           get_default_instance_tags_dict)
 
 
 def get_current_cloud():
@@ -63,13 +65,8 @@ def launch_instance(env_type, size=None,
     key_name = config.CLOUD['PUBLIC_KEY_NAME']
 
     tags = extra_tags or {}
-    tags.update({
-        'environment': environment,
-        'server_type': server_type,
-    })
-
-    if owner:
-        tags['owner'] = owner
+    tags.update(
+        get_default_instance_tags_dict(environment, server_type, owner))
 
     security_groups = add_default_security_groups(server_type, security_groups)
     for security_group in security_groups:
@@ -87,74 +84,21 @@ def launch_instance(env_type, size=None,
         user_data=user_data, tags=tags)
 
 
-def add_default_security_groups(server_type, additional_security_groups=None):
-    # Set defaults
-    security_groups = [server_type, 'gonzo']
-
-    # Add argument passed groups
-    if additional_security_groups is not None:
-        security_groups += additional_security_groups
-
-    # Remove Duplicates
-    security_groups = list(set(security_groups))
-
-    return security_groups
-
-
 def create_if_not_exist_security_group(group_name):
     cloud = get_current_cloud()
     if not cloud.security_group_exists(group_name):
         cloud.create_security_group(group_name)
 
 
-def configure_instance(instance):
-    instance.create_dns_entry()
-
-
-def generate_stack_template(stack_type, stack_name,
-                            template_uri, template_params,
-                            owner=None):
-    template_uri = config.get_namespaced_cloud_config_value(
-        'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
-    if template_uri is None:
-        raise ValueError('A template must be specified by argument or '
-                         'in config')
-
-    template = get_parsed_document(stack_name, template_uri,
-                               'ORCHESTRATION_TEMPLATE_PARAMS',
-                               template_params)
-
-    # Parse as json for validation and for injecting gonzo defaults
-    template_dict = json.loads(template)
-
-    if owner:
-        template_dict = insert_stack_owner_output(template_dict, owner)
-
-    return json.dumps(template_dict)
-
-
-def insert_stack_owner_output(template_dict, owner):
-    """ Adds a stack output to a template with key "owner" """
-    template_outputs = template_dict.get('Outputs', {})
-    template_outputs['owner'] = {
-        'Value': owner,
-        'Description': "This stack's launcher (Managed by Gonzo)"
-    }
-    template_dict.update({'Outputs': template_outputs})
-
-    return template_dict
-
-
 def launch_stack(stack_name, template_uri, template_params, owner=None):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
-
+    cloud = get_current_cloud()
     template = generate_stack_template(stack_name, unique_stack_name,
                                        template_uri, template_params,
+                                       cloud.stack_class.instance_type,
                                        owner)
-
-    cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)
 
 
