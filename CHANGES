@@ -1,0 +1,11 @@
+Version 0.3.0
+--------------
+
+- Delete stack after completion
+- Capture instance images after stack creation
+- Capture / delete instance images
+- Additional tags from cli
+- Fixed: instance size lookup based on name
+- CloudFormation stack support
+- Supervisor start/stop commands
+
