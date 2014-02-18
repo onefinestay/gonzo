@@ -232,7 +232,7 @@ def set_current(release):
     release_dir = project_path("releases", release)
     symlink = project_path("releases", "current")
 
-    usudo('ln -sf {} {}'.format(release_dir, symlink))
+    usudo('ln -sfT {} {}'.format(release_dir, symlink))
 
 
 @task
