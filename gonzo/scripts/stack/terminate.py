@@ -5,7 +5,7 @@ import curses
 from functools import partial
 from time import sleep
 
-from gonzo.exceptions import CommandError, NoSuchResourceError
+from gonzo.exceptions import NoSuchResourceError
 from gonzo.scripts.utils import colorize
 from gonzo.backends import get_current_cloud
 
@@ -64,11 +64,7 @@ def terminate(args):
 
 
 def main(args):
-    try:
-        terminate(args)
-    except CommandError as ex:
-        print ex
-        print
+    terminate(args)
 
 
 def init_parser(parser):

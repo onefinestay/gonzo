@@ -1,18 +1,20 @@
 from boto.cloudformation import connection as cfn_boto
 from boto import regioninfo
 from novaclient.v1_1 import client as nova_client
-from novaclient.exceptions import NoUniqueMatch, NotFound
 from urlparse import urlparse
 
 from gonzo.backends.base.cloud import BaseCloud
 from gonzo.backends.openstack import OPENSTACK_AVAILABILITY_ZONE
+from gonzo.backends.openstack.image import Image
 from gonzo.backends.openstack.instance import Instance
 from gonzo.backends.openstack.stack import Stack
 from gonzo.config import config_proxy as config
+from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
 
+    image_class = Image
     instance_class = Instance
     stack_class = Stack
 
@@ -42,32 +44,55 @@ class Cloud(BaseCloud):
             sg_name, 'Rules for %s' % sg_name)
         return sg
 
+    def create_image(self, instance, name):
+        self.compute_connection.create_image(instance, name)
+        return self.get_image_by_name(name)
+
+    def delete_image(self, image):
+        self.imaging_connection.delete(image)
+
     def get_image_by_name(self, name):
         """ Find image by name """
-        try:
-            return self.compute_connection.api.images.find(name=name)
-        except (NotFound, NoUniqueMatch):
-            # in case we want to do/throw something else later
-            raise
+        raw_images = self.imaging_connection.list()
+        raw_images = [raw_image for raw_image in raw_images
+                      if raw_image.name == name]
+
+        if len(raw_images) == 0:
+            raise NoSuchResourceError(
+                "No images found with name {}".format(name))
+        if len(raw_images) > 1:
+            raise MultipleResourcesError(
+                "More than one image found with name {}".format(name))
+
+        return self._instantiate_image(raw_images[0])
+
+    def get_raw_image(self, image_id):
+        return self.imaging_connection.get(image_id)
 
     def get_available_azs(self):
         """ Return a list of AZs - as single characters, no region info"""
         return [OPENSTACK_AVAILABILITY_ZONE]
 
-    _compute_connection = None
+    _nova_client_instance = None
 
     @property
-    def compute_connection(self):
-        if self._compute_connection is None:
-
-            client = nova_client.Client(
+    def _nova_client(self):
+        if self._nova_client_instance is None:
+            self._nova_client_instance = nova_client.Client(
                 config.CLOUD['USERNAME'],
                 config.CLOUD['PASSWORD'],
                 config.CLOUD['TENANT_NAME'],
                 config.CLOUD['AUTH_URL'],
                 service_type="compute")
-            self._compute_connection = client.servers
-        return self._compute_connection
+        return self._nova_client_instance
+
+    @property
+    def compute_connection(self):
+        return self._nova_client.servers
+
+    @property
+    def imaging_connection(self):
+        return self._nova_client.images
 
     _orchestration_connection = None
 

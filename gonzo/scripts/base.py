@@ -6,14 +6,18 @@ import gonzo
 from gonzo.exceptions import ConfigurationError
 from gonzo.scripts import config
 
-from gonzo.scripts.stack import launch as stack_launch
-from gonzo.scripts.stack import list_ as stack_list
-from gonzo.scripts.stack import show as stack_show
-from gonzo.scripts.stack import terminate as stack_terminate
+from gonzo.scripts.image import create as image_create
+from gonzo.scripts.image import delete as image_delete
 
 from gonzo.scripts.instance import launch as instance_launch
 from gonzo.scripts.instance import list_ as instance_list
 from gonzo.scripts.instance import terminate as instance_terminate
+
+from gonzo.scripts.stack import launch as stack_launch
+from gonzo.scripts.stack import list_ as stack_list
+from gonzo.scripts.stack import show as stack_show
+from gonzo.scripts.stack import template as stack_template
+from gonzo.scripts.stack import terminate as stack_terminate
 
 
 def main():
@@ -24,8 +28,10 @@ def main():
     subparsers = parser.add_subparsers(help='subcommand help')
 
     for module in [config,
+                   image_create, image_delete,
                    instance_launch, instance_list, instance_terminate,
-                   stack_launch, stack_list, stack_show, stack_terminate]:
+                   stack_launch, stack_list, stack_show, stack_template,
+                   stack_terminate]:
 
         module_name = module.__name__.replace(
             '%s.' % gonzo.scripts.__name__, '')

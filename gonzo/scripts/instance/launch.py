@@ -8,7 +8,7 @@ import sys
 from time import sleep
 
 from gonzo.backends import launch_instance, configure_instance
-from gonzo.exceptions import CommandError, DataError
+from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
 
@@ -39,6 +39,7 @@ def launch(args):
                                size=args.size,
                                user_data_uri=args.user_data_uri,
                                user_data_params=args.user_data_params,
+                               image_name=args.image_name,
                                extra_tags=args.extra_tags,
                                owner=username)
     instance.create_dns_entries_from_tag(args.dns_tag)
@@ -50,8 +51,6 @@ def launch(args):
 def main(args):
     try:
         launch(args)
-    except CommandError as ex:
-        abort(ex.message)
     except DataError as ex:
         abort(ex.message)
 
@@ -84,6 +83,9 @@ records are suffixed with the current cloud's DNS_ZONE config.
 def init_parser(parser):
     parser.add_argument(
         'env_type', metavar='environment-server_type', help=env_type_pair_help)
+    parser.add_argument(
+        '--image-name', dest='image_name',
+        help="Name of image to boot from")
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")

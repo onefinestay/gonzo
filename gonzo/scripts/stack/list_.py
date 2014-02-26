@@ -4,7 +4,6 @@
 
 from functools import partial
 
-from gonzo.exceptions import CommandError
 from gonzo.backends import get_current_cloud
 from gonzo.scripts.utils import colorize, print_table, format_uptime, ellipsize
 
@@ -13,7 +12,7 @@ headers = [
     "name",
     "description",
     "status",
-    #"owner", # TODO: support ownership of stacks
+    "owner",
     "uptime",
 ]
 
@@ -30,7 +29,7 @@ def print_stack_summary(stack, use_color='auto'):
     status_colour = "green" if stack.is_complete else "red"
     status = colorize_(stack.status, status_colour)
 
-    #owner = stack.tags.get("owner", "--")
+    owner = stack.owner
 
     uptime = format_uptime(stack.launch_time)
     uptime = colorize_(uptime, "blue")
@@ -39,7 +38,7 @@ def print_stack_summary(stack, use_color='auto'):
         name,
         description,
         status,
-        #owner,
+        owner,
         uptime,
     ]
     return result_list
@@ -58,11 +57,7 @@ def list_(args):
 
 
 def main(args):
-    try:
-        list_(args)
-    except CommandError as ex:
-        print ex
-        print
+    list_(args)
 
 
 def init_parser(parser):

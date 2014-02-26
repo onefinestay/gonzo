@@ -1,8 +1,10 @@
 import imp
+import json
 import logging
 import os
 
 from gonzo import exceptions
+
 from gonzo.config import config_proxy as config
 from gonzo.helpers.document_loader import get_parsed_document
 
@@ -71,7 +73,8 @@ def get_next_hostname(env_type):
 
 def launch_instance(env_type, size=None,
                     user_data_uri=None, user_data_params=None,
-                    security_groups=None, extra_tags=None, owner=None):
+                    security_groups=None, extra_tags=None,
+                    image_name=None, owner=None):
     """ Launch instances
 
         Arguments:
@@ -91,7 +94,8 @@ def launch_instance(env_type, size=None,
 
     name = get_next_hostname(env_type)
 
-    image_name = config.CLOUD['IMAGE_NAME']
+    image_name = config.get_cloud_config_value('IMAGE_NAME',
+                                               override=image_name)
 
     if size is None:
         sizes = config.SIZES
@@ -151,20 +155,48 @@ def configure_instance(instance):
     instance.create_dns_entry()
 
 
-def launch_stack(stack_name, template_uri, template_params):
-    """ Launch stacks """
-
-    unique_stack_name = get_next_hostname(stack_name)
-
+def generate_stack_template(stack_type, stack_name,
+                            template_uri, template_params,
+                            owner=None):
     template_uri = config.get_namespaced_cloud_config_value(
-        'ORCHESTRATION_TEMPLATE_URIS', stack_name, override=template_uri)
+        'ORCHESTRATION_TEMPLATE_URIS', stack_type, override=template_uri)
     if template_uri is None:
         raise ValueError('A template must be specified by argument or '
                          'in config')
 
-    template = get_parsed_document(unique_stack_name, template_uri,
-                                   'ORCHESTRATION_TEMPLATE_PARAMS',
-                                   template_params)
+    template = get_parsed_document(stack_name, template_uri,
+                               'ORCHESTRATION_TEMPLATE_PARAMS',
+                               template_params)
+
+    # Parse as json for validation and for injecting gonzo defaults
+    template_dict = json.loads(template)
+
+    if owner:
+        template_dict = insert_stack_owner_output(template_dict, owner)
+
+    return json.dumps(template_dict)
+
+
+def insert_stack_owner_output(template_dict, owner):
+    """ Adds a stack output to a template with key "owner" """
+    template_outputs = template_dict.get('Outputs', {})
+    template_outputs['owner'] = {
+        'Value': owner,
+        'Description': "This stack's launcher (Managed by Gonzo)"
+    }
+    template_dict.update({'Outputs': template_outputs})
+
+    return template_dict
+
+
+def launch_stack(stack_name, template_uri, template_params, owner=None):
+    """ Launch stacks """
+
+    unique_stack_name = get_next_hostname(stack_name)
+
+    template = generate_stack_template(stack_name, unique_stack_name,
+                                       template_uri, template_params,
+                                       owner)
 
     cloud = get_current_cloud()
     return cloud.launch_stack(unique_stack_name, template)
