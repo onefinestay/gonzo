@@ -1,6 +1,9 @@
-from mock import patch, Mock
 import pytest
+from mock import patch, Mock
 
+
+import pdb
+pdb.set_trace()
 
 @pytest.yield_fixture
 def minimum_config_fixture():
