@@ -161,7 +161,8 @@ class BaseCloud(object):
         pass
 
     @abstractmethod
-    def launch_stack(self, name, template):
+    def launch_stack(self, name, template,
+                     timeout_in_minutes, disable_rollback):
         """ Launch a stack """
         pass
 

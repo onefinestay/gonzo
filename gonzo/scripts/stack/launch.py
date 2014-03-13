@@ -68,8 +68,10 @@ def launch(args):
     username = os.environ.get('USER')
 
     stack = launch_stack(args.stack_name, args.template_uri,
-                         args.template_params, owner=username)
-    wait_for_stack_complete(stack, args.quiet)
+                         args.template_params,
+                         args.timeout_in_minutes, args.disable_rollback,
+                         owner=username)
+    wait_for_stack_complete(stack, args.quiet,)
     if not stack.is_healthy:
         raise UnhealthyResourceError("Stack was not healthy upon completion.")
 
@@ -150,3 +152,13 @@ def init_parser(parser):
         '--color', dest='color', nargs='?', default='auto',
         choices=['never', 'auto', 'always'],
         help='display coloured output. (default: auto)')
+    parser.add_argument(
+        '--timeout-in-minutes', dest='timeout_in_minutes', default=720,
+        help="Set stack creation timeout in minutes")
+    parser.add_argument(
+        '--disable-rollback', dest='disable_rollback', action="store_true",
+        help="Disable destroying stacks on failures(Disabled by default)")
+    parser.add_argument(
+        '--enable-rollback', dest='disable_rollback', action="store_false",
+        help="Enable destroying stacks on failures(Disabled by default)")
+    parser.set_defaults(disable_rollback=True)

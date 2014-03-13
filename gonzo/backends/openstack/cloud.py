@@ -138,10 +138,13 @@ class Cloud(BaseCloud):
 
         return instance
 
-    def launch_stack(self, name, template):
+    def launch_stack(self, name, template,
+                     timeout_in_minutes, disable_rollback):
         stack_id = self.orchestration_connection.create_stack(
             stack_name=name,
             template_body=template,
+            timeout_in_minutes=timeout_in_minutes,
+            disable_rollback=disable_rollback,
         )
 
         return self._instantiate_stack(stack_id)

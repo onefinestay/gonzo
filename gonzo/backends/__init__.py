@@ -147,7 +147,8 @@ def insert_stack_owner_output(template_dict, owner):
     return template_dict
 
 
-def launch_stack(stack_name, template_uri, template_params, owner=None):
+def launch_stack(stack_name, template_uri, template_params,
+                 timeout_in_minutes, disable_rollback, owner=None):
     """ Launch stacks """
 
     unique_stack_name = get_next_hostname(stack_name)
@@ -157,7 +158,8 @@ def launch_stack(stack_name, template_uri, template_params, owner=None):
                                        owner)
 
     cloud = get_current_cloud()
-    return cloud.launch_stack(unique_stack_name, template)
+    return cloud.launch_stack(unique_stack_name, template,
+                              timeout_in_minutes, disable_rollback)
 
 
 def terminate_stack(stack_name_or_id):
