@@ -156,9 +156,6 @@ def init_parser(parser):
         '--timeout-in-minutes', dest='timeout_in_minutes', default=720,
         help="Set stack creation timeout in minutes")
     parser.add_argument(
-        '--disable-rollback', dest='disable_rollback', action="store_true",
-        help="Disable destroying stacks on failures(Disabled by default)")
-    parser.add_argument(
         '--enable-rollback', dest='disable_rollback', action="store_false",
         help="Enable destroying stacks on failures(Disabled by default)")
     parser.set_defaults(disable_rollback=True)
