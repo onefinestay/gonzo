@@ -13,6 +13,8 @@ class DNS(DNSService):
         ``'DNS_SERVICE': 'dummy'``
 
     """
+    name = 'dummy'
+
     def _warn(self, handler_name):
         sys.stdout.write(
             'No DNS handler is configured for "{}"\n'.format(handler_name)

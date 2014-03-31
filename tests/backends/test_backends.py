@@ -1,8 +1,126 @@
+import StringIO
+import types
+
+import pytest
 from mock import Mock, patch
 
+from gonzo.backends import get_current_cloud, get_dns_service, get_next_hostname
 from gonzo.backends import (get_next_hostname,
                             create_if_not_exist_security_group,
                             launch_instance)
+
+
+@pytest.yield_fixture
+def config():
+    config = types.ModuleType('Config', 'Dummy gonzo config')
+    config.CLOUDS = {
+        'amazon': {
+            'BACKEND': 'gonzo.backends.aws',
+        },
+        'openstack': {
+            'BACKEND': 'gonzo.backends.openstack',
+        }
+    }
+
+    with patch('gonzo.config.get_config_module') as get_config_module:
+        get_config_module.return_value = config
+        yield
+
+
+class TestBackends(object):
+    @pytest.mark.parametrize("cloud_name", [
+        "amazon",
+        "openstack",
+    ])
+    def test_get_cloud(self, cloud_name, config):
+        state = {
+            'cloud': cloud_name,
+            'region': 'regionname',
+        }
+
+        with patch('gonzo.config.global_state', state):
+            cloud = get_current_cloud()
+
+            assert cloud.name == cloud_name
+
+    @patch('boto.route53.connection.Route53Connection')
+    def test_get_route53_service(self, connection):
+        config = types.ModuleType('Config', 'Dummy gonzo config')
+        config.CLOUDS = {
+            'openstack': {
+                'BACKEND': 'gonzo.backends.openstack',
+                'DNS_SERVICE': 'route53',
+                'DNS_ZONE': 'example.com',
+                'AWS_ACCESS_KEY_ID': 'ABC',
+                'AWS_SECRET_ACCESS_KEY': 'ABC',
+            }
+        }
+
+        with patch('gonzo.config.get_config_module') as get_config_module:
+            get_config_module.return_value = config
+            dns_service = get_dns_service()
+
+            assert dns_service.name == 'route53'
+
+    def test_get_dummy_service(self):
+        config = types.ModuleType('Config', 'Dummy gonzo config')
+        config.CLOUDS = {
+            'openstack': {
+                'BACKEND': 'gonzo.backends.openstack',
+                'DNS_SERVICE': 'dummy',
+            }
+        }
+
+        with patch('gonzo.config.get_config_module') as get_config_module:
+            get_config_module.return_value = config
+            dns_service = get_dns_service()
+
+            assert dns_service.name == 'dummy'
+
+    def test_dummy_is_default(self):
+        config = types.ModuleType('Config', 'Dummy gonzo config')
+        config.CLOUDS = {
+            'openstack': {
+                'BACKEND': 'gonzo.backends.openstack',
+            }
+        }
+
+        with patch('gonzo.config.get_config_module') as get_config_module:
+            get_config_module.return_value = config
+            dns_service = get_dns_service()
+
+            assert dns_service.name == 'dummy'
+
+    @patch('boto.route53.connection.Route53Connection')
+    @patch('gonzo.backends.get_current_cloud')
+    def test_route53_get_next_hostname(self, get_cloud, connection):
+        cloud = Mock()
+        r53 = Mock()
+        cloud.dns = r53
+        cloud.dns.get_values_by_name.return_value = ['record']
+        get_cloud.return_value = cloud
+
+        config = types.ModuleType('Config', 'Dummy gonzo config')
+        config.CLOUDS = {
+            'openstack': {
+                'BACKEND': 'gonzo.backends.openstack',
+                'DNS_SERVICE': 'route53',
+                'DNS_ZONE': 'example.com',
+                'AWS_ACCESS_KEY_ID': 'ABC',
+                'AWS_SECRET_ACCESS_KEY': 'ABC',
+            }
+        }
+
+        with patch('gonzo.config.get_config_module') as get_config_module:
+            get_config_module.return_value = config
+
+            name = get_next_hostname('prod')
+
+            # check expected calls
+            assert r53.get_values_by_name.called
+            assert r53.update_record.called
+
+            assert name == 'prod-001'
 
 
 @patch('gonzo.backends.create_if_not_exist_security_group')
@@ -25,18 +143,7 @@ def test_launch_instance(get_cloud,
 
 
 
-@patch('gonzo.backends.dns_services.route53.DNS')
-def test_route53_get_next_hostname(Route53):
-    r53 = Route53()
-    r53.get_values_by_name.return_value = ['9']
-    name = get_next_hostname('prod')
 
-    # check expected calls
-    assert r53.get_values_by_name.called
-    assert r53.update_record.called
-    assert not r53.add_remove_record.called
-
-    assert name == 'prod-010'
 
 
 @patch('gonzo.backends.get_current_cloud')

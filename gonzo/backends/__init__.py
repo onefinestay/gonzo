@@ -46,6 +46,7 @@ def get_next_hostname(env_type):
     record_name = "-".join(["_count", env_type])
     cloud = get_current_cloud()
     dns_service = cloud.dns
+    next_count = 1
 
     try:
         values = dns_service.get_values_by_name(record_name)
@@ -57,7 +58,7 @@ def get_next_hostname(env_type):
             count_value = values[0]
             next_count = int(count_value.replace('\"', '')) + 1
         except (IndexError, ValueError):
-            next_count = 1
+            pass
 
         try:
             dns_service.update_record(record_name, "TXT", "%s" % next_count)

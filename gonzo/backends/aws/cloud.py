@@ -11,6 +11,7 @@ from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
+    name = 'amazon'
     instance_class = Instance
     stack_class = Stack
     image_class = Image

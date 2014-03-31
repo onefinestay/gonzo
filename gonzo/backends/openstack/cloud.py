@@ -13,7 +13,7 @@ from gonzo.exceptions import NoSuchResourceError, MultipleResourcesError
 
 
 class Cloud(BaseCloud):
-
+    name = 'openstack'
     image_class = Image
     instance_class = Instance
     stack_class = Stack

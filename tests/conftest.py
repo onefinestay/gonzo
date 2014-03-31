@@ -2,9 +2,6 @@ import pytest
 from mock import patch, Mock
 
 
-import pdb
-pdb.set_trace()
-
 @pytest.yield_fixture
 def minimum_config_fixture():
     cloud = {
@@ -18,13 +15,13 @@ def minimum_config_fixture():
     }
 
     with patch('gonzo.config.get_config_module') as get_config_module:
-            get_config_module.return_value = Mock(SIZES=sizes,
-                                                  CLOUDS={'cloudname': cloud})
-            with patch('gonzo.config.global_state', {
-                'cloud': 'cloudname',
-                'region': 'regionname',
-            }):
-                    yield get_config_module
+        get_config_module.return_value = Mock(SIZES=sizes,
+                                              CLOUDS={'cloudname': cloud})
+        with patch('gonzo.config.global_state', {
+            'cloud': 'cloudname',
+            'region': 'regionname',
+        }):
+            yield get_config_module
 
 
 @pytest.yield_fixture

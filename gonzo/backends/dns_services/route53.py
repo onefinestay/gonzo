@@ -17,6 +17,7 @@ class DNS(DNSService):
         ``'DNS_SERVICE': 'route53'``
 
     """
+    name = 'route53'
 
     def __init__(
             self, zone_name=None, aws_access_key_id=None,
