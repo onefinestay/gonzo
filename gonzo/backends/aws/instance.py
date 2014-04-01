@@ -1,6 +1,5 @@
 import datetime
 
-from gonzo.backends import get_current_cloud
 from gonzo.backends.aws import TIME_FORMAT
 from gonzo.backends.base.instance import BaseInstance
 

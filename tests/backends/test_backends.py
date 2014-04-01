@@ -1,29 +1,21 @@
-import StringIO
 import types
 
 import pytest
 from mock import Mock, patch
 
-from gonzo.backends import get_current_cloud, get_dns_service, get_next_hostname
-from gonzo.backends import (get_next_hostname,
-                            create_if_not_exist_security_group,
-                            launch_instance)
+from gonzo.backends import (
+    get_current_cloud, get_dns_service, get_next_hostname,
+    create_if_not_exist_security_group, launch_instance
+)
 
 
-@pytest.yield_fixture
-def config():
-    config = types.ModuleType('Config', 'Dummy gonzo config')
-    config.CLOUDS = {
-        'amazon': {
-            'BACKEND': 'gonzo.backends.aws',
-        },
-        'openstack': {
-            'BACKEND': 'gonzo.backends.openstack',
-        }
+@pytest.yield_fixture(autouse=True)
+def state():
+    state = {
+        'cloud': 'openstack',
+        'region': 'regionname',
     }
-
-    with patch('gonzo.config.get_config_module') as get_config_module:
-        get_config_module.return_value = config
+    with patch('gonzo.config.global_state', state):
         yield
 
 
@@ -32,16 +24,32 @@ class TestBackends(object):
         "amazon",
         "openstack",
     ])
-    def test_get_cloud(self, cloud_name, config):
+    def test_get_cloud(self, cloud_name):
+        config = types.ModuleType('Config', 'Dummy gonzo config')
+        config.CLOUDS = {
+            'amazon': {
+                'BACKEND': 'gonzo.backends.aws',
+            },
+            'openstack': {
+                'BACKEND': 'gonzo.backends.openstack',
+            }
+        }
+
         state = {
             'cloud': cloud_name,
             'region': 'regionname',
         }
 
-        with patch('gonzo.config.global_state', state):
-            cloud = get_current_cloud()
+        with patch('gonzo.config.get_config_module') as get_config_module, \
+             patch('gonzo.config.global_state', state):
 
-            assert cloud.name == cloud_name
+            get_config_module.return_value = config
+
+
+            with patch('gonzo.config.global_state', state):
+                cloud = get_current_cloud()
+
+                assert cloud.name == cloud_name
 
     @patch('boto.route53.connection.Route53Connection')
     def test_get_route53_service(self, connection):
@@ -140,10 +148,6 @@ def test_launch_instance(get_cloud,
     args, kwargs = cloud.launch_instance.call_args
     (name, image_name, instance_type,
      zone, key_name, tags) = args
-
-
-
-
 
 
 @patch('gonzo.backends.get_current_cloud')
