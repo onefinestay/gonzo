@@ -45,7 +45,6 @@ class TestBackends(object):
 
             get_config_module.return_value = config
 
-
             with patch('gonzo.config.global_state', state):
                 cloud = get_current_cloud()
 
