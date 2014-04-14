@@ -9,7 +9,7 @@ CLOUDS = {
         # ## For Openstack based clouds
         'BACKEND': 'gonzo.backends.openstack',
         # ## For AWS based clouds
-        #'BACKEND': 'gonzo.backends.aws',
+        # 'BACKEND': 'gonzo.backends.aws',
 
         # Openstack authentication details
         'TENANT_NAME': 'service',
