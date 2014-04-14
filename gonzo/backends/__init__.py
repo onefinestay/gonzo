@@ -165,9 +165,10 @@ def generate_stack_template(stack_type, stack_name,
         raise ValueError('A template must be specified by argument or '
                          'in config')
 
-    template = get_parsed_document(stack_name, template_uri,
-                               'ORCHESTRATION_TEMPLATE_PARAMS',
-                               template_params)
+    template = get_parsed_document(
+        stack_name, template_uri,
+        'ORCHESTRATION_TEMPLATE_PARAMS', template_params
+    )
 
     # Parse as json for validation and for injecting gonzo defaults
     template_dict = json.loads(template)

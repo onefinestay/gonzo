@@ -41,7 +41,7 @@ class TestBackends(object):
         }
 
         with patch('gonzo.config.get_config_module') as get_config_module, \
-             patch('gonzo.config.global_state', state):
+                patch('gonzo.config.global_state', state):
 
             get_config_module.return_value = config
 

@@ -7,8 +7,9 @@ import pytest
 from mock import ANY, Mock, patch, sentinel
 
 from gonzo.exceptions import ConfigurationError
-from gonzo.config import (get_config_module, StateDict, GlobalState,
-    LocalState, ConfigProxy)
+from gonzo.config import (
+    get_config_module, StateDict, GlobalState, LocalState,
+    ConfigProxy)
 from gonzo.test_utils import assert_called_once_with
 
 
