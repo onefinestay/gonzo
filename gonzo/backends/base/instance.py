@@ -11,8 +11,8 @@ class BaseInstance(object):
     running_state = abstractproperty
     internal_address_dns_type = abstractproperty
 
-    def __init__(self, parent):
-        self._parent = parent
+    def __init__(self, server):
+        self._server = server
 
     def __repr__(self):
         return "<%s.%s %s>" % (
@@ -20,7 +20,11 @@ class BaseInstance(object):
 
     @property
     def id(self):
-        return self._parent.id
+        return self._server.id
+
+    @abstractproperty
+    def cloud(self):
+        """The Cloud the Instance belongs to """
 
     @abstractproperty
     def name(self):
@@ -91,7 +95,7 @@ class BaseInstance(object):
         if name is None:
             name = self.name
 
-        cloud = get_current_cloud()
+        cloud = self.cloud
         dns_service = cloud.dns
         dns_service.add_remove_record(name, record_type, address)
 
