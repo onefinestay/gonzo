@@ -1,8 +1,9 @@
 import types
 
 import pytest
-from mock import Mock, MagicMock, patch, call
+from mock import Mock, MagicMock, PropertyMock, patch, call
 
+from gonzo import exceptions
 from gonzo.backends import (
     get_current_cloud, get_dns_service, get_next_hostname,
     create_if_not_exist_security_group, launch_instance)
@@ -42,7 +43,7 @@ def instances():
     os_server = MagicMock()
     os_server.addresses = os_addresses
 
-    aws = AwsInstance(parent=aws_server)
+    aws = AwsInstance(server=aws_server)
     os = OpenStackInstance(server=os_server)
     return (os, aws)
 
@@ -171,6 +172,36 @@ class TestDummyDNS(object):
 
                 expected_call = call('foo', 'A', SERVER_ADDRESS)
                 assert expected_call == dummy_svc.add_remove_record.call_args
+
+    def test_get_next_hostname(self, instances):
+        with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
+            dummy_svc = Mock(spec=DNS)
+            dummy_svc.get_values_by_name.return_value = ['1']
+            get_dns.return_value = dummy_svc
+
+            name = 'foo'
+            expected_record_name = "-".join(["_count", name])
+            expected_update_call = call(expected_record_name, "TXT", '2')
+
+            get_next_hostname(name)
+
+            assert expected_update_call == dummy_svc.update_record.call_args
+
+    def test_get_next_hostname_with_exception(self, instances):
+        with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
+            dummy_svc = Mock(spec=DNS)
+            dummy_svc.get_values_by_name.side_effect = exceptions.DNSRecordNotFoundError('test')
+            get_dns.return_value = dummy_svc
+
+            name = 'foo'
+            expected_record_name = "-".join(["_count", name])
+            expected_get_values_call = call(expected_record_name)
+            expected_add_remove_call = call(expected_record_name, "TXT", '1')
+
+            get_next_hostname(name)
+
+            assert expected_get_values_call == dummy_svc.get_values_by_name.call_args
+            assert expected_add_remove_call == dummy_svc.add_remove_record.call_args
 
 
 @patch('gonzo.backends.create_if_not_exist_security_group')
