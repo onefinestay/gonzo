@@ -1,12 +1,22 @@
 import types
 
 import pytest
-from mock import Mock, patch
+from mock import Mock, MagicMock, patch, call
 
 from gonzo.backends import (
     get_current_cloud, get_dns_service, get_next_hostname,
-    create_if_not_exist_security_group, launch_instance
-)
+    create_if_not_exist_security_group, launch_instance)
+from gonzo.backends.dns_services.dummy import DNS
+
+from gonzo.backends.openstack.cloud import Cloud as OpenStackCloud
+from gonzo.backends.aws.cloud import Cloud as AwsCloud
+
+from gonzo.backends.openstack.instance import Instance as OpenStackInstance
+from gonzo.backends.aws.instance import Instance as AwsInstance
+
+
+# default value for the address given to an instance by any cloud
+SERVER_ADDRESS = '10.0.0.1'
 
 
 @pytest.yield_fixture(autouse=True)
@@ -17,6 +27,24 @@ def state():
     }
     with patch('gonzo.config.global_state', state):
         yield
+
+
+@pytest.fixture
+def instances():
+    # Gonzo Instances configured with Mock servers
+    aws_address = SERVER_ADDRESS
+    os_addresses = {
+        'private': [{'addr': SERVER_ADDRESS}]
+    }
+
+    aws_server = MagicMock()
+    aws_server.public_dns_name = aws_address
+    os_server = MagicMock()
+    os_server.addresses = os_addresses
+
+    aws = AwsInstance(parent=aws_server)
+    os = OpenStackInstance(server=os_server)
+    return (os, aws)
 
 
 class TestBackends(object):
@@ -128,6 +156,21 @@ class TestBackends(object):
             assert r53.update_record.called
 
             assert name == 'prod-001'
+
+
+class TestDummyDNS(object):
+    def test_create_dns_entry(self, instances):
+        for instance in instances:
+            with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
+                dummy_svc = Mock(spec=DNS)
+                get_dns.return_value = dummy_svc
+
+                instance.create_dns_entry(name='foo')
+
+                assert dummy_svc.add_remove_record.called
+
+                expected_call = call('foo', 'A', SERVER_ADDRESS)
+                assert expected_call == dummy_svc.add_remove_record.call_args
 
 
 @patch('gonzo.backends.create_if_not_exist_security_group')
