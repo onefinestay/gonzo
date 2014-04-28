@@ -30,6 +30,33 @@ def state():
         yield
 
 
+@pytest.yield_fixture
+def config():
+    config = types.ModuleType('Config', 'Dummy gonzo config')
+    config.CLOUDS = {
+        'amazon': {
+            'BACKEND': 'gonzo.backends.aws',
+        },
+        'openstack': {
+            'BACKEND': 'gonzo.backends.openstack',
+            'DNS_SERVICE': 'route53',
+            'DNS_ZONE': 'example.com',
+            'AWS_ACCESS_KEY_ID': 'ABC',
+            'AWS_SECRET_ACCESS_KEY': 'ABC',
+        }
+    }
+
+    with patch('gonzo.config.get_config_module') as get_config_module:
+        get_config_module.return_value = config
+        yield
+
+
+@pytest.yield_fixture
+def mock_route53():
+    with patch('boto.route53.connection.Route53Connection'):
+        yield
+
+
 @pytest.fixture
 def instances():
     # Gonzo Instances configured with Mock servers
@@ -53,50 +80,21 @@ class TestBackends(object):
         "amazon",
         "openstack",
     ])
-    def test_get_cloud(self, cloud_name):
-        config = types.ModuleType('Config', 'Dummy gonzo config')
-        config.CLOUDS = {
-            'amazon': {
-                'BACKEND': 'gonzo.backends.aws',
-            },
-            'openstack': {
-                'BACKEND': 'gonzo.backends.openstack',
-            }
-        }
-
+    def test_get_cloud(self, cloud_name, config, mock_route53):
         state = {
             'cloud': cloud_name,
             'region': 'regionname',
         }
 
-        with patch('gonzo.config.get_config_module') as get_config_module, \
-                patch('gonzo.config.global_state', state):
+        with patch('gonzo.config.global_state', state):
+            cloud = get_current_cloud()
 
-            get_config_module.return_value = config
+            assert cloud.name == cloud_name
 
-            with patch('gonzo.config.global_state', state):
-                cloud = get_current_cloud()
+    def test_get_route53_service(self, config, mock_route53):
+        dns_service = get_dns_service()
 
-                assert cloud.name == cloud_name
-
-    @patch('boto.route53.connection.Route53Connection')
-    def test_get_route53_service(self, connection):
-        config = types.ModuleType('Config', 'Dummy gonzo config')
-        config.CLOUDS = {
-            'openstack': {
-                'BACKEND': 'gonzo.backends.openstack',
-                'DNS_SERVICE': 'route53',
-                'DNS_ZONE': 'example.com',
-                'AWS_ACCESS_KEY_ID': 'ABC',
-                'AWS_SECRET_ACCESS_KEY': 'ABC',
-            }
-        }
-
-        with patch('gonzo.config.get_config_module') as get_config_module:
-            get_config_module.return_value = config
-            dns_service = get_dns_service()
-
-            assert dns_service.name == 'route53'
+        assert dns_service.name == 'route53'
 
     def test_get_dummy_service(self):
         config = types.ModuleType('Config', 'Dummy gonzo config')
@@ -127,36 +125,21 @@ class TestBackends(object):
 
             assert dns_service.name == 'dummy'
 
-    @patch('boto.route53.connection.Route53Connection')
     @patch('gonzo.backends.get_current_cloud')
-    def test_route53_get_next_hostname(self, get_cloud, connection):
+    def test_route53_get_next_hostname(self, get_cloud, config, mock_route53):
         cloud = Mock()
         r53 = Mock()
         cloud.dns = r53
         cloud.dns.get_values_by_name.return_value = ['record']
         get_cloud.return_value = cloud
 
-        config = types.ModuleType('Config', 'Dummy gonzo config')
-        config.CLOUDS = {
-            'openstack': {
-                'BACKEND': 'gonzo.backends.openstack',
-                'DNS_SERVICE': 'route53',
-                'DNS_ZONE': 'example.com',
-                'AWS_ACCESS_KEY_ID': 'ABC',
-                'AWS_SECRET_ACCESS_KEY': 'ABC',
-            }
-        }
+        name = get_next_hostname('prod')
 
-        with patch('gonzo.config.get_config_module') as get_config_module:
-            get_config_module.return_value = config
+        # check expected calls
+        assert r53.get_values_by_name.called
+        assert r53.update_record.called
 
-            name = get_next_hostname('prod')
-
-            # check expected calls
-            assert r53.get_values_by_name.called
-            assert r53.update_record.called
-
-            assert name == 'prod-001'
+        assert name == 'prod-001'
 
 
 class TestDummyDNS(object):
@@ -173,7 +156,7 @@ class TestDummyDNS(object):
                 expected_call = call('foo', 'A', SERVER_ADDRESS)
                 assert expected_call == dummy_svc.add_remove_record.call_args
 
-    def test_get_next_hostname(self, instances):
+    def test_get_next_hostname(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
             dummy_svc = Mock(spec=DNS)
             dummy_svc.get_values_by_name.return_value = ['1']
@@ -187,7 +170,7 @@ class TestDummyDNS(object):
 
             assert expected_update_call == dummy_svc.update_record.call_args
 
-    def test_get_next_hostname_with_exception(self, instances):
+    def test_get_next_hostname_with_exception(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
             dummy_svc = Mock(spec=DNS)
             dummy_svc.get_values_by_name.side_effect = exceptions.DNSRecordNotFoundError('test')
