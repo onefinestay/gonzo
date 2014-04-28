@@ -1,7 +1,7 @@
 import types
 
 import pytest
-from mock import Mock, MagicMock, PropertyMock, patch, call
+from mock import Mock, MagicMock, patch, call
 
 from gonzo import exceptions
 from gonzo.backends import (
@@ -9,8 +9,6 @@ from gonzo.backends import (
     create_if_not_exist_security_group, launch_instance)
 from gonzo.backends.dns_services.dummy import DNS
 
-from gonzo.backends.openstack.cloud import Cloud as OpenStackCloud
-from gonzo.backends.aws.cloud import Cloud as AwsCloud
 
 from gonzo.backends.openstack.instance import Instance as OpenStackInstance
 from gonzo.backends.aws.instance import Instance as AwsInstance
@@ -173,7 +171,8 @@ class TestDummyDNS(object):
     def test_get_next_hostname_with_exception(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
             dummy_svc = Mock(spec=DNS)
-            dummy_svc.get_values_by_name.side_effect = exceptions.DNSRecordNotFoundError('test')
+            dummy_svc.get_values_by_name.side_effect = \
+                exceptions.DNSRecordNotFoundError('test')
             get_dns.return_value = dummy_svc
 
             name = 'foo'
@@ -183,8 +182,11 @@ class TestDummyDNS(object):
 
             get_next_hostname(name)
 
-            assert expected_get_values_call == dummy_svc.get_values_by_name.call_args
-            assert expected_add_remove_call == dummy_svc.add_remove_record.call_args
+            assert expected_get_values_call == \
+                dummy_svc.get_values_by_name.call_args
+
+            assert expected_add_remove_call == \
+                dummy_svc.add_remove_record.call_args
 
 
 @patch('gonzo.backends.create_if_not_exist_security_group')
