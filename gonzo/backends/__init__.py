@@ -40,9 +40,9 @@ def get_next_hostname(env_type):
 
         try:
             dns_service.update_record(record_name, "TXT", "%s" % next_count)
-        except exceptions.DNSRecordUpdateError as exc:
+        except exceptions.DNSRecordUpdateError:
             logger.exception(
-                'Failed updating DNS record %s: %s', record_name, exc)
+                'Failed updating DNS record: %s', record_name)
             raise
 
     name = "%s-%03d" % (env_type, next_count)
