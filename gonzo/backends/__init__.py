@@ -18,26 +18,6 @@ def get_current_cloud():
     return cloud_module.Cloud()
 
 
-def get_dns_service():
-    service_name = config.DNS.lower()
-    path_to_services = os.path.join(os.path.dirname(__file__), 'dns_services')
-
-    try:
-        module = imp.find_module(
-            service_name, [path_to_services])
-    except ImportError:
-        raise exceptions.ConfigurationError(
-            'DNS option {dns_provider} does not exist. '.format(
-                dns_provider=service_name,
-            )
-        )
-
-    dns_module = imp.load_module(service_name, *module)
-    dns_service = dns_module.DNS()
-
-    return dns_service
-
-
 def get_next_hostname(env_type):
     """ Calculate the next hostname for a given environment, server_type
         returns the full hostname, including the counter, e.g.

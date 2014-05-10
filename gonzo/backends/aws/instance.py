@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Instance(BaseInstance):
     running_state = 'running'
-    internal_address_dns_type = 'A'
+    internal_address_dns_type = 'CNAME'
 
     @property
     def cloud(self):

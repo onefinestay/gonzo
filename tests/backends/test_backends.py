@@ -1,14 +1,16 @@
 import types
 
 import pytest
-from mock import Mock, MagicMock, patch, call
+from mock import Mock, MagicMock, patch, call, ANY
 
 from gonzo import exceptions
 from gonzo.backends import (
-    get_current_cloud, get_dns_service, get_next_hostname,
+    get_current_cloud, get_next_hostname,
     create_if_not_exist_security_group, launch_instance)
-from gonzo.backends.dns_services.dummy import DNS
-
+from gonzo.backends.aws.stack import Stack as AWSStack
+from gonzo.backends.dns_services import get_dns_service
+from gonzo.backends.dns_services.dummy import DummyDNS
+from gonzo.backends.openstack.stack import Stack as OpenStack
 
 from gonzo.backends.openstack.instance import Instance as OpenStackInstance
 from gonzo.backends.aws.instance import Instance as AwsInstance
@@ -19,7 +21,7 @@ SERVER_ADDRESS = '10.0.0.1'
 
 
 @pytest.yield_fixture(autouse=True)
-def state():
+def openstack_state():
     state = {
         'cloud': 'openstack',
         'region': 'regionname',
@@ -34,6 +36,7 @@ def config():
     config.CLOUDS = {
         'amazon': {
             'BACKEND': 'gonzo.backends.aws',
+            'DNS_SERVICE': 'route53',
         },
         'openstack': {
             'BACKEND': 'gonzo.backends.openstack',
@@ -50,8 +53,8 @@ def config():
 
 
 @pytest.yield_fixture
-def mock_route53():
-    with patch('boto.route53.connection.Route53Connection'):
+def mock_route53_conn():
+    with patch('gonzo.backends.dns_services.route53.Route53Connection'):
         yield
 
 
@@ -74,11 +77,13 @@ def instances():
 
 
 class TestBackends(object):
-    @pytest.mark.parametrize("cloud_name", [
-        "amazon",
-        "openstack",
+    @pytest.mark.parametrize(("cloud_name", "stack_class"), [
+        ("amazon", AWSStack),
+        ("openstack", OpenStack),
     ])
-    def test_get_cloud(self, cloud_name, config, mock_route53):
+    def test_get_cloud(
+            self, cloud_name, stack_class, config, mock_route53_conn):
+
         state = {
             'cloud': cloud_name,
             'region': 'regionname',
@@ -87,9 +92,9 @@ class TestBackends(object):
         with patch('gonzo.config.global_state', state):
             cloud = get_current_cloud()
 
-            assert cloud.name == cloud_name
+            assert cloud.stack_class == stack_class
 
-    def test_get_route53_service(self, config, mock_route53):
+    def test_get_route53_service(self, config, mock_route53_conn):
         dns_service = get_dns_service()
 
         assert dns_service.name == 'route53'
@@ -124,7 +129,9 @@ class TestBackends(object):
             assert dns_service.name == 'dummy'
 
     @patch('gonzo.backends.get_current_cloud')
-    def test_route53_get_next_hostname(self, get_cloud, config, mock_route53):
+    def test_route53_get_next_hostname(
+            self, get_cloud, config, mock_route53_conn):
+
         cloud = Mock()
         r53 = Mock()
         cloud.dns = r53
@@ -144,19 +151,19 @@ class TestDummyDNS(object):
     def test_create_dns_entry(self, instances):
         for instance in instances:
             with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
-                dummy_svc = Mock(spec=DNS)
+                dummy_svc = Mock(spec=DummyDNS)
                 get_dns.return_value = dummy_svc
 
                 instance.create_dns_entry(name='foo')
 
                 assert dummy_svc.add_remove_record.called
 
-                expected_call = call('foo', 'A', SERVER_ADDRESS)
+                expected_call = call('foo', ANY, SERVER_ADDRESS)
                 assert expected_call == dummy_svc.add_remove_record.call_args
 
     def test_get_next_hostname(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
-            dummy_svc = Mock(spec=DNS)
+            dummy_svc = Mock(spec=DummyDNS)
             dummy_svc.get_values_by_name.return_value = ['1']
             get_dns.return_value = dummy_svc
 
@@ -170,7 +177,7 @@ class TestDummyDNS(object):
 
     def test_get_next_hostname_with_exception(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
-            dummy_svc = Mock(spec=DNS)
+            dummy_svc = Mock(spec=DummyDNS)
             dummy_svc.get_values_by_name.side_effect = \
                 exceptions.DNSRecordNotFoundError('test')
             get_dns.return_value = dummy_svc

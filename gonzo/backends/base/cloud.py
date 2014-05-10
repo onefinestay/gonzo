@@ -1,6 +1,6 @@
 from abc import abstractmethod, abstractproperty
 
-from gonzo.backends import get_dns_service
+from gonzo.backends.dns_services import get_dns_service
 
 
 class BaseCloud(object):
@@ -15,8 +15,10 @@ class BaseCloud(object):
     instance_class = abstractproperty
     stack_class = abstractproperty
 
-    def __init__(self):
-        self.dns = get_dns_service()
+    @property
+    def dns(self):
+        dns = get_dns_service()
+        return dns
 
     def _instantiate_stack(self, stack_name_or_id):
         return self.stack_class(self, stack_id=stack_name_or_id)

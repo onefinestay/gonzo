@@ -6,7 +6,7 @@ from gonzo.backends.base.dns import DNSService
 logger = logging.getLogger(__name__)
 
 
-class DNS(DNSService):
+class DummyDNS(DNSService):
     """ "BlackHole" for DNS record requests.
 
     config usage:

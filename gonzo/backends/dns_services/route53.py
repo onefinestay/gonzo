@@ -7,7 +7,7 @@ from gonzo.backends.base.dns import DNSService
 from gonzo.config import config_proxy as config
 
 
-class DNS(DNSService):
+class Route53DNS(DNSService):
     """ CRUD record sets on route53.
     Attempting to mask how convoluted the boto implementaton for dealing with
     R53 is at the moment
