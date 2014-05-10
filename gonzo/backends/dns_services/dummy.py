@@ -20,26 +20,24 @@ class DummyDNS(DNSService):
             'No DNS handler is configured for "{}"\n'.format(handler_name)
         )
 
-    def add_remove_record(self, *args, **kwargs):
+    def add_remove_record(
+            self, name, type, value, action="CREATE", is_qualified=False):
         self._warn("add_remove_record")
 
-    def delete_record(self, *args, **kwargs):
-        self._warn("delete_record")
-
-    def update_record(self, *args, **kwargs):
+    def update_record(self, name, type, new_value, old_value=None):
         self._warn("update_record")
 
-    def get_record_by_name(self, *args, **kwargs):
+    def get_record_by_name(self, name):
         self._warn("get_record_by_name")
 
-    def replace_a_record(self, *args, **kwargs):
+    def replace_a_record(self, ipaddress, name):
         self._warn("replace_a_record")
 
-    def get_values_by_name(self, *args, **kwargs):
+    def get_values_by_name(self, name):
         self._warn("get_values_by_name")
         return []
 
-    def fqdn(self, *args, **kwargs):
+    def fqdn(self, name):
         self._warn("fqdn")
 
     def delete_dns_by_value(self, get_values_by_name):
