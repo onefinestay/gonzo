@@ -12,11 +12,6 @@ class Instance(BaseInstance):
     internal_address_dns_type = 'CNAME'
 
     @property
-    def cloud(self):
-        from gonzo.backends.aws.cloud import Cloud
-        return Cloud()
-
-    @property
     def name(self):
         return self._server.tags.get('Name')
 

@@ -19,11 +19,6 @@ class Instance(BaseInstance):
         self._server = self._server.manager.get(self._server.id)
 
     @property
-    def cloud(self):
-        from gonzo.backends.openstack.cloud import Cloud
-        return Cloud()
-
-    @property
     def name(self):
         return self._server.name
 

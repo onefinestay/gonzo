@@ -21,10 +21,6 @@ class BaseInstance(object):
         return self._server.id
 
     @abstractproperty
-    def cloud(self):
-        """The Cloud the Instance belongs to """
-
-    @abstractproperty
     def name(self):
         """ Instance name """
         pass
