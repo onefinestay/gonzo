@@ -1,6 +1,5 @@
 from abc import abstractmethod, abstractproperty
 
-from gonzo.backends import get_current_cloud
 from gonzo.backends.dns_services import get_dns_service
 
 
