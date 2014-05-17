@@ -39,11 +39,10 @@ class BaseCloud(object):
         for name in names:
             self.create_dns_entry(instance, name)
 
-    def delete_dns_entries(self):
-        cloud = get_current_cloud()
-        dns_service = cloud.dns
-        value = self.internal_address()
-        dns_service.delete_dns_by_value(value)
+    def delete_dns_entries(self, instance):
+        dns_service = self.dns
+        instance_address = instance.internal_address()
+        dns_service.delete_dns_by_value(instance_address)
 
     def configure_instance(self, instance):
         self.create_dns_entry(instance)
