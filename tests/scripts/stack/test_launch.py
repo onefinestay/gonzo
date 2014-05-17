@@ -16,11 +16,13 @@ from gonzo.scripts.stack.launch import launch
 @patch('gonzo.scripts.stack.launch.launch_stack')
 @patch('gonzo.scripts.stack.launch.get_current_cloud')
 def test_launch(
-        mock_get_current_cloud, mock_launch_stack, wait_for_stack_complete, print_stack,
+        mock_get_current_cloud, mock_launch_stack,
+        mock_wait_for_stack_complete, mock_print_stack,
         cloud, config, openstack_state):
 
     with patch.multiple(
-            cloud, _get_dns_service=DEFAULT, launch_stack=DEFAULT) as mock_methods:
+            cloud, _get_dns_service=DEFAULT, launch_stack=DEFAULT
+            ) as mock_methods:
 
         mock_get_current_cloud.return_value = cloud
 
@@ -38,5 +40,5 @@ def test_launch(
         launch(params)
 
         assert mock_launch_stack.called
-        assert wait_for_stack_complete.called
-        assert print_stack.called
+        assert mock_wait_for_stack_complete.called
+        assert mock_print_stack.called
