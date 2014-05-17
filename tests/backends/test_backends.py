@@ -73,7 +73,7 @@ class TestBackends(object):
             get_config_module.return_value = config
 
             with pytest.raises(exceptions.ConfigurationError):
-                dns_service = get_dns_service()
+                get_dns_service()
 
     @patch('gonzo.backends.get_current_cloud')
     def test_route53_get_next_hostname(
