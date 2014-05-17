@@ -7,7 +7,6 @@ from gonzo import exceptions
 from gonzo.backends import (
     get_current_cloud, get_next_hostname,
     create_if_not_exist_security_group, launch_instance)
-
 from gonzo.backends.dns_services import get_dns_service
 from gonzo.backends.dns_services.dummy import DummyDNS
 from gonzo.backends.aws.cloud import Cloud as AWSCloud
@@ -62,7 +61,7 @@ class TestBackends(object):
 
             assert dns_service.name == 'dummy'
 
-    def test_dummy_is_default(self):
+    def test_dns_backend_required(self):
         config = types.ModuleType('Config', 'Dummy gonzo config')
         config.CLOUDS = {
             'openstack': {
@@ -72,9 +71,9 @@ class TestBackends(object):
 
         with patch('gonzo.config.get_config_module') as get_config_module:
             get_config_module.return_value = config
-            dns_service = get_dns_service()
 
-            assert dns_service.name == 'dummy'
+            with pytest.raises(exceptions.ConfigurationError):
+                dns_service = get_dns_service()
 
     @patch('gonzo.backends.get_current_cloud')
     def test_route53_get_next_hostname(
