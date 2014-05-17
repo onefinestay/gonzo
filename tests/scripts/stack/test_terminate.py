@@ -19,6 +19,6 @@ def test_terminate(get_current_cloud, show_delete_progress):
     terminate(params)
 
     assert_called_with(cloud.get_stack, 'stackname')
-    assert instance.delete_dns_entries.called
+    assert cloud.delete_dns_entries.called
     assert stack.delete.called
     assert show_delete_progress.called

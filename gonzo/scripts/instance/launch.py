@@ -7,7 +7,7 @@ import os
 import sys
 from time import sleep
 
-from gonzo.backends import launch_instance, configure_instance
+from gonzo.backends import get_current_cloud, launch_instance
 from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
@@ -31,7 +31,7 @@ def wait_for_instance_boot(instance, use_color='auto'):
 
 def launch(args):
     """ Launch instances """
-
+    cloud = get_current_cloud()
     username = os.environ.get('USER')
 
     instance = launch_instance(args.env_type,
@@ -42,9 +42,9 @@ def launch(args):
                                image_name=args.image_name,
                                extra_tags=args.extra_tags,
                                owner=username)
-    instance.create_dns_entries_from_tag(args.dns_tag)
+    cloud.create_dns_entries_from_tag(args.dns_tag)
     wait_for_instance_boot(instance, args.color)
-    configure_instance(instance)
+    cloud.configure_instance(instance)
     print "Created instance {}".format(instance.name)
 
 

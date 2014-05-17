@@ -54,7 +54,7 @@ def terminate(args):
     stack_name = stack.name  # Get the name before it's deleted
 
     for instance in stack.get_instances():
-        instance.delete_dns_entries()
+        cloud.delete_dns_entries(instance)
 
     stack.delete()
     show_delete_progress(stack)

@@ -1,5 +1,6 @@
 from abc import abstractmethod, abstractproperty
 
+from gonzo.backends import get_current_cloud
 from gonzo.backends.dns_services import get_dns_service
 
 
@@ -17,8 +18,35 @@ class BaseCloud(object):
 
     @property
     def dns(self):
-        dns = get_dns_service()
-        return dns
+        return self._get_dns_service()
+
+    def _get_dns_service(self):
+        return get_dns_service()
+
+    def create_dns_entry(self, instance, name=None):
+        address = instance.internal_address()
+        record_type = instance.internal_address_dns_type
+        if name is None:
+            name = instance.name
+
+        dns_service = self.dns
+        dns_service.add_remove_record(name, record_type, address)
+
+    def create_dns_entries_from_tag(self, instance, key='cnames'):
+        if key not in instance.tags:
+            return
+        names = instance.tags[key].split(',')
+        for name in names:
+            self.create_dns_entry(instance, name)
+
+    def delete_dns_entries(self):
+        cloud = get_current_cloud()
+        dns_service = cloud.dns
+        value = self.internal_address()
+        dns_service.delete_dns_by_value(value)
+
+    def configure_instance(self, instance):
+        self.create_dns_entry(instance)
 
     def _instantiate_stack(self, stack_name_or_id):
         return self.stack_class(self, stack_id=stack_name_or_id)

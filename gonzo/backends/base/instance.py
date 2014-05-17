@@ -1,7 +1,5 @@
 from abc import abstractproperty, abstractmethod
 
-from gonzo.backends import get_current_cloud
-
 
 class BaseInstance(object):
     """ Wrapper for cloud instances
@@ -88,29 +86,6 @@ class BaseInstance(object):
     @abstractmethod
     def internal_address(self):
         pass
-
-    def create_dns_entry(self, name=None):
-        address = self.internal_address()
-        record_type = self.internal_address_dns_type
-        if name is None:
-            name = self.name
-
-        cloud = self.cloud
-        dns_service = cloud.dns
-        dns_service.add_remove_record(name, record_type, address)
-
-    def create_dns_entries_from_tag(self, key='cnames'):
-        if key not in self.tags:
-            return
-        names = self.tags[key].split(',')
-        for name in names:
-            self.create_dns_entry(name)
-
-    def delete_dns_entries(self):
-        cloud = get_current_cloud()
-        dns_service = cloud.dns
-        value = self.internal_address()
-        dns_service.delete_dns_by_value(value)
 
     @abstractmethod
     def update(self):

@@ -7,7 +7,7 @@ from time import sleep
 import sys
 import os
 
-from gonzo.backends import launch_stack
+from gonzo.backends import launch_stack, get_current_cloud
 from gonzo.exceptions import DataError, UnhealthyResourceError
 from gonzo.scripts.stack.template import (template_uri_option_kwargs,
                                           template_uri_option_args,
@@ -64,7 +64,7 @@ def print_output(output):
 
 def launch(args):
     """ Launch stacks """
-
+    cloud = get_current_cloud()
     username = os.environ.get('USER')
 
     stack = launch_stack(args.stack_name, args.template_uri,
@@ -93,7 +93,7 @@ def launch(args):
     else:
         # Create instance dns from tag
         for instance in stack.get_instances():
-            instance.create_dns_entries_from_tag(args.dns_tag)
+            cloud.create_dns_entries_from_tag(instance, args.dns_tag)
 
 
 def main(args):

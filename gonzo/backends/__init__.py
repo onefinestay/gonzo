@@ -104,7 +104,6 @@ def launch_instance(env_type, size=None,
     if user_data_uri is not None:
         user_data = get_parsed_document(name, user_data_uri,
                                         'USER_DATA_PARAMS', user_data_params)
-
     return cloud.launch_instance(
         name, image_name, size, zone, security_groups, key_name,
         user_data=user_data, tags=tags)
@@ -128,10 +127,6 @@ def create_if_not_exist_security_group(group_name):
     cloud = get_current_cloud()
     if not cloud.security_group_exists(group_name):
         cloud.create_security_group(group_name)
-
-
-def configure_instance(instance):
-    instance.create_dns_entry()
 
 
 def generate_stack_template(stack_type, stack_name,
@@ -171,7 +166,8 @@ def insert_stack_owner_output(template_dict, owner):
 
 def launch_stack(stack_name, template_uri, template_params, owner=None):
     """ Launch stacks """
-
+    import pdb
+    pdb.set_trace()
     unique_stack_name = get_next_hostname(stack_name)
 
     template = generate_stack_template(stack_name, unique_stack_name,

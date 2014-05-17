@@ -1,79 +1,27 @@
 import types
 
 import pytest
-from mock import Mock, MagicMock, patch, call, ANY
+from mock import Mock, patch, call, ANY
 
 from gonzo import exceptions
 from gonzo.backends import (
     get_current_cloud, get_next_hostname,
     create_if_not_exist_security_group, launch_instance)
-from gonzo.backends.aws.stack import Stack as AWSStack
+
 from gonzo.backends.dns_services import get_dns_service
 from gonzo.backends.dns_services.dummy import DummyDNS
+from gonzo.backends.aws.cloud import Cloud as AWSCloud
+from gonzo.backends.aws.stack import Stack as AWSStack
+from gonzo.backends.openstack.cloud import Cloud as OpenStackCloud
 from gonzo.backends.openstack.stack import Stack as OpenStack
 
-from gonzo.backends.openstack.instance import Instance as OpenStackInstance
-from gonzo.backends.aws.instance import Instance as AwsInstance
 
-
-# default value for the address given to an instance by any cloud
 SERVER_ADDRESS = '10.0.0.1'
 
 
-@pytest.yield_fixture(autouse=True)
-def openstack_state():
-    state = {
-        'cloud': 'openstack',
-        'region': 'regionname',
-    }
-    with patch('gonzo.config.global_state', state):
-        yield
-
-
-@pytest.yield_fixture
-def config():
-    config = types.ModuleType('Config', 'Dummy gonzo config')
-    config.CLOUDS = {
-        'amazon': {
-            'BACKEND': 'gonzo.backends.aws',
-            'DNS_SERVICE': 'route53',
-        },
-        'openstack': {
-            'BACKEND': 'gonzo.backends.openstack',
-            'DNS_SERVICE': 'route53',
-            'DNS_ZONE': 'example.com',
-            'AWS_ACCESS_KEY_ID': 'ABC',
-            'AWS_SECRET_ACCESS_KEY': 'ABC',
-        }
-    }
-
-    with patch('gonzo.config.get_config_module') as get_config_module:
-        get_config_module.return_value = config
-        yield
-
-
-@pytest.yield_fixture
-def mock_route53_conn():
-    with patch('gonzo.backends.dns_services.route53.Route53Connection'):
-        yield
-
-
-@pytest.fixture
-def instances():
-    # Gonzo Instances configured with Mock servers
-    aws_address = SERVER_ADDRESS
-    os_addresses = {
-        'private': [{'addr': SERVER_ADDRESS}]
-    }
-
-    aws_server = MagicMock()
-    aws_server.public_dns_name = aws_address
-    os_server = MagicMock()
-    os_server.addresses = os_addresses
-
-    aws = AwsInstance(server=aws_server)
-    os = OpenStackInstance(server=os_server)
-    return (os, aws)
+@pytest.fixture(autouse=True)
+def state(openstack_state):
+    pass
 
 
 class TestBackends(object):
@@ -148,18 +96,21 @@ class TestBackends(object):
 
 
 class TestDummyDNS(object):
-    def test_create_dns_entry(self, instances):
-        for instance in instances:
-            with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
-                dummy_svc = Mock(spec=DummyDNS)
-                get_dns.return_value = dummy_svc
+    @pytest.mark.parametrize("cloud", [
+        OpenStackCloud(),
+        AWSCloud(),
+    ])
+    def test_openstack_create_dns_entry(self, cloud, openstack_instance):
+        with patch.object(cloud, '_get_dns_service') as mock_get_dns:
+            dummy_svc = Mock(spec=DummyDNS)
+            mock_get_dns.return_value = dummy_svc
 
-                instance.create_dns_entry(name='foo')
+            cloud.create_dns_entry(openstack_instance, name='foo')
 
-                assert dummy_svc.add_remove_record.called
+            assert dummy_svc.add_remove_record.called
 
-                expected_call = call('foo', ANY, SERVER_ADDRESS)
-                assert expected_call == dummy_svc.add_remove_record.call_args
+            expected_call = call('foo', ANY, SERVER_ADDRESS)
+            assert expected_call == dummy_svc.add_remove_record.call_args
 
     def test_get_next_hostname(self, config, instances):
         with patch('gonzo.backends.base.cloud.get_dns_service') as get_dns:
