@@ -21,8 +21,9 @@ def test_launch(
         cloud, config, openstack_state):
 
     with patch.multiple(
-            cloud, _get_dns_service=DEFAULT, launch_stack=DEFAULT
-            ) as mock_methods:
+            cloud,
+            _get_dns_service=DEFAULT,
+            launch_stack=DEFAULT) as mock_methods:
 
         mock_get_current_cloud.return_value = cloud
 
