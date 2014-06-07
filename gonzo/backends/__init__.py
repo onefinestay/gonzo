@@ -28,7 +28,7 @@ def get_next_hostname(env_type):
                 <project_name>-<environment_name>-<version_number>
 
             It's essential that the `version_number` is unique between any
-            of the cloud's past or present servers, so the next value is
+            of the cloud's past or present servers so the next value is
             incremented from the the most recently used, which is globally
             held on a DNS TXT record.
 
