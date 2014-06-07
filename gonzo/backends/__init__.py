@@ -26,9 +26,9 @@ def get_next_hostname(env_type):
             Gonzo's host name protocol follows the pattern:
             <project_name>-<environment_name>-<version_number>
 
-            It's essential that the version number is unique between the cloud's
-            past, present and future servers, so next values are held on DNS TXT
-            records and then calculated from.
+            It's essential that the version number is unique between any of
+            the cloud's past or present servers, so the next value is calculated
+            from the the most recently used which is held on a DNS TXT record.
 
     """
     record_name = "-".join(["_count", env_type])
