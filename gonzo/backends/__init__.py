@@ -20,6 +20,16 @@ def get_next_hostname(env_type):
     """ Calculate the next hostname for a given environment, server_type
         returns the full hostname, including the counter, e.g.
         production-ecommerce-web-013
+
+        .. note::
+
+            Gonzo's host name protocol follows the pattern:
+            <project_name>-<environment_name>-<version_number>
+
+            It's essential that the version number is unique between the cloud's
+            past, present and future servers, so next values are held on DNS TXT
+            records and then calculated from.
+
     """
     record_name = "-".join(["_count", env_type])
     cloud = get_current_cloud()
