@@ -23,6 +23,16 @@ def openstack_state():
 
 
 @pytest.yield_fixture
+def aws_state():
+    state = {
+        'cloud': 'aws',
+        'region': 'regionname',
+    }
+    with patch('gonzo.config.global_state', state):
+        yield
+
+
+@pytest.yield_fixture
 def config():
     config = types.ModuleType('Config', 'Dummy gonzo config')
     config.CLOUDS = {
@@ -70,7 +80,7 @@ def openstack_instance():
 
 
 @pytest.fixture
-def aws_intance():
+def aws_instance():
     aws_address = SERVER_ADDRESS
     aws_server = MagicMock()
     aws_server.public_dns_name = aws_address
@@ -79,8 +89,8 @@ def aws_intance():
 
 
 @pytest.fixture
-def instances(openstack_instance, aws_intance):
-    return (openstack_instance, aws_intance)
+def instances(openstack_instance, aws_instance):
+    return (openstack_instance, aws_instance)
 
 
 @pytest.yield_fixture

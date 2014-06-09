@@ -1,10 +1,7 @@
 import datetime
-import logging
 
 from gonzo.backends.aws import TIME_FORMAT
 from gonzo.backends.base.instance import BaseInstance
-
-logger = logging.getLogger(__name__)
 
 
 class Instance(BaseInstance):

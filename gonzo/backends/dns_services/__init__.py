@@ -25,6 +25,6 @@ _dns_service_register = {
 
 
 def get_dns_service():
-    service_name = config.DNS.lower()
+    service_name = config.DNS_SERVICE.lower()
     service_cls = _dns_service_register[service_name]
     return service_cls()

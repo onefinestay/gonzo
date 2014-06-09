@@ -178,8 +178,6 @@ def insert_stack_owner_output(template_dict, owner):
 
 def launch_stack(stack_name, template_uri, template_params, owner=None):
     """ Launch stacks """
-    import pdb
-    pdb.set_trace()
     unique_stack_name = get_next_hostname(stack_name)
 
     template = generate_stack_template(stack_name, unique_stack_name,

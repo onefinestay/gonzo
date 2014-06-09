@@ -128,7 +128,7 @@ class ConfigProxy(object):
         return global_state['region']
 
     @property
-    def DNS(self):
+    def DNS_SERVICE(self):
         cloud = self.CLOUD
         dns_service_name = cloud.get('DNS_SERVICE')
         if not dns_service_name:
