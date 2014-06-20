@@ -29,10 +29,10 @@ def get_dns_service():
     cloud = config.CLOUD
     dns_service_name = cloud.get('DNS_SERVICE')
 
-    if not dns_service_name in _dns_service_register:
+    if dns_service_name not in _dns_service_register:
         raise ConfigurationError(
             'Gonzo must be configured with a ``DNS_SERVICE``. This should be '
-            'selected from: {}. For example, if you have no need for DNS add ' 
+            'selected from: {}. For example, if you have no need for DNS add '
             '``DNS_SERVICE="dummy" to your config.py.'.format(
                 ', '.join(_dns_service_register.keys())
             )
