@@ -127,19 +127,6 @@ class ConfigProxy(object):
     def REGION(self):
         return global_state['region']
 
-    @property
-    def DNS_SERVICE(self):
-        cloud = self.CLOUD
-        dns_service_name = cloud.get('DNS_SERVICE')
-        if not dns_service_name:
-            raise ConfigurationError(
-                'A value must be set for ``DNS_SERVICE``. '
-                'If you have no need for DNS you can configure this '
-                'as ``DNS_SERVICE="dummy".'
-            )
-
-        return dns_service_name
-
     def get_cloud_config_value(self, config_key, override=None):
         if override is None:
             return self.CLOUD.get(config_key)
