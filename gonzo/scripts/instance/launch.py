@@ -42,7 +42,7 @@ def launch(args):
                                image_name=args.image_name,
                                extra_tags=args.extra_tags,
                                owner=username)
-    cloud.create_dns_entries_from_tag(args.dns_tag)
+    cloud.create_dns_entries_from_tag(instance, args.dns_tag)
     wait_for_instance_boot(instance, args.color)
     cloud.configure_instance(instance)
     print "Created instance {}".format(instance.name)
