@@ -1,3 +1,9 @@
+Version 0.3.1
+--------------
+
+Bugfix for the `current` symlink creation
+
+
 Version 0.3.0
 --------------
 
