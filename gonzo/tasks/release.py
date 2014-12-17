@@ -49,11 +49,11 @@ def project_path(*extra):
     return os.path.join(PROJECT_ROOT, get_project(), *extra)
 
 
-def activate_command():
+def activate_command(venv_dir):
     project = get_project()
     commit = get_commit()
     return 'cd {}; source bin/activate; cd {}'.format(
-        project_path(), project_path('releases', commit, project))
+        venv_dir, project_path('releases', commit, project))
 
 
 def list_releases():
@@ -228,15 +228,48 @@ def get_current():
     return current
 
 
-def set_current(release):
-    release_dir = project_path("releases", release)
-    symlink = project_path("releases", "current")
+def _symlink(target, release):
+    target_dir = project_path(target, release)
+    symlink = project_path(target, "current")
+    usudo('ln -snf {} {}'.format(target_dir, symlink))
 
-    usudo('ln -snf {} {}'.format(release_dir, symlink))
+
+def set_current(release):
+    _symlink("releases", release)
+    if using_separate_virtualenvs():
+        _symlink("virtualenvs", release)
+
+
+def ensure_virtualenv(separate_venv):
+    base_dir = project_path()
+    if separate_venv:
+        commit = get_commit()
+        venv_dir = project_path('virtualenvs', commit)
+    else:
+        venv_dir = base_dir
+
+    if exists(os.path.join(venv_dir, 'bin', 'activate')):
+        return venv_dir
+
+    with settings(warn_only=True):
+        res = sudo("virtualenv {}".format(venv_dir))
+
+    # TODO: install setuptools and virtualenv? or bootatrap, e.g.
+    # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
+    if res.succeeded:
+        return venv_dir
+    if "virtualenv: command not found" in res:
+        raise RuntimeError(
+            "Virtualenv not installed on target server!")
+    raise RuntimeError(res)
+
+
+def using_separate_virtualenvs():
+    return exists(project_path('virtualenvs'))
 
 
 @task
-def push():
+def push(separate_venv=False):
     """ Deploy commit identified by ``set_commit`` previously.
         The release is not set live - the 'current' point is not amended -
         until ``activate`` is invoked. The latter is a fast operation whilst
@@ -253,18 +286,7 @@ def push():
 
     base_dir = project_path()
 
-    if not exists(project_path('bin', 'activate')):
-        with settings(warn_only=True):
-            res = sudo("virtualenv {}".format(base_dir))
-
-        # TODO: install setuptools and virtualenv? or bootatrap, e.g.
-        # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
-        if not res.succeeded:
-            if "virtualenv: command not found" in res:
-                raise RuntimeError(
-                    "Virtualenv not installed on target server!")
-            else:
-                raise RuntimeError(res)
+    venv_dir = ensure_virtualenv(separate_venv=True)
 
     sudo("chown -R {} {}".format(USER, base_dir))
 
@@ -287,7 +309,7 @@ def push():
             quiet_flag = "--quiet"
         else:
             quiet_flag = ""
-        with fab_prefix(activate_command()):
+        with fab_prefix(activate_command(venv_dir)):
             usudo("pip install {} -r requirements.txt {}".format(
                 upgrade_flag, quiet_flag))
 
@@ -314,13 +336,6 @@ def prune(keep='4'):
 
 
 @task
-def purge_local_package(package):
-    """ Purge a pip installed package from a project virtualenv. """
-    with fab_prefix(activate_command()):
-        usudo("pip uninstall --yes {}".format(package))
-
-
-@task
 def purge_release(release):
     """ Remove all data related to the release.
 
@@ -343,6 +358,9 @@ def purge_release(release):
             "Cannot remove checked out directory as it is the current release")
 
     usudo('rm -rf {}'.format(released_dir))
+
+    # TODO: if using separate venvs (detect presence of 'virtualenvs' dir?)
+    # also trim those
 
     # remove history entry
     releases = list_releases()
