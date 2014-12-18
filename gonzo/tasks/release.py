@@ -228,16 +228,16 @@ def get_current():
     return current
 
 
-def _symlink(target, release):
+def _set_symlink(target, release):
     target_dir = project_path(target, release)
     symlink = project_path(target, "current")
     usudo('ln -snf {} {}'.format(target_dir, symlink))
 
 
 def set_current(release):
-    _symlink("releases", release)
+    _set_symlink("releases", release)
     if using_separate_virtualenvs():
-        _symlink("virtualenvs", release)
+        _set_symlink("virtualenvs", release)
 
 
 def ensure_virtualenv(separate_venv):
@@ -274,6 +274,10 @@ def push(separate_venv=False):
         The release is not set live - the 'current' point is not amended -
         until ``activate`` is invoked. The latter is a fast operation whilst
         this is slow.
+
+        :Parameters:
+            separate_venv: bool (default: False)
+                If True, gonzo will create a fresh virtualenv for every release
     """
     commit = get_commit()
     zipfile, _ = create_archive(commit)
@@ -310,7 +314,7 @@ def push(separate_venv=False):
         else:
             quiet_flag = ""
         with fab_prefix(activate_command(venv_dir)):
-            usudo("pip install {} -r requirements.txt {}".format(
+            return usudo("pip install {} -r requirements.txt {}".format(
                 upgrade_flag, quiet_flag))
 
 
@@ -359,8 +363,9 @@ def purge_release(release):
 
     usudo('rm -rf {}'.format(released_dir))
 
-    # TODO: if using separate venvs (detect presence of 'virtualenvs' dir?)
-    # also trim those
+    if using_separate_virtualenvs():
+        venv_dir = project_path('virtualenvs', release)
+        usudo('rm -rf {}'.format(venv_dir))
 
     # remove history entry
     releases = list_releases()
