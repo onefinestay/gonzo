@@ -1,9 +1,10 @@
 from __future__ import absolute_import  # otherwise we find tasks.gonzo
 
+from contextlib import contextmanager
 import os
 
 from fabric.api import task, env, sudo, put, run, local, settings
-from fabric.context_managers import prefix as fab_prefix, hide
+from fabric.context_managers import prefix as fab_prefix, hide, cd
 from fabric.contrib.files import exists
 
 from gonzo.config import PROJECT_ROOT, local_state
@@ -49,11 +50,13 @@ def project_path(*extra):
     return os.path.join(PROJECT_ROOT, get_project(), *extra)
 
 
-def activate_command(venv_dir):
+@contextmanager
+def venv_and_project_dir(venv_dir):
     project = get_project()
     commit = get_commit()
-    return 'cd {}; source bin/activate; cd {}'.format(
-        venv_dir, project_path('releases', commit, project))
+    with fab_prefix('source "{}/bin/activate"'.format(venv_dir)):
+        with cd(project_path('releases', commit, project)):
+            yield
 
 
 def list_releases():
@@ -314,7 +317,7 @@ def push(separate_venv=False):
     ):
         return
 
-    with fab_prefix(activate_command(venv_dir)):
+    with venv_and_project_dir(venv_dir):
         return usudo("pip install -r requirements.txt {}".format(
             quiet_flag))
 
