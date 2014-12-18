@@ -303,19 +303,20 @@ def push(separate_venv=False):
 
         usudo("cd /; tar zxf {}".format(target_file))
 
-    if getattr(env, "install_requirements", True):
-        if getattr(env, "pip_upgrade", False):
-            upgrade_flag = "--upgrade"
-        else:
-            upgrade_flag = ""
+    if getattr(env, "pip_quiet", False):
+        quiet_flag = "--quiet"
+    else:
+        quiet_flag = ""
 
-        if getattr(env, "pip_quiet", False):
-            quiet_flag = "--quiet"
-        else:
-            quiet_flag = ""
-        with fab_prefix(activate_command(venv_dir)):
-            return usudo("pip install {} -r requirements.txt {}".format(
-                upgrade_flag, quiet_flag))
+    project = get_project()
+    if not exists(
+        project_path('releases', commit, project, 'requirements.txt')
+    ):
+        return
+
+    with fab_prefix(activate_command(venv_dir)):
+        return usudo("pip install -r requirements.txt {}".format(
+            quiet_flag))
 
 
 @task
