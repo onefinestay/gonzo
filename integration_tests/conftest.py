@@ -8,6 +8,13 @@ import pytest
 DOCKER_IMAGE_NAME = "gonzo-integration-test"
 
 
+@pytest.fixture(autouse=True)
+def disable_output_capturing(request):
+    capture_config = request.config.getoption('capture')
+    if capture_config != 'no':
+        pytest.fail('fabric requires --capture=no/-s')
+
+
 def completes_successfully(cmd):
     with settings(warn_only=True):
         res = local(cmd)
