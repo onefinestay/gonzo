@@ -1,7 +1,7 @@
-from os import chdir, environ
+from os import chdir, environ, path
 from urllib2 import urlparse
 
-from fabric.api import local, settings
+from fabric.api import local, settings, cd
 import pytest
 
 
@@ -61,32 +61,43 @@ def container(docker_image):
 
 
 class TestRepo(object):
+    class Files(object):
+        def __init__(self, path):
+            self._path = path
+            self._files = {}
+
+        def __getitem__(self, key):
+            return self._files[key]
+
+        def __setitem__(self, key, value):
+            self._files[key] = value
+            with open(path.join(self._path, key), 'w') as handle:
+                handle.write(value)
+            cmd = """
+                git add {key}
+                git commit -m "updated {key}"
+            """.format(key=key)
+            with cd(self._path):
+                local(cmd)
+
     def __init__(self, path):
         self.path = path
         cmd = """
-        cd {path}
-        # small package with no requirements
-        echo "initools==0.2" > requirements.txt
+        echo "test repo" > readme.txt
         git init
-        git add requirements.txt
+        git add readme.txt
         git commit -m "initial add"
         git config --local gonzo.project test
         """.format(path=path)
-        local(cmd)
+        with cd(self.path):
+            local(cmd)
 
-    def add_commit(self):
-        cmd = """
-        cd {path}
-        date >> increments.txt
-        git add increments.txt
-        git commit -m "increment"
-        """.format(path=self.path)
-        local(cmd)
+        self.files = self.Files(self.path)
 
 
 @pytest.fixture
 def test_repo(tmpdir):
     chdir(str(tmpdir))
-    return TestRepo(tmpdir)
+    return TestRepo(str(tmpdir))
 
 
