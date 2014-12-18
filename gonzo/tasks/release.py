@@ -51,9 +51,10 @@ def project_path(*extra):
 
 
 @contextmanager
-def venv_and_project_dir(venv_dir):
+def venv_and_project_dir():
     project = get_project()
     commit = get_commit()
+    venv_dir = project_path('virtualenvs', commit)
     with fab_prefix('source "{}/bin/activate"'.format(venv_dir)):
         with cd(project_path('releases', commit, project)):
             yield
@@ -293,7 +294,7 @@ def push(separate_venv=False):
 
     base_dir = project_path()
 
-    venv_dir = ensure_virtualenv(separate_venv=separate_venv)
+    ensure_virtualenv(separate_venv=separate_venv)
 
     sudo("chown -R {} {}".format(USER, base_dir))
 
@@ -317,7 +318,7 @@ def push(separate_venv=False):
     ):
         return
 
-    with venv_and_project_dir(venv_dir):
+    with venv_and_project_dir():
         return usudo("pip install -r requirements.txt {}".format(
             quiet_flag))
 
@@ -337,8 +338,9 @@ def prune(keep='4'):
     release_list = list_releases()
     current_release = get_current()
     index = release_list.index(current_release)
-    if index > keep:
-        delete_release_list = release_list[:index - keep + 1]
+    n_first = index - keep + 1
+    if n_first > 0:
+        delete_release_list = release_list[:n_first]
         for release in delete_release_list:
             purge_release(release)
 
