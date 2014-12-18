@@ -290,7 +290,7 @@ def push(separate_venv=False):
 
     base_dir = project_path()
 
-    venv_dir = ensure_virtualenv(separate_venv=True)
+    venv_dir = ensure_virtualenv(separate_venv=separate_venv)
 
     sudo("chown -R {} {}".format(USER, base_dir))
 
