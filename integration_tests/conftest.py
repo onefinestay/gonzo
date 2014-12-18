@@ -1,7 +1,7 @@
 from os import chdir, environ, path
 from urllib2 import urlparse
 
-from fabric.api import local, settings, cd
+from fabric.api import local, settings, cd, hide
 import pytest
 
 
@@ -13,6 +13,18 @@ def disable_output_capturing(request):
     capture_config = request.config.getoption('capture')
     if capture_config != 'no':
         pytest.fail('fabric requires --capture=no/-s')
+
+
+@pytest.yield_fixture(autouse=True)
+def hide_fabric_output(request):
+    if request.config.getoption('verbose') == 0:
+        groups = ['running', 'stdout', 'stderr']
+    else:
+        groups = []
+
+    with hide(*groups):
+        yield
+
 
 
 def completes_successfully(cmd):
