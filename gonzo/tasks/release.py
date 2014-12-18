@@ -54,8 +54,11 @@ def project_path(*extra):
 def venv_and_project_dir():
     project = get_project()
     commit = get_commit()
-    venv_dir = project_path('virtualenvs', commit)
-    with fab_prefix('source "{}/bin/activate"'.format(venv_dir)):
+    if using_separate_virtualenvs():
+        venv_dir = project_path('virtualenvs', commit)
+    else:
+        venv_dir = project_path()
+    with fab_prefix('source {}/bin/activate'.format(venv_dir)):
         with cd(project_path('releases', commit, project)):
             yield
 
