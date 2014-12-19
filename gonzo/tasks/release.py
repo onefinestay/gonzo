@@ -3,7 +3,7 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 from contextlib import contextmanager
 import os
 
-from fabric.api import task, env, sudo, put, run, local, settings
+from fabric.api import task, env, sudo, put, run, local, settings, abort
 from fabric.context_managers import prefix as fab_prefix, hide, cd
 from fabric.contrib.files import exists
 
@@ -12,6 +12,7 @@ from gonzo.utils import last_index
 
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 USER = 'www-data'  # TODO: make configurable
+VIRTUALENVS = 'virtualenvs'
 
 
 def usudo(*args, **kwargs):
@@ -55,11 +56,13 @@ def venv_and_project_dir():
     project = get_project()
     commit = get_commit()
     if using_separate_virtualenvs():
-        venv_dir = project_path('virtualenvs', commit)
+        venv_dir = project_path(VIRTUALENVS, commit)
     else:
         venv_dir = project_path()
     with fab_prefix('source {}/bin/activate'.format(venv_dir)):
         with cd(project_path('releases', commit, project)):
+            usudo('pip freeze')
+            usudo('which pip')
             yield
 
 
@@ -244,27 +247,17 @@ def _set_symlink(target, release):
 def set_current(release):
     _set_symlink("releases", release)
     if using_separate_virtualenvs():
-        _set_symlink("virtualenvs", release)
+        _set_symlink(VIRTUALENVS, release)
 
 
-def ensure_virtualenv(separate_venv):
-    base_dir = project_path()
-    if separate_venv:
-        commit = get_commit()
-        venv_dir = project_path('virtualenvs', commit)
-    else:
-        venv_dir = base_dir
-
-    if exists(os.path.join(venv_dir, 'bin', 'activate')):
-        return venv_dir
-
+def create_virtualenv(path):
     with settings(warn_only=True):
-        res = sudo("virtualenv {}".format(venv_dir))
+        res = usudo("virtualenv {}".format(path))
 
     # TODO: install setuptools and virtualenv? or bootatrap, e.g.
     # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
     if res.succeeded:
-        return venv_dir
+        return
     if "virtualenv: command not found" in res:
         raise RuntimeError(
             "Virtualenv not installed on target server!")
@@ -272,11 +265,32 @@ def ensure_virtualenv(separate_venv):
 
 
 def using_separate_virtualenvs():
-    return exists(project_path('virtualenvs'))
+    return exists(project_path(VIRTUALENVS))
 
 
 @task
-def push(separate_venv=False):
+def init(separate_virtualenv=False):
+    base_dir = project_path()
+
+    sudo('mkdir -p {}'.format(base_dir))
+    sudo("chown -R {} {}".format(USER, base_dir))
+
+    if separate_virtualenv:
+        usudo('mkdir -p {}'.format(project_path(VIRTUALENVS)))
+    else:
+        create_virtualenv(base_dir)
+
+
+def is_initialised():
+    project_dir = project_path()
+    return (
+        exists(os.path.join(project_dir, 'bin', 'activate')) or
+        exists(os.path.join(project_dir, VIRTUALENVS))
+    )
+
+
+@task
+def push():
     """ Deploy commit identified by ``set_commit`` previously.
         The release is not set live - the 'current' point is not amended -
         until ``activate`` is invoked. The latter is a fast operation whilst
@@ -295,11 +309,11 @@ def push(separate_venv=False):
     packages_dir = project_path('packages')
     target_file = project_path('packages', zfname)
 
-    base_dir = project_path()
+    if not is_initialised():
+        abort('Project not initialised on this host. Please run release.init')
 
-    ensure_virtualenv(separate_venv=separate_venv)
-
-    sudo("chown -R {} {}".format(USER, base_dir))
+    if using_separate_virtualenvs():
+        create_virtualenv(project_path(VIRTUALENVS, commit))
 
     if not exists(target_file):
         usudo("mkdir -p {}".format(packages_dir))
@@ -373,7 +387,7 @@ def purge_release(release):
     usudo('rm -rf {}'.format(released_dir))
 
     if using_separate_virtualenvs():
-        venv_dir = project_path('virtualenvs', release)
+        venv_dir = project_path(VIRTUALENVS, release)
         usudo('rm -rf {}'.format(venv_dir))
 
     # remove history entry

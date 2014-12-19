@@ -1,14 +1,14 @@
-from fabric.api import settings, run
+from fabric.api import run, settings
 
 from gonzo.tasks.release import (
-    activate, list_releases, push, venv_and_project_dir, prune, usudo,
-    project_path,
-)
+    activate, init, list_releases, project_path, prune, push, usudo,
+    venv_and_project_dir)
 
 
 def test_basic(container, test_repo):
     # small package with no requirements
     test_repo.files['requirements.txt'] = 'initools==0.2'
+    init()
     pip_output = push()
     setup_output = 'Running setup.py install for initools'
     assert setup_output in pip_output
@@ -28,13 +28,14 @@ def test_basic(container, test_repo):
 def test_separate_venv(container, test_repo):
     # small package with no requirements
     test_repo.files['requirements.txt'] = 'initools==0.2'
-    pip_output = push(separate_venv=True)
+    init(separate_virtualenv=True)
+    pip_output = push()
     setup_output = 'Running setup.py install for initools'
     assert setup_output in pip_output
     activate()
     # trigger commit
     test_repo.files['dummy'] = 'a'
-    pip_output = push(separate_venv=True)
+    pip_output = push()
     assert setup_output in pip_output
 
 
@@ -43,11 +44,12 @@ def test_pruning(container, test_repo):
     venv_dir = project_path('virtualenvs')
 
     test_repo.files['requirements.txt'] = 'initools==0.2'
-    push(separate_venv=True)
+    init(separate_virtualenv=True)
+    push()
     activate()
     # trigger commit
     test_repo.files['dummy'] = 'a'
-    push(separate_venv=True)
+    push()
     activate()
 
     history = list_releases()
