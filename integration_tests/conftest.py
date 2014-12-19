@@ -1,4 +1,4 @@
-from os import chdir, environ, path
+import os
 from urllib2 import urlparse
 
 from fabric.api import local, settings, cd, hide
@@ -68,7 +68,7 @@ def container(docker_image, disable_output_capturing):
     ssh_host = '127.0.0.1'
 
     # for boot2docker
-    docker_host = environ.get('DOCKER_HOST')
+    docker_host = os.environ.get('DOCKER_HOST')
     if docker_host:
         parsed = urlparse.urlparse(docker_host)
         ssh_host = parsed.hostname
@@ -99,7 +99,7 @@ class TestRepo(object):
 
         def __setitem__(self, key, value):
             self._files[key] = value
-            with open(path.join(self._path, key), 'w') as handle:
+            with open(os.path.join(self._path, key), 'w') as handle:
                 handle.write(value)
             cmd = """
                 git add {key}
@@ -125,5 +125,5 @@ class TestRepo(object):
 
 @pytest.fixture
 def test_repo(tmpdir):
-    chdir(str(tmpdir))
+    os.chdir(str(tmpdir))
     return TestRepo(str(tmpdir))
