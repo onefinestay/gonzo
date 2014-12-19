@@ -61,8 +61,6 @@ def venv_and_project_dir():
         venv_dir = project_path()
     with fab_prefix('source {}/bin/activate'.format(venv_dir)):
         with cd(project_path('releases', commit, project)):
-            usudo('pip freeze')
-            usudo('which pip')
             yield
 
 
