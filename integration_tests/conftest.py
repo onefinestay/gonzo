@@ -117,5 +117,3 @@ class TestRepo(object):
 def test_repo(tmpdir):
     chdir(str(tmpdir))
     return TestRepo(str(tmpdir))
-
-
