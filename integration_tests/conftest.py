@@ -90,6 +90,12 @@ def container(docker_image, disable_output_capturing):
 
 
 class TestRepo(object):
+    """
+    Test git repo. Has a dict-like property `files` for adding/editing
+    files (only supports top level files).
+
+    >>> test_repo['requirements.txt'] = 'mypackage==0.1'
+    """
     class Files(object):
         def __init__(self, path):
             self._path = path
