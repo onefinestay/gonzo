@@ -12,7 +12,7 @@ unit_tests:
 	coverage report
 
 all_tests:
-	coverage run --source=gonzo -m pytest -s tests integration_tests
+	coverage run --source=gonzo -m pytest tests integration_tests
 	coverage report
 
 flake8:
