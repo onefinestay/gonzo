@@ -8,11 +8,21 @@ import pytest
 DOCKER_IMAGE_NAME = "gonzo-integration-test"
 
 
-@pytest.fixture(autouse=True)
+@pytest.yield_fixture
 def disable_output_capturing(request):
-    capture_config = request.config.getoption('capture')
-    if capture_config != 'no':
-        pytest.fail('fabric requires --capture=no/-s')
+    # fabric doesn't work with captured outpu
+    capman = request.config.pluginmanager.getplugin("capturemanager")
+    original_method = capman._method
+
+    capman._method = 'no'
+    capman.reset_capturings()
+    capman.init_capturings()
+    try:
+        yield
+    finally:
+        capman._method = original_method
+        capman.reset_capturings()
+        capman.init_capturings()
 
 
 @pytest.yield_fixture(autouse=True)
@@ -50,7 +60,7 @@ def docker(cmd, *args):
 
 
 @pytest.yield_fixture
-def container(docker_image):
+def container(docker_image, disable_output_capturing):
     container = docker('run -d -P -t {} /usr/sbin/sshd -D', DOCKER_IMAGE_NAME)
     ssh_port_string = docker('port {} 22', container)
     ssh_port = ssh_port_string.split(':')[1]
