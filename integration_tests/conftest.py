@@ -26,7 +26,6 @@ def hide_fabric_output(request):
         yield
 
 
-
 def completes_successfully(cmd):
     with settings(warn_only=True):
         res = local(cmd)
