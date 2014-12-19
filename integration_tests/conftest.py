@@ -44,14 +44,15 @@ def completes_successfully(cmd):
 
 @pytest.fixture(scope='session')
 def docker_image():
+    import pdb; pdb.set_trace()
     if not completes_successfully('docker --version'):
         pytest.skip('docker is not available')
 
     if not completes_successfully(
         'docker images |grep {}'.format(DOCKER_IMAGE_NAME)
     ):
-        # TODO: more robust folder resolution
-        local('docker build integration_suite -t {}'.format(DOCKER_IMAGE_NAME))
+        path = os.path.dirname(__file__)
+        local('docker build {} -t {}'.format(path, DOCKER_IMAGE_NAME))
 
 
 def docker(cmd, *args):
