@@ -3,8 +3,8 @@ from __future__ import absolute_import  # otherwise we find tasks.gonzo
 from contextlib import contextmanager
 import os
 
-from fabric.api import task, env, sudo, put, run, local, settings, abort
-from fabric.context_managers import prefix as fab_prefix, hide, cd
+from fabric.api import task, env, sudo, put, run, local, settings
+from fabric.context_managers import prefix as fab_prefix, hide
 from fabric.contrib.files import exists
 
 from gonzo.config import PROJECT_ROOT, local_state
@@ -53,15 +53,10 @@ def project_path(*extra):
 
 @contextmanager
 def virtualenv():
-    project = get_project()
     commit = get_commit()
-    if using_separate_virtualenvs():
-        venv_dir = project_path(VIRTUALENVS, commit)
-    else:
-        venv_dir = project_path()
+    venv_dir = project_path(VIRTUALENVS, commit)
     with fab_prefix('source {}/bin/activate'.format(venv_dir)):
-        with cd(project_path('releases', commit, project)):
-            yield
+        yield
 
 
 def list_releases():
@@ -244,11 +239,16 @@ def _set_symlink(target, release):
 
 def set_current(release):
     _set_symlink("releases", release)
-    if using_separate_virtualenvs():
-        _set_symlink(VIRTUALENVS, release)
+    _set_symlink(VIRTUALENVS, release)
 
 
 def create_virtualenv(path):
+    if not exists(project_path(VIRTUALENVS)):
+        base_dir = project_path()
+        sudo("mkdir -p {}".format(base_dir))
+        sudo("chown -R {} {}".format(USER, base_dir))
+        usudo('mkdir -p {}'.format(project_path(VIRTUALENVS)))
+
     with settings(warn_only=True):
         res = usudo("virtualenv {}".format(path))
 
@@ -260,31 +260,6 @@ def create_virtualenv(path):
         raise RuntimeError(
             "Virtualenv not installed on target server!")
     raise RuntimeError(res)
-
-
-def using_separate_virtualenvs():
-    return exists(project_path(VIRTUALENVS))
-
-
-@task
-def init(separate_virtualenv=False):
-    base_dir = project_path()
-
-    sudo('mkdir -p {}'.format(base_dir))
-    sudo("chown -R {} {}".format(USER, base_dir))
-
-    if separate_virtualenv:
-        usudo('mkdir -p {}'.format(project_path(VIRTUALENVS)))
-    else:
-        create_virtualenv(base_dir)
-
-
-def is_initialised():
-    project_dir = project_path()
-    return (
-        exists(os.path.join(project_dir, 'bin', 'activate')) or
-        exists(os.path.join(project_dir, VIRTUALENVS))
-    )
 
 
 @task
@@ -307,11 +282,7 @@ def push():
     packages_dir = project_path('packages')
     target_file = project_path('packages', zfname)
 
-    if not is_initialised():
-        abort('Project not initialised on this host. Please run release.init')
-
-    if using_separate_virtualenvs():
-        create_virtualenv(project_path(VIRTUALENVS, commit))
+    create_virtualenv(project_path(VIRTUALENVS, commit))
 
     if not exists(target_file):
         usudo("mkdir -p {}".format(packages_dir))
@@ -328,14 +299,12 @@ def push():
         quiet_flag = ""
 
     project = get_project()
-    if not exists(
-        project_path('releases', commit, project, 'requirements.txt')
-    ):
+    req_txt = project_path('releases', commit, project, 'requirements.txt')
+    if not exists(req_txt):
         return
 
     with virtualenv():
-        return usudo("pip install -r requirements.txt {}".format(
-            quiet_flag))
+        return usudo("pip install -r {} {}".format(quiet_flag, req_txt))
 
 
 @task
@@ -373,6 +342,8 @@ def purge_release(release):
     """
     package_name = project_path('packages', '{}.tgz'.format(release))
     released_dir = project_path('releases', release)
+    venv_dir = project_path(VIRTUALENVS, release)
+
     current_pointer = get_current()
 
     if exists(package_name):
@@ -383,10 +354,7 @@ def purge_release(release):
             "Cannot remove checked out directory as it is the current release")
 
     usudo('rm -rf {}'.format(released_dir))
-
-    if using_separate_virtualenvs():
-        venv_dir = project_path(VIRTUALENVS, release)
-        usudo('rm -rf {}'.format(venv_dir))
+    usudo('rm -rf {}'.format(venv_dir))
 
     # remove history entry
     releases = list_releases()

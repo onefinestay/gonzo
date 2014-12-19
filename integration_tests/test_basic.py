@@ -1,35 +1,13 @@
 from fabric.api import run, settings
-import pytest
 
 from gonzo.tasks.release import (
-    activate, init, list_releases, project_path, prune, push, usudo,
+    activate, list_releases, project_path, prune, push, usudo,
     virtualenv)
-
-
-def test_basic(container, test_repo):
-    # small package with no requirements
-    test_repo.files['requirements.txt'] = 'initools==0.2'
-    init()
-    pip_output = push()
-    setup_output = 'Running setup.py install for initools'
-    assert setup_output in pip_output
-    activate()
-    # trigger commit
-    test_repo.files['dummy'] = 'a'
-    pip_output = push()
-    assert setup_output not in pip_output
-    activate()
-    # trigger commit
-    test_repo.files['dummy'] = 'b'
-    push()
-    history = list_releases()
-    assert len(history) == 2
 
 
 def test_separate_venv(container, test_repo):
     # small package with no requirements
     test_repo.files['requirements.txt'] = 'initools==0.2'
-    init(separate_virtualenv=True)
     pip_output = push()
     setup_output = 'Running setup.py install for initools'
     assert setup_output in pip_output
@@ -38,13 +16,6 @@ def test_separate_venv(container, test_repo):
     test_repo.files['dummy'] = 'a'
     pip_output = push()
     assert setup_output in pip_output
-
-
-def test_no_init(container, test_repo, capsys):
-    with pytest.raises(BaseException):
-        push()
-    stdout, stderr = capsys.readouterr()
-    assert 'Please run release.init' in stderr
 
 
 def test_pruning(container, test_repo):
@@ -52,7 +23,6 @@ def test_pruning(container, test_repo):
     venv_dir = project_path('virtualenvs')
 
     test_repo.files['requirements.txt'] = 'initools==0.2'
-    init(separate_virtualenv=True)
     push()
     activate()
     # trigger commit

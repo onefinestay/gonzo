@@ -106,7 +106,7 @@ class TestRepo(object):
         git add readme.txt
         git commit -m "initial add"
         git config --local gonzo.project test
-        """.format(path=path)
+        """.format()
         with cd(self.path):
             local(cmd)
 
