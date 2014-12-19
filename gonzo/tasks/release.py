@@ -52,7 +52,7 @@ def project_path(*extra):
 
 
 @contextmanager
-def venv_and_project_dir():
+def virtualenv():
     project = get_project()
     commit = get_commit()
     if using_separate_virtualenvs():
@@ -333,7 +333,7 @@ def push():
     ):
         return
 
-    with venv_and_project_dir():
+    with virtualenv():
         return usudo("pip install -r requirements.txt {}".format(
             quiet_flag))
 

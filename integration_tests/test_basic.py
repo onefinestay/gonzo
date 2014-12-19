@@ -3,7 +3,7 @@ import pytest
 
 from gonzo.tasks.release import (
     activate, init, list_releases, project_path, prune, push, usudo,
-    venv_and_project_dir)
+    virtualenv)
 
 
 def test_basic(container, test_repo):
@@ -84,7 +84,7 @@ def test_pruning(container, test_repo):
     assert len(virtualenvs) == 2  # includes current
 
     # check that virtualenv still works
-    with venv_and_project_dir():
+    with virtualenv():
         with settings(warn_only=True):
             res = usudo('pip freeze|grep -i initools')
         assert res.succeeded
