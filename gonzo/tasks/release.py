@@ -298,13 +298,18 @@ def push():
     else:
         quiet_flag = ""
 
+    index_url = getattr(env, "pip_index_url", None)
+    if index_url:
+        index_url_flag = '--index-url={}'.format(index_url)
+
     project = get_project()
     req_txt = project_path('releases', commit, project, 'requirements.txt')
     if not exists(req_txt):
         return
 
     with virtualenv():
-        return usudo("pip install -r {} {}".format(quiet_flag, req_txt))
+        return usudo("pip install {} -r {} {}".format(
+            index_url_flag, quiet_flag, req_txt))
 
 
 @task
