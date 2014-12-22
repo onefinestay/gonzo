@@ -18,11 +18,6 @@ def test_separate_venv(container, test_repo):
     assert setup_output in pip_output
 
 
-def test_push_same_commit(container, test_repo):
-    push()
-    push()
-
-
 def test_pruning(container, test_repo):
     project_dir = project_path('releases')
     venv_dir = project_path('virtualenvs')
