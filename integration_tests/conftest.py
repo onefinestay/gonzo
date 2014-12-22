@@ -10,7 +10,7 @@ DOCKER_IMAGE_NAME = "gonzo-integration-test"
 
 @pytest.yield_fixture
 def disable_output_capturing(request):
-    # fabric doesn't work with captured outpu
+    # fabric doesn't work with captured output
     capman = request.config.pluginmanager.getplugin("capturemanager")
     original_method = capman._method
 
@@ -44,7 +44,6 @@ def completes_successfully(cmd):
 
 @pytest.fixture(scope='session')
 def docker_image():
-    import pdb; pdb.set_trace()
     if not completes_successfully('docker --version'):
         pytest.skip('docker is not available')
 
@@ -123,7 +122,7 @@ class TestRepo(object):
         git add readme.txt
         git commit -m "initial add"
         git config --local gonzo.project test
-        """.format()
+        """
         with cd(self.path):
             local(cmd)
 

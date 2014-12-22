@@ -269,10 +269,6 @@ def push():
         The release is not set live - the 'current' point is not amended -
         until ``activate`` is invoked. The latter is a fast operation whilst
         this is slow.
-
-        :Parameters:
-            separate_venv: bool (default: False)
-                If True, gonzo will create a fresh virtualenv for every release
     """
     commit = get_commit()
     zipfile, _ = create_archive(commit)
