@@ -13,6 +13,7 @@ from gonzo.utils import last_index
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 USER = 'www-data'  # TODO: make configurable
 VIRTUALENVS = 'virtualenvs'
+VIRTUALENV_NOT_FOUND = 'virtualenv: command not found'
 
 
 def usudo(*args, **kwargs):
@@ -256,7 +257,7 @@ def create_virtualenv(path):
     # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
     if res.succeeded:
         return
-    if "virtualenv: command not found" in res:
+    if VIRTUALENV_NOT_FOUND in res:
         raise RuntimeError(
             "Virtualenv not installed on target server!")
     raise RuntimeError(res)
