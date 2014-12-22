@@ -1,8 +1,23 @@
-from fabric.api import run, settings
+from contextlib import contextmanager
 
+from fabric.api import run, settings, sudo
+from mock import patch
+
+from gonzo.tasks.pip import index_url
 from gonzo.tasks.release import (
     activate, list_releases, project_path, prune, push, usudo,
     virtualenv)
+
+
+@contextmanager
+def log_sudo_calls():
+    with patch('gonzo.tasks.release.sudo') as mock_sudo:
+        log = []
+        def capturing_sudo(*a, **k):
+            log.append((a, k))
+            return sudo(*a, **k)
+        mock_sudo.side_effect = capturing_sudo
+        yield log
 
 
 def test_separate_venv(container, test_repo):
@@ -16,6 +31,16 @@ def test_separate_venv(container, test_repo):
     test_repo.files['dummy'] = 'a'
     pip_output = push()
     assert setup_output in pip_output
+
+
+def test_custom_index_url(container, test_repo):
+    test_repo.files['requirements.txt'] = 'initools==0.2'
+    index_url('https://pypi.python.org/simple/')
+    with log_sudo_calls() as log:
+        push()
+    pip_install_args, _ = log[-1]
+    (install_cmd,) = pip_install_args
+    assert '--index-url=https://pypi.python.org/simple/' in install_cmd
 
 
 def test_pruning(container, test_repo):
