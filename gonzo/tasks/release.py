@@ -290,14 +290,13 @@ def push():
 
         usudo("cd /; tar zxf {}".format(target_file))
 
+    flags = []
     if getattr(env, "pip_quiet", False):
-        quiet_flag = "--quiet"
-    else:
-        quiet_flag = ""
+        flags.append("--quiet")
 
     index_url = getattr(env, "pip_index_url", None)
     if index_url:
-        index_url_flag = '--index-url={}'.format(index_url)
+        flags.append('--index-url={}'.format(index_url))
 
     project = get_project()
     req_txt = project_path('releases', commit, project, 'requirements.txt')
@@ -305,8 +304,8 @@ def push():
         return
 
     with virtualenv():
-        return usudo("pip install {} -r {} {}".format(
-            index_url_flag, quiet_flag, req_txt))
+        return usudo("pip install {} -r {}".format(
+            ' '.join(flags), req_txt))
 
 
 @task
