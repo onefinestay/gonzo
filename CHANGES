@@ -1,3 +1,13 @@
+Version 0.4.0
+-------------
+
+Backwards incompatible: Separate virtualenvs
+
+Each release now gets its own virtualenv for proper separation between
+releases. We recommend using wheels to maintain speedy releases, e.g.
+using http://doc.devpi.net/
+
+
 Version 0.3.1
 --------------
 
