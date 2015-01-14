@@ -8,7 +8,7 @@ a single consistent interface::
 
     $ gonzo instance-launch production-web-app
     ...
-    $ gonzo list
+    $ gonzo instance-list
 
     production-web-app-001        m1.large   ACTIVE   david    0d 0h  2m 23s
     fullstack-database-006        m1.small   ACTIVE   fergus   7d 23h 45m 3s
@@ -51,7 +51,7 @@ within.
 
 To see a list of all running instance in the region::
 
-    $ gonzo list
+    $ gonzo instance-list
     production-sql-004          m1.small   ACTIVE   david    20d 20h 4m 23s
     production-web-004          m1.small   ACTIVE   fergus   7d 23h 45m 3s
 
