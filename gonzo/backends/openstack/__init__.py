@@ -1,2 +1,0 @@
-OPENSTACK_AVAILABILITY_ZONE = "nova"
-TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
