@@ -4,14 +4,10 @@ from fabric.api import task, env
 
 
 @task
-def index_url(url):
-    """ Use a custom index-url when running `pip install`
-    """
-    env.pip_index_url = url
+def flags(flags):
+    """ Add custom flags to pip when installing requirements.txt
 
-
-@task
-def quiet():
-    """ Cause pip to use the --quiet flag when pushing new releases
+    Example:
+        pip.flags:'--index-url=https://mypi.example.com --quiet'
     """
-    env.pip_quiet = True
+    env.pip_flags = flags

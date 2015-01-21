@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from fabric.api import run, settings, sudo
 from mock import patch
 
-from gonzo.tasks.pip import index_url
+from gonzo.tasks import pip
 from gonzo.tasks.release import (
     activate, list_releases, project_path, prune, push, usudo,
     virtualenv)
@@ -35,7 +35,7 @@ def test_separate_venv(container, test_repo):
 
 def test_custom_index_url(container, test_repo):
     test_repo.files['requirements.txt'] = 'initools==0.2'
-    index_url('https://pypi.python.org/simple/')
+    pip.flags('--index-url=https://pypi.python.org/simple/')
     with log_sudo_calls() as log:
         push()
     pip_install_args, _ = log[-1]
