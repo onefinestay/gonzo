@@ -1,5 +1,6 @@
 from __future__ import absolute_import  # otherwise we find tasks.gonzo
 
+from contextlib import contextmanager
 import os
 
 from fabric.api import task, env, sudo, put, run, local, settings
@@ -11,6 +12,8 @@ from gonzo.utils import last_index
 
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 USER = 'www-data'  # TODO: make configurable
+VIRTUALENVS = 'virtualenvs'
+VIRTUALENV_NOT_FOUND = 'virtualenv: command not found'
 
 
 def usudo(*args, **kwargs):
@@ -49,11 +52,12 @@ def project_path(*extra):
     return os.path.join(PROJECT_ROOT, get_project(), *extra)
 
 
-def activate_command():
-    project = get_project()
+@contextmanager
+def virtualenv():
     commit = get_commit()
-    return 'cd {}; source bin/activate; cd {}'.format(
-        project_path(), project_path('releases', commit, project))
+    venv_dir = project_path(VIRTUALENVS, commit)
+    with fab_prefix('source {}/bin/activate'.format(venv_dir)):
+        yield
 
 
 def list_releases():
@@ -228,11 +232,35 @@ def get_current():
     return current
 
 
-def set_current(release):
-    release_dir = project_path("releases", release)
-    symlink = project_path("releases", "current")
+def _set_symlink(target, release):
+    target_dir = project_path(target, release)
+    symlink = project_path(target, "current")
+    usudo('ln -snf {} {}'.format(target_dir, symlink))
 
-    usudo('ln -snf {} {}'.format(release_dir, symlink))
+
+def set_current(release):
+    _set_symlink("releases", release)
+    _set_symlink(VIRTUALENVS, release)
+
+
+def create_virtualenv(path):
+    if not exists(project_path(VIRTUALENVS)):
+        base_dir = project_path()
+        sudo("mkdir -p {}".format(base_dir))
+        sudo("chown -R {} {}".format(USER, base_dir))
+        usudo('mkdir -p {}'.format(project_path(VIRTUALENVS)))
+
+    with settings(warn_only=True):
+        res = usudo("virtualenv {}".format(path))
+
+    # TODO: install setuptools and virtualenv? or bootatrap, e.g.
+    # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
+    if res.succeeded:
+        return
+    if VIRTUALENV_NOT_FOUND in res:
+        raise RuntimeError(
+            "Virtualenv not installed on target server!")
+    raise RuntimeError(res)
 
 
 @task
@@ -251,22 +279,7 @@ def push():
     packages_dir = project_path('packages')
     target_file = project_path('packages', zfname)
 
-    base_dir = project_path()
-
-    if not exists(project_path('bin', 'activate')):
-        with settings(warn_only=True):
-            res = sudo("virtualenv {}".format(base_dir))
-
-        # TODO: install setuptools and virtualenv? or bootatrap, e.g.
-        # http://eli.thegreenplace.net/2013/04/20/bootstrapping-virtualenv/
-        if not res.succeeded:
-            if "virtualenv: command not found" in res:
-                raise RuntimeError(
-                    "Virtualenv not installed on target server!")
-            else:
-                raise RuntimeError(res)
-
-    sudo("chown -R {} {}".format(USER, base_dir))
+    create_virtualenv(project_path(VIRTUALENVS, commit))
 
     if not exists(target_file):
         usudo("mkdir -p {}".format(packages_dir))
@@ -277,19 +290,15 @@ def push():
 
         usudo("cd /; tar zxf {}".format(target_file))
 
-    if getattr(env, "install_requirements", True):
-        if getattr(env, "pip_upgrade", False):
-            upgrade_flag = "--upgrade"
-        else:
-            upgrade_flag = ""
+    flags = getattr(env, 'pip_flags', '')
 
-        if getattr(env, "pip_quiet", False):
-            quiet_flag = "--quiet"
-        else:
-            quiet_flag = ""
-        with fab_prefix(activate_command()):
-            usudo("pip install {} -r requirements.txt {}".format(
-                upgrade_flag, quiet_flag))
+    project = get_project()
+    req_txt = project_path('releases', commit, project, 'requirements.txt')
+    if not exists(req_txt):
+        return
+
+    with virtualenv():
+        return usudo("pip install {} -r {}".format(flags, req_txt))
 
 
 @task
@@ -307,17 +316,11 @@ def prune(keep='4'):
     release_list = list_releases()
     current_release = get_current()
     index = release_list.index(current_release)
-    if index > keep:
-        delete_release_list = release_list[:index - keep + 1]
+    n_first = index - keep + 1
+    if n_first > 0:
+        delete_release_list = release_list[:n_first]
         for release in delete_release_list:
             purge_release(release)
-
-
-@task
-def purge_local_package(package):
-    """ Purge a pip installed package from a project virtualenv. """
-    with fab_prefix(activate_command()):
-        usudo("pip uninstall --yes {}".format(package))
 
 
 @task
@@ -333,6 +336,8 @@ def purge_release(release):
     """
     package_name = project_path('packages', '{}.tgz'.format(release))
     released_dir = project_path('releases', release)
+    venv_dir = project_path(VIRTUALENVS, release)
+
     current_pointer = get_current()
 
     if exists(package_name):
@@ -343,6 +348,7 @@ def purge_release(release):
             "Cannot remove checked out directory as it is the current release")
 
     usudo('rm -rf {}'.format(released_dir))
+    usudo('rm -rf {}'.format(venv_dir))
 
     # remove history entry
     releases = list_releases()
