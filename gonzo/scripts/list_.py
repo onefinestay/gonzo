@@ -4,9 +4,12 @@
 
 from functools import partial
 
-from gonzo.backends import get_current_cloud
-from gonzo.scripts.utils import colorize, print_table, format_uptime
+from libcloud.compute.types import NodeState
 
+from gonzo.clouds.compute import Cloud
+from gonzo.config import config_proxy
+from gonzo.scripts.utils import colorize, print_table, format_uptime
+import ipdb
 
 headers = [
     "name",
@@ -19,29 +22,49 @@ headers = [
 ]
 
 
+def instance_colour(instance):
+    pass
+
+
 def print_instance_summary(instance, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
+    #ipdb.set_trace()
     colorize_ = partial(colorize, use_color=use_color)
 
     name = colorize_(instance.name, "yellow")
+    instance_type = instance.extra['gonzo_size']
 
-    instance_type = instance.instance_type
+#    colours = {
+#        NodeState.RUNNING: 'green'
+#    }
 
-    status_colour = "green" if instance.is_running() else "red"
-    status = colorize_(instance.status, status_colour)
+#    colour = colours.get(instance_status, 'red')
 
-    owner = instance.tags.get("owner", "--")
+    if instance.state == NodeState.RUNNING:
+        status_colour = "green"
+    else:
+        status_colour = "red"
 
-    uptime = format_uptime(instance.launch_time)
+    instance_status = NodeState.tostring(instance.state)
+    status = colorize_(instance_status, status_colour)
+    #ipdb.set_trace()
+    if 'owner' in instance.extra['gonzo_tags']:
+        owner = instance.extra['gonzo_tags']['owner']
+    else:
+        owner = "---"
+
+    uptime = format_uptime(instance.extra['gonzo_created_time'])
     uptime = colorize_(uptime, "blue")
 
-    group_list = [group.name for group in instance.groups]
-    group_list.sort()
-    group_name_list = ",".join(group_list)
+    try:
+        group_list = [group['group_name'] for group in instance.extra['groups']]
+        group_list.sort()
+        group_name_list = ",".join(group_list)
+    except KeyError:
+        group_name_list = ""
 
-    availability_zone = instance.availability_zone
-
+    availability_zone = instance.extra['gonzo_az']
     result_list = [
         name,
         instance_type,
@@ -60,12 +83,14 @@ def list_(args):
 
     """
 
-    cloud = get_current_cloud()
-    instances = cloud.list_instances(only_running=args.only_running)
+    #cloud = get_current_cloud()
 
-    if args.order == 'name':
-        instances.sort(key=lambda i: i.tags.get(args.order))
+    # Get Config.py
+    cloud_config = config_proxy.CLOUD
+    region = config_proxy.REGION
+    cloud = Cloud.from_config(cloud_config, region)
 
+    instances = cloud.list_instances()
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
 

@@ -24,7 +24,7 @@ def colorize(msg, colour, use_color='auto'):
         return msg
 
 
-def print_table(row_definer, headers, objects, show_header=False,
+def print_table(row_definer, headers, objects, show_header=True,
                 use_color='auto'):
     tableoutput = PrettyTable(headers)
     for column in headers:
