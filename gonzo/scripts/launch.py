@@ -177,7 +177,7 @@ def init_parser(parser):
     parser.add_argument(
         'env_type', metavar='environment-server_type', help=env_type_pair_help)
     parser.add_argument(
-        '--image-name', dest='image_id',
+        '--image-id', dest='image_id',
         help="ID of image to boot from")
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],

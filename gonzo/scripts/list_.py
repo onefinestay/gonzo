@@ -89,7 +89,6 @@ def list_(args):
     cloud_config = config_proxy.CLOUD
     region = config_proxy.REGION
     cloud = Cloud.from_config(cloud_config, region)
-
     instances = cloud.list_instances()
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
