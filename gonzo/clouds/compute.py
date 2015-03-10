@@ -241,11 +241,10 @@ class Openstack(Cloud):
 
     def __init__(self, cloud_config, region):
 
-        AUTH_URL = "http://10.11.55.1:5000"
-        AUTH_USERNAME = "admin"
-        AUTH_PASSWORD = "password"
-        TENANT_NAME = "admin"
-        REGION = "RegionOne"
+        AUTH_URL = cloud_config['AUTH_URL']
+        AUTH_USERNAME = cloud_config['USERNAME']
+        AUTH_PASSWORD = cloud_config['PASSWORD']
+        TENANT_NAME = cloud_config['TENANT_NAME']
 
         Openstack = get_compute_driver(ComputeProvider.OPENSTACK)
         self.compute_session = Openstack(AUTH_USERNAME,
@@ -253,7 +252,8 @@ class Openstack(Cloud):
                                          ex_force_auth_url=AUTH_URL,
                                          ex_tenant_name=TENANT_NAME,
                                          ex_force_auth_version="2.0_password",
-                                         ex_force_service_region=REGION)
+                                         ex_force_service_region=region
+                                         )
 
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
