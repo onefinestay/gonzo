@@ -157,8 +157,8 @@ class Cloud(object):
     def get_key_pair(self, key_name):
         for key in self.compute_session.list_key_pairs():
             if key_name == key.name:
-                print "Matched"
                 return key
+        raise LookupError("Unknown key `{}`".format(key_name))
 
     def generate_instance_metadata(self, owner, environment, server_type):
         instance_metadata = {}
