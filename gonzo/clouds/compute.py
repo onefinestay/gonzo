@@ -96,7 +96,9 @@ class Cloud(object):
         image = self.get_image(image_name)
 
         # Key Pair
-        key = self.get_key_pair(key_name)
+        if key_name is not None:
+            key = self.get_key_pair(key_name)
+            key_name = key.name
 
         # Tags
         tags = self.generate_instance_metadata(
@@ -139,7 +141,7 @@ class Cloud(object):
             ex_security_groups=security_groups,
             ex_metadata=tags,
             ex_userdata=user_data,
-            ex_keyname=key.name,
+            ex_keyname=key_name,
             )
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
