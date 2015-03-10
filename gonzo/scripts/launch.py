@@ -107,14 +107,17 @@ def launch(args):
 
     # User Data
     if args.user_data_params is None:
-        user_data_params = cloud_config['USER_DATA_PARAMS']
+        user_data_params = cloud_config.get('USER_DATA_PARAMS')
     else:
         user_data_params = args.user_data_params
 
     if not args.user_data_uri:
-        user_data_uri = cloud_config['DEFAULT_USER_DATA']
-        user_data = get_parsed_document(full_instance_name, user_data_uri,
-                                        'USER_DATA_PARAMS', user_data_params)
+        user_data_uri = cloud_config.get('DEFAULT_USER_DATA')
+        if user_data_uri is None:
+            user_data = {}
+        else:
+            user_data = get_parsed_document(full_instance_name, user_data_uri,
+                                            'USER_DATA_PARAMS', user_data_params)
 
     # Launch Instance
     instance = cloud.create_instance(
@@ -124,7 +127,7 @@ def launch(args):
         image_name=image_id,
         security_groups=security_groups,
         owner=username,
-        key_name=cloud_config['PUBLIC_KEY_NAME'],
+        key_name=cloud_config.get('PUBLIC_KEY_NAME'),
     )
     print instance
     #ipdb.set_trace()
