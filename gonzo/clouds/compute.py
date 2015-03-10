@@ -16,6 +16,8 @@ def backend_for(provider):
 
 
 class Cloud(object):
+    compute_session = None
+
     @classmethod
     def from_config(cls, cloud_config, region):
         try:
@@ -77,7 +79,6 @@ class Cloud(object):
 
         if len(availabie_azs) == 0:
             return availabie_azs
-
         else:
             for index, availabie_az in enumerate(availabie_azs):
                 if availabie_az.name == newest_instance_az:
