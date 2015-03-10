@@ -18,7 +18,6 @@ class DNS(object):
                                              record_name=record_name)
 
             next_count = int(dns_record.data.strip('"')) + 1
-           #ipdb.set_trace()
             print "Updating DNS Counter..."
             print self.dns_session.update_record(record=dns_record,
                                                  name=record_name,

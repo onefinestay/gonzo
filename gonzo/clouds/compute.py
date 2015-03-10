@@ -3,7 +3,6 @@ import logging
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 
-import ipdb
 
 logger = logging.getLogger(__name__)
 backends = {}

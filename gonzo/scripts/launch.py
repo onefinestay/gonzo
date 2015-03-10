@@ -17,7 +17,6 @@ from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
 
-import ipdb
 
 logger = logging.getLogger(__name__)
 

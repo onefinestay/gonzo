@@ -9,7 +9,7 @@ from libcloud.compute.types import NodeState
 from gonzo.clouds.compute import Cloud
 from gonzo.config import config_proxy
 from gonzo.scripts.utils import colorize, print_table, format_uptime
-import ipdb
+
 
 headers = [
     "name",
