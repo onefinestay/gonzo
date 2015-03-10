@@ -6,9 +6,8 @@ from libcloud.dns.types import RecordType
 class DNS(object):
 
     def __init__(self, aws_access_id, aws_secret_key):
-        R53Drver = get_dns_driver(DNSProvider.ROUTE53)
-        #import ipdb; ipdb.set_trace()
-        self.dns_session = R53Drver(aws_access_id, aws_secret_key)
+        R53Driver = get_dns_driver(DNSProvider.ROUTE53)
+        self.dns_session = R53Driver(aws_access_id, aws_secret_key)
 
     def get_next_host(self, environment, server_type, zone):
         record_type = RecordType.TXT
