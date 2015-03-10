@@ -2,6 +2,13 @@ from mock import patch, Mock
 import pytest
 
 
+# used by end-to-end test
+def pytest_addoption(parser):
+    parser.addoption(
+        "--devstack-endpoint", action="store",
+        help="Devstack endpoint")
+
+
 @pytest.yield_fixture
 def minimum_config_fixture():
     cloud = {
