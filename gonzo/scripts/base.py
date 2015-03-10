@@ -20,9 +20,7 @@ from gonzo.scripts import list_
 # from gonzo.scripts.stack import template as stack_template
 # from gonzo.scripts.stack import terminate as stack_terminate
 
-
-def main():
-    #import ipdb ; ipdb.set_trace()
+def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--version', action='version',
@@ -43,6 +41,11 @@ def main():
             module_alias, description=module.__doc__)
         module.init_parser(module_parser)
         module_parser.set_defaults(main=module.main)
+    return parser
+
+
+def main():
+    parser = get_parser()
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
