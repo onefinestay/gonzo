@@ -29,7 +29,6 @@ def instance_colour(instance):
 def print_instance_summary(instance, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
-    #ipdb.set_trace()
     colorize_ = partial(colorize, use_color=use_color)
 
     name = colorize_(instance.name, "yellow")
@@ -48,7 +47,7 @@ def print_instance_summary(instance, use_color='auto'):
 
     instance_status = NodeState.tostring(instance.state)
     status = colorize_(instance_status, status_colour)
-    #ipdb.set_trace()
+
     if 'owner' in instance.extra['gonzo_tags']:
         owner = instance.extra['gonzo_tags']['owner']
     else:

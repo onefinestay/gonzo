@@ -68,7 +68,6 @@ class Cloud(object):
         return self.compute_session.list_locations()
 
     def get_next_az(self, server_type):
-        #ipdb.set_trace()
         availabie_azs = self.list_availability_zones()
         try:
             newest_instance_az = self.list_instances_by_type(
@@ -89,7 +88,6 @@ class Cloud(object):
 
     def create_instance(self, image_name, name, owner, user_data=None,
                         security_groups=None, size=None, key_name=None):
-        #ipdb.set_trace()
         instance_name = name.split('-')
         server_type = '-'.join(instance_name[1:][:-1])
 
@@ -115,7 +113,6 @@ class Cloud(object):
         if security_groups is None:
             security_groups = []
 
-        #ipdb.set_trace()
         sec_group_objects = []
 
         for security_group in security_groups:
@@ -146,7 +143,6 @@ class Cloud(object):
             )
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
-       # ipdb.set_trace()
         return new_instance
 
     def get_instance_size(self, size_name, query_attribute):

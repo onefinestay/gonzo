@@ -130,7 +130,7 @@ def launch(args):
         key_name=cloud_config.get('PUBLIC_KEY_NAME'),
     )
     print instance
-    #ipdb.set_trace()
+
 
     dns.create_dns_record(instance.name,
                           instance.extra['gonzo_network_address'],
