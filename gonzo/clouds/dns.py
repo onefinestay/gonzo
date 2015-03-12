@@ -9,25 +9,25 @@ class DNS(object):
         R53Driver = get_dns_driver(DNSProvider.ROUTE53)
         self.dns_session = R53Driver(aws_access_id, aws_secret_key)
 
-    def get_next_host(self, environment, server_type, zone):
-        record_type = RecordType.TXT
-        record_name = "_count-%s-%s" % (environment, server_type)
-        try:  # Try to update record first
-            dns_record = self.get_dns_record(zone=self.get_zone(zone),
-                                             record_name=record_name)
+    def get_next_host(self, server_name, zone_name):
+        count_record = "_count-{}".format(server_name)
+        record = self.get_dns_record(count_record, zone_name)
 
-            next_count = int(dns_record.data.strip('"')) + 1
-            print "Updating DNS Counter..."
-            print self.dns_session.update_record(record=dns_record,
-                                                 name=record_name,
-                                                 type=record_type,
-                                                 data='"{}"'.format(str(
-                                                     next_count)))
-        except Exception:
-            print "Creating New DNS Counter..."
-            print self.dns_session.create_record(zone=self.get_zone(zone),
-                                                 name=record_name,
-                                                 type=record_type, data='"1"')
+        if record:
+            next_count = int(record.data.strip('"')) + 1
+            self.update_dns_record(
+                record=record,
+                value='"{}"'.format(next_count),
+            )
+        else:
+            next_count = 1
+            self.create_dns_record(
+                name=count_record,
+                value='"{}"'.format(next_count),
+                record_type="TXT",
+                zone_name=zone_name
+            )
+        return "%s-%03d" % (server_name, next_count)
 
     def get_zone(self, zone_name):
         for zone in self.dns_session.iterate_zones():
