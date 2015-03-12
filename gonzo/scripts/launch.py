@@ -21,26 +21,6 @@ from gonzo.utils import abort, csv_dict, csv_list
 logger = logging.getLogger(__name__)
 
 
-def get_next_host(dns, server_name, zone_name):
-    count_record = "_count-{}".format(server_name)
-    record = dns.get_dns_record(count_record, zone_name)
-    if record:
-        next_count = int(record.data.strip('"')) + 1
-        dns.update_dns_record(
-            record=record,
-            value='"{}"'.format(next_count),
-        )
-    else:
-#       ipdb.set_trace()
-        next_count = 1
-        dns.create_dns_record(
-            name=count_record,
-            value='"{}"'.format(next_count),
-            record_type="TXT",
-            zone_name=zone_name
-        )
-    return "%s-%03d" % (server_name, next_count)
-
 
 def wait_for_instance_boot(instance, use_color='auto'):
     colorize_ = partial(colorize, use_color=use_color)
@@ -73,12 +53,11 @@ def launch(args):
 
     # Server Type
     server_type = ("-").join(args.env_type.split("-")[-2:])
-    #ipdb.set_trace()
 
     # Instance Full Name
     zone_name = cloud_config['DNS_ZONE']
 
-    full_instance_name = get_next_host(dns, args.env_type,
+    full_instance_name = dns.get_next_host(args.env_type,
                                        zone_name)
 
     print full_instance_name
