@@ -44,8 +44,10 @@ class Cloud(object):
             if instance.uuid == instance_uuid:
                 return instance
 
-    def get_instance(self, instance):
-        return self.compute_session.list_nodes(ex_node_ids=[instance])
+    def get_instance_by_name(self, instance_name):
+        for instance in self.list_instances():
+            if instance.name == instance_name:
+                return instance
 
     def list_instances_by_type(self, instance_type):
         all_instances = self.list_instances()
@@ -76,8 +78,8 @@ class Cloud(object):
             print "No Server Types Found"
             return availabie_azs[0]
 
-        if len(availabie_azs) == 0:
-            return availabie_azs
+        if len(availabie_azs) == 1:
+            return availabie_azs[0]
         else:
             for index, availabie_az in enumerate(availabie_azs):
                 if availabie_az.name == newest_instance_az:
@@ -166,19 +168,6 @@ class Cloud(object):
         instance_metadata['server_type'] = server_type
         return instance_metadata
 
-    def add_default_security_groups(server_type,
-                                    additional_security_groups=None):
-        # Set defaults
-        security_groups = [server_type, 'gonzo']
-
-        # Add argument passed groups
-        if additional_security_groups is not None:
-            security_groups += additional_security_groups
-
-        # Remove Duplicates
-        security_groups = list(set(security_groups))
-        return security_groups
-
     def create_if_not_exist_security_group(self, group_name):
 
         try:
@@ -263,30 +252,3 @@ class Openstack(Cloud):
         instance.extra['gonzo_created_time'] = instance.extra['created']
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
-
-# backends['openstack'] = Openstack
-
-
-class InstanceExtra(object):
-    def __init__(self, data, size):
-        self.data = data
-        self.size = size
-
-    @property
-    def created_at(self):
-        return self.data[self.CREATION_TIME_ATTR]
-
-    @property
-    def tags(self):
-        return self.data[self.TAGS_ATTR]
-
-
-class AwsInstanceExtra(InstanceExtra):
-    TAGS_ATTR = 'tags'
-    CREATION_TIME_ATTR = 'launch_time'
-
-
-class OpenstackInstanceExtra(InstanceExtra):
-    @property
-    def tags(self):
-        return self.data['metadata']
