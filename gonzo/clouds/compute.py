@@ -23,12 +23,12 @@ class Cloud(object):
         try:
             backend = cloud_config['BACKEND']
         except KeyError:
-            raise Exception("No backend specified!")
+            raise LookupError("No backend specified!")
 
         try:
             backend_cls = backends[backend]
         except KeyError:
-            raise Exception(
+            raise LookupError(
                 "Unknown backend `{}`. Please choose one of {}".format(
                     backend, backends.keys()))
         return backend_cls(cloud_config, region)
