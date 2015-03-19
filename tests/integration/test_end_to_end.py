@@ -48,18 +48,18 @@ def fake_get_config(request):
 
 @pytest.yield_fixture
 def openstack_session(fake_get_config):
-    openstack = Openstack(fake_get_config().CLOUDS['cloudname'],region=None)
+    openstack = Openstack(fake_get_config().CLOUDS['cloudname'], region=None)
     instance_list = openstack.compute_session.list_nodes()
 
     print "deleting instances"
     for instance in instance_list:
         openstack.compute_session.destroy_node(instance)
 
-    time.sleep(10) # wait for instance to be deleted
+    time.sleep(10)  # wait for instance to be deleted
 
     print "deleting security groups"
     sec_groups = openstack.compute_session.ex_list_security_groups()
-    for sec_group in sec_groups[1:]: # Skip default group
+    for sec_group in sec_groups[1:]:  # Skip default group
         openstack.compute_session.ex_delete_security_group(sec_group)
     yield openstack
 
@@ -76,14 +76,15 @@ def test_end_to_end(capsys, fake_dns, fake_get_config, openstack_session):
     printed_headers = non_blank_lines[0]
     assert printed_headers.split() == list_.headers
 
-
     image_list = openstack_session.compute_session.list_images()
     image_map = {image.name: image.id for image in image_list}
     image_id = image_map['cirros-0.3.2-x86_64-uec']
 
     # launch an instance
     instance_name = ["test", "launch", "instance"]
-    args = parser.parse_args(["launch", "-".join(instance_name), "--image-id={}".format(image_id)])
+    args = parser.parse_args(["launch", "-".join(
+        instance_name), "--image-id={}".format(image_id)]
+    )
     launch.launch(args)
     full_instance_name = "{}-001".format("-".join(instance_name))
     instance = openstack_session.get_instance_by_name(full_instance_name)
@@ -92,16 +93,17 @@ def test_end_to_end(capsys, fake_dns, fake_get_config, openstack_session):
     assert instance.name == full_instance_name
     assert instance.extra['gonzo_size'] == fake_get_config().SIZES['default']
     assert instance.extra['gonzo_tags']['environment'] == instance_name[0]
-    assert instance.extra['gonzo_tags']['server_type'] == ("-").join(instance_name[-2:])
+    assert instance.extra['gonzo_tags']['server_type'] == ("-").join(
+        instance_name[-2:]
+    )
 
     # check security groups created
-    assert  openstack_session.get_security_group("launch-instance")
-    assert  openstack_session.get_security_group("gonzo")
+    assert openstack_session.get_security_group("launch-instance")
+    assert openstack_session.get_security_group("gonzo")
 
     # list instances - should return 1 instance
-    capsys.readouterr() # reset stdout
+    capsys.readouterr()  # reset stdout
     list_.main(args)
     out, err = capsys.readouterr()
     non_blank_lines = [line for line in out.splitlines() if line.strip()]
-    assert len(non_blank_lines) == 2 # includes headers
-
+    assert len(non_blank_lines) == 2  # includes headers
