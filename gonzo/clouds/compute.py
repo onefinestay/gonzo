@@ -114,9 +114,7 @@ class Cloud(object):
             )
 
         # Instance Size
-        size = self.get_instance_size_by_name(
-            size, self.INSTANCE_SIZE_ATTRIBUTE
-        )
+        size = self.get_instance_size_by_name(size)
 
         # Security Groups
         if security_groups is None:
@@ -154,7 +152,11 @@ class Cloud(object):
         new_instance = self.get_instance_by_uuid(instance.uuid)
         return new_instance
 
-    def get_instance_size_by_name(self, size_name, query_attribute):
+    def get_instance_size_by_name(self, size_name, query_attribute=None):
+
+        if query_attribute is None:
+            query_attribute = self.INSTANCE_SIZE_ATTRIBUTE
+
         for size in self.compute_session.list_sizes():
             if size_name == getattr(size, query_attribute):
                 return size
@@ -251,7 +253,7 @@ class Openstack(Cloud):
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
 
-        size = self.get_instance_size_by_name(instance.extra['flavorId'], "id")
+        size = self.get_instance_size_by_name(instance.extra['flavorId'])
 
         instance.extra['gonzo_size'] = getattr(size,
                                                self.INSTANCE_SIZE_ATTRIBUTE)
