@@ -55,7 +55,7 @@ def openstack_session(fake_get_config):
     for instance in instance_list:
         openstack.compute_session.destroy_node(instance)
 
-    time.sleep(10) # wait for instance to be deleting
+    time.sleep(10) # wait for instance to be deleted
 
     print "deleting security groups"
     sec_groups = openstack.compute_session.ex_list_security_groups()

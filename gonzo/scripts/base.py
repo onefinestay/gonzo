@@ -6,19 +6,9 @@ import argcomplete
 import gonzo
 from gonzo.exceptions import ConfigurationError
 from gonzo.scripts import config
-
-# from gonzo.scripts.image import create as image_create
-# from gonzo.scripts.image import delete as image_delete
-
 from gonzo.scripts import launch as launch
 from gonzo.scripts import list_
-# from gonzo.scripts.instance import terminate as instance_terminate
 
-# from gonzo.scripts.stack import launch as stack_launch
-# from gonzo.scripts.stack import list_ as stack_list
-# from gonzo.scripts.stack import show as stack_show
-# from gonzo.scripts.stack import template as stack_template
-# from gonzo.scripts.stack import terminate as stack_terminate
 
 def get_parser():
     parser = argparse.ArgumentParser()

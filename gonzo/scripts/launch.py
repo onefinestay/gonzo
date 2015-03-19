@@ -8,7 +8,6 @@ import os
 import sys
 from time import sleep
 
-#from gonzo.backends import launch_instance, configure_instance
 from gonzo.helpers.document_loader import get_parsed_document
 from gonzo.clouds.compute import Cloud
 from gonzo.clouds.dns import DNS
@@ -19,7 +18,6 @@ from gonzo.utils import abort, csv_dict, csv_list
 
 
 logger = logging.getLogger(__name__)
-
 
 
 def wait_for_instance_boot(instance, use_color='auto'):
@@ -47,7 +45,6 @@ def launch(args):
     cloud = Cloud.from_config(cloud_config, region)
 
     # Instantiate DNS
-    #ipdb.set_trace()
     dns = DNS(cloud_config['AWS_ACCESS_KEY_ID'],
               cloud_config['AWS_SECRET_ACCESS_KEY'])
 
@@ -110,14 +107,10 @@ def launch(args):
     )
     print instance
 
-
     dns.create_dns_record(instance.name,
                           instance.extra['gonzo_network_address'],
                           cloud_config['DNS_TYPE'],
                           cloud_config['DNS_ZONE'])
-    #instance.create_dns_entries_from_tag(args.dns_tag)
-    #wait_for_instance_boot(instance, args.color)
-    #print "Created instance {}".format(instance.name)
 
 
 def main(args):

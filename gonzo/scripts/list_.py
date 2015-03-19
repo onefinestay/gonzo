@@ -34,12 +34,6 @@ def print_instance_summary(instance, use_color='auto'):
     name = colorize_(instance.name, "yellow")
     instance_type = instance.extra['gonzo_size']
 
-#    colours = {
-#        NodeState.RUNNING: 'green'
-#    }
-
-#    colour = colours.get(instance_status, 'red')
-
     if instance.state == NodeState.RUNNING:
         status_colour = "green"
     else:
@@ -81,8 +75,6 @@ def list_(args):
         in any state (e.g. terminated) if args.only_running == True
 
     """
-
-    #cloud = get_current_cloud()
 
     # Get Config.py
     cloud_config = config_proxy.CLOUD

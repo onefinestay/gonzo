@@ -70,23 +70,22 @@ class Cloud(object):
         return self.compute_session.list_locations()
 
     def get_next_az(self, server_type):
-        availabie_azs = self.list_availability_zones()
+        available_azs = self.list_availability_zones()
         try:
             newest_instance_az = self.list_instances_by_type(
                 server_type)[-1].extra['gonzo_az']
         except IndexError:
-            print "No Server Types Found"
-            return availabie_azs[0]
+            return available_azs[0]
 
-        if len(availabie_azs) == 1:
-            return availabie_azs[0]
+        if len(available_azs) == 1:
+            return available_azs[0]
         else:
-            for index, availabie_az in enumerate(availabie_azs):
+            for index, availabie_az in enumerate(available_azs):
                 if availabie_az.name == newest_instance_az:
-                    if (index + 1) == len(availabie_azs):
-                        return availabie_azs[0]
+                    if (index + 1) == len(available_azs):
+                        return available_azs[0]
                     else:
-                        return availabie_azs[index + 1]
+                        return available_azs[index + 1]
 
     def create_instance(self, image_name, name, owner, user_data=None,
                         security_groups=None, size=None, key_name=None):
@@ -177,13 +176,11 @@ class Cloud(object):
         except Exception as exc:  # libcloud doesn't raise anything better
             if not ("exists" in str(exc)):
                 raise
-            print "Security Group {} Exists".format(group_name)
 
     def get_security_group(self, group_name):
 
         for group in self.list_security_groups():
             if group_name == getattr(group, self.SECURITY_GROUP_IDENTIFIER):
-                print "Sec Group Matched!"
                 return group
 
     def list_security_groups(self):
