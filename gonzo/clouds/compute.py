@@ -43,17 +43,17 @@ class Cloud(object):
         for instance in self.list_instances():
             if instance.uuid == instance_uuid:
                 return instance
-        else:
-            raise LookupError("Instance with uuid: {} not found".format(
-                instance_uuid))
+
+        raise LookupError("Instance with uuid: {} not found".format(
+            instance_uuid))
 
     def get_instance_by_name(self, instance_name):
         for instance in self.list_instances():
             if instance.name == instance_name:
                 return instance
-        else:
-            raise LookupError("Instance with name: {} not found".format(
-                instance_name))
+
+        raise LookupError("Instance with name: {} not found".format(
+            instance_name))
 
     def list_instances_by_type(self, instance_type):
         all_instances = self.list_instances()
@@ -158,6 +158,7 @@ class Cloud(object):
         for size in self.compute_session.list_sizes():
             if size_name == getattr(size, query_attribute):
                 return size
+        raise LookupError("Unknown size `{}`".format(size_name))
 
     def get_image(self, image_id):
             return self.compute_session.get_image(image_id)
