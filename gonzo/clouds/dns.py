@@ -38,9 +38,7 @@ class DNS(object):
         for dns_record in self.dns_session.iterate_records(
                 self.get_zone(zone)):
             if record_name == dns_record.name:
-                print "Matched"
                 return dns_record
-        # TODO Raise exception on failure
 
     def get_record_type(self, record_name):
         pass

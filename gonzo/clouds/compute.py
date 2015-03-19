@@ -57,17 +57,17 @@ class Cloud(object):
 
     def list_instances_by_type(self, instance_type):
         all_instances = self.list_instances()
-        instance_types = []
+        instances_of_type = []
 
         for instance in all_instances:
             metadata = self.compute_session.ex_get_metadata_for_node(
                     instance)
 
             if metadata.get('server_type') == instance_type:
-                instance_types.append(instance)
+                instances_of_type.append(instance)
 
-        instance_types.sort(key=lambda i: i.name)
-        return instance_types
+        instances_of_type.sort(key=lambda i: i.name)
+        return instances_of_type
 
     def list_instance_tags(self, node):
         return node.extra[self.TAG_KEY]
@@ -114,7 +114,9 @@ class Cloud(object):
             )
 
         # Instance Size
-        size = self.get_instance_size(size, self.INSTANCE_SIZE_ATTRIBUTE)
+        size = self.get_instance_size_by_name(
+            size, self.INSTANCE_SIZE_ATTRIBUTE
+        )
 
         # Security Groups
         if security_groups is None:
@@ -152,7 +154,7 @@ class Cloud(object):
         new_instance = self.get_instance_by_uuid(instance.uuid)
         return new_instance
 
-    def get_instance_size(self, size_name, query_attribute):
+    def get_instance_size_by_name(self, size_name, query_attribute):
         for size in self.compute_session.list_sizes():
             if size_name == getattr(size, query_attribute):
                 return size
@@ -219,6 +221,7 @@ class AWS(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
+
 @backend_for(ComputeProvider.OPENSTACK)
 class Openstack(Cloud):
 
@@ -247,7 +250,7 @@ class Openstack(Cloud):
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
 
-        size = self.get_instance_size(instance.extra['flavorId'], "id")
+        size = self.get_instance_size_by_name(instance.extra['flavorId'], "id")
 
         instance.extra['gonzo_size'] = getattr(size,
                                                self.INSTANCE_SIZE_ATTRIBUTE)
