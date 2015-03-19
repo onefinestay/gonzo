@@ -54,8 +54,10 @@ def launch(args):
     # Instance Full Name
     zone_name = cloud_config['DNS_ZONE']
 
-    full_instance_name = dns.get_next_host(args.env_type,
-                                       zone_name)
+    full_instance_name = dns.get_next_host(
+        args.env_type,
+        zone_name
+    )
 
     print full_instance_name
     # Owner
@@ -92,8 +94,10 @@ def launch(args):
         if user_data_uri is None:
             user_data = {}
         else:
-            user_data = get_parsed_document(full_instance_name, user_data_uri,
-                                            'USER_DATA_PARAMS', user_data_params)
+            user_data = get_parsed_document(
+                full_instance_name, user_data_uri,
+                'USER_DATA_PARAMS', user_data_params
+            )
 
     # Launch Instance
     instance = cloud.create_instance(

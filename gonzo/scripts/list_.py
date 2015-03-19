@@ -22,10 +22,6 @@ headers = [
 ]
 
 
-def instance_colour(instance):
-    pass
-
-
 def print_instance_summary(instance, use_color='auto'):
     """ Print summary info line for the supplied instance """
 
@@ -51,7 +47,8 @@ def print_instance_summary(instance, use_color='auto'):
     uptime = colorize_(uptime, "blue")
 
     try:
-        group_list = [group['group_name'] for group in instance.extra['groups']]
+        group_list = [group['group_name']
+                      for group in instance.extra['groups']]
         group_list.sort()
         group_name_list = ",".join(group_list)
     except KeyError:
