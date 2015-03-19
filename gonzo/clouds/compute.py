@@ -43,11 +43,17 @@ class Cloud(object):
         for instance in self.list_instances():
             if instance.uuid == instance_uuid:
                 return instance
+        else:
+            raise LookupError("Instance with uuid: {} not found".format(
+                instance_uuid))
 
     def get_instance_by_name(self, instance_name):
         for instance in self.list_instances():
             if instance.name == instance_name:
                 return instance
+        else:
+            raise LookupError("Instance with name: {} not found".format(
+                instance_name))
 
     def list_instances_by_type(self, instance_type):
         all_instances = self.list_instances()
