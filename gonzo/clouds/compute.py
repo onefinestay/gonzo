@@ -128,13 +128,7 @@ class Cloud(object):
             self.create_if_not_exist_security_group(security_group)
             sec_group_objects.append(self.get_security_group(security_group))
 
-        if not self.SECURITY_GROUP_OBJECT:
-            security_groups = []
-            for sec_group in sec_group_objects:
-                security_groups.append(getattr(sec_group,
-                                               self.SECURITY_GROUP_IDENTIFIER))
-        else:
-            security_groups = sec_group_objects
+        security_groups = self.security_groups_for_launch(sec_group_objects)
 
         # Availability Zone
         az = self.get_next_az(server_type)
@@ -155,7 +149,6 @@ class Cloud(object):
         return new_instance
 
     def get_instance_size_by_name(self, size_name, query_attribute=None):
-
         if query_attribute is None:
             query_attribute = self.INSTANCE_SIZE_ATTRIBUTE
 
@@ -208,7 +201,6 @@ class AWS(Cloud):
     INSTANCE_SIZE_ATTRIBUTE = 'id'
     SECURITY_GROUP_IDENTIFIER = 'name'
     SECURITY_GROUP_METHOD = 'ex_get_security_groups'
-    SECURITY_GROUP_OBJECT = False
 
     def __init__(self, cloud_config, region):
 
@@ -229,6 +221,9 @@ class AWS(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
+    def security_groups_for_launch(self, security_groups_object):
+        return [group.name for group in security_groups_object]
+
 
 @backend_for(ComputeProvider.OPENSTACK)
 class Openstack(Cloud):
@@ -236,7 +231,6 @@ class Openstack(Cloud):
     INSTANCE_SIZE_ATTRIBUTE = 'name'
     SECURITY_GROUP_IDENTIFIER = 'name'
     SECURITY_GROUP_METHOD = 'ex_list_security_groups'
-    SECURITY_GROUP_OBJECT = True
 
     def __init__(self, cloud_config, region):
 
@@ -266,3 +260,6 @@ class Openstack(Cloud):
         instance.extra['gonzo_created_time'] = created_time
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
+
+    def security_groups_for_launch(self, security_groups_object):
+        return security_groups_object
