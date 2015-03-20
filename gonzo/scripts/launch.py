@@ -9,7 +9,7 @@ import sys
 from time import sleep
 
 from gonzo.helpers.document_loader import get_parsed_document
-from gonzo.clouds.compute import Cloud
+from gonzo.clouds import get_current_cloud
 from gonzo.clouds.dns import DNS
 from gonzo.config import config_proxy
 from gonzo.exceptions import DataError
@@ -39,10 +39,8 @@ def wait_for_instance_boot(instance, use_color='auto'):
 def launch(args):
     """ Launch instances """
 
-    # Instantiate Cloud Backend
     cloud_config = config_proxy.CLOUD
-    region = config_proxy.REGION
-    cloud = Cloud.from_config(cloud_config, region)
+    cloud = get_current_cloud()
 
     # Instantiate DNS
     dns = DNS(cloud_config['AWS_ACCESS_KEY_ID'],

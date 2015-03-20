@@ -3,7 +3,7 @@ from __future__ import absolute_import  # otherwise we find ourself
 import envoy
 from fabric.api import env, task
 
-from gonzo.backends import get_current_cloud
+from gonzo.clouds import get_current_cloud
 from gonzo.config import config_proxy as config
 
 

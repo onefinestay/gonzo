@@ -6,9 +6,8 @@ from functools import partial
 
 from libcloud.compute.types import NodeState
 
-from gonzo.clouds.compute import Cloud
-from gonzo.config import config_proxy
 from gonzo.scripts.utils import colorize, print_table, format_uptime
+from gonzo.clouds import get_current_cloud
 
 
 headers = [
@@ -74,10 +73,10 @@ def list_(args):
     """
 
     # Get Config.py
-    cloud_config = config_proxy.CLOUD
-    region = config_proxy.REGION
-    cloud = Cloud.from_config(cloud_config, region)
+    cloud = get_current_cloud()
+
     instances = cloud.list_instances()
+
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
 
