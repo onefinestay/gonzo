@@ -44,8 +44,7 @@ def print_table(row_definer, headers, objects, show_header=True,
 
 def format_uptime(start_time):
     try:
-        start = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S.%fZ")
-        delta = datetime.now() - start
+        delta = datetime.now() - start_time
         days = delta.days
         hours = delta.seconds / 3600
         minutes = (delta.seconds % 3600) / 60

@@ -1,5 +1,7 @@
 import logging
 
+from datetime import datetime
+
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 
@@ -220,14 +222,16 @@ class AWS(Cloud):
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_size'] = instance.extra['instance_type']
         instance.extra['gonzo_tags'] = instance.extra['tags']
-        instance.extra['gonzo_created_time'] = instance.extra['launch_time']
+        created_time = datetime.strptime(
+            instance.extra['launch_time'], "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
+        instance.extra['gonzo_created_time'] = created_time
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
 
 @backend_for(ComputeProvider.OPENSTACK)
 class Openstack(Cloud):
-
     TAG_KEY = 'metadata'
     INSTANCE_SIZE_ATTRIBUTE = 'name'
     SECURITY_GROUP_IDENTIFIER = 'name'
@@ -252,12 +256,13 @@ class Openstack(Cloud):
 
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
-
-        size = self.get_instance_size_by_name(instance.extra['flavorId'])
+        size = self.get_instance_size_by_name(instance.extra['flavorId'], "id")
 
         instance.extra['gonzo_size'] = getattr(size,
                                                self.INSTANCE_SIZE_ATTRIBUTE)
-
-        instance.extra['gonzo_created_time'] = instance.extra['created']
+        created_time = datetime.strptime(
+            instance.extra['created'], "%Y-%m-%dT%H:%M:%S%fZ"
+        )
+        instance.extra['gonzo_created_time'] = created_time
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
