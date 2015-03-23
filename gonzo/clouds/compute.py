@@ -57,15 +57,15 @@ class Cloud(object):
         raise LookupError("Instance with name: {} not found".format(
             instance_name))
 
-    def list_instances_by_type(self, instance_type):
+    def list_instances_by_type(self, environment, instance_type):
         all_instances = self.list_instances()
         instances_of_type = []
 
         for instance in all_instances:
             metadata = self.compute_session.ex_get_metadata_for_node(
                     instance)
-
-            if metadata.get('server_type') == instance_type:
+            if (metadata.get('server_type') == instance_type and
+                    metadata.get('environment') == environment):
                 instances_of_type.append(instance)
 
         instances_of_type.sort(key=lambda i: i.name)
@@ -77,10 +77,11 @@ class Cloud(object):
     def list_availability_zones(self):
         return self.compute_session.list_locations()
 
-    def get_next_az(self, server_type):
+    def get_next_az(self, environment, server_type):
         available_azs = self.list_availability_zones()
         try:
             newest_instance_az = self.list_instances_by_type(
+                environment,
                 server_type)[-1].extra['gonzo_az']
         except IndexError:
             return available_azs[0]
@@ -98,6 +99,7 @@ class Cloud(object):
     def create_instance(self, image_name, name, owner, user_data=None,
                         security_groups=None, size=None, key_name=None):
         instance_name = name.split('-')
+        environment = instance_name[0]
         server_type = '-'.join(instance_name[1:][:-1])
 
         # Image
@@ -111,8 +113,8 @@ class Cloud(object):
         # Tags
         tags = self.generate_instance_metadata(
             owner,
-            environment=instance_name[0],
-            server_type=server_type
+            environment,
+            server_type
             )
 
         # Instance Size
@@ -131,7 +133,7 @@ class Cloud(object):
         security_groups = self.security_groups_for_launch(sec_group_objects)
 
         # Availability Zone
-        az = self.get_next_az(server_type)
+        az = self.get_next_az(environment, server_type)
 
         # Launch Instance
         instance = self.compute_session.create_node(

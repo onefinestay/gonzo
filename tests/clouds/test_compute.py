@@ -24,7 +24,7 @@ class MockCloud(Cloud):
             zone_list.append(mock)
         return zone_list
 
-    def list_instances_by_type(self, instance_type):
+    def list_instances_by_type(self, server_type, instance_type):
         return self.instances
 
 
@@ -32,7 +32,7 @@ def test_get_next_az_foo():
     cloud = MockCloud(
         zones=['a'], instances=[make_fake_instance(gonzo_az='x')]
     )
-    az = cloud.get_next_az(server_type=["foo", "bar"])
+    az = cloud.get_next_az(environment="testing", server_type=["foo", "bar"])
     assert az.name == 'a'
 
 
@@ -55,7 +55,10 @@ def test_get_next_az(zones, instance_zones, expected):
     ]
 
     cloud = MockCloud(zones=zones, instances=instances)
-    az = cloud.get_next_az(server_type=["foo", "bar"])
+    az = cloud.get_next_az(
+        environment="testing",
+        server_type=["foo", "bar"]
+    )
     assert az.name == expected
 
 
