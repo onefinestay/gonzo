@@ -100,7 +100,7 @@ class Cloud(object):
                         security_groups=None, size=None, key_name=None):
         instance_name = name.split('-')
         environment = instance_name[0]
-        server_type = '-'.join(instance_name[1:][:-1])
+        server_type = '-'.join(instance_name[1:-1])
 
         # Image
         image = self.get_image(image_name)
@@ -124,13 +124,11 @@ class Cloud(object):
         if security_groups is None:
             security_groups = []
 
-        sec_group_objects = []
-
         for security_group in security_groups:
             self.create_if_not_exist_security_group(security_group)
-            sec_group_objects.append(self.get_security_group(security_group))
 
-        security_groups = self.security_groups_for_launch(sec_group_objects)
+        security_groups_for_launch = self.security_groups_for_launch(
+            security_groups)
 
         # Availability Zone
         az = self.get_next_az(environment, server_type)
@@ -141,7 +139,7 @@ class Cloud(object):
             image=image,
             size=size,
             location=az,
-            ex_security_groups=security_groups,
+            ex_security_groups=security_groups_for_launch,
             ex_metadata=tags,
             ex_userdata=user_data,
             ex_keyname=key_name,
@@ -150,13 +148,11 @@ class Cloud(object):
         new_instance = self.get_instance_by_uuid(instance.uuid)
         return new_instance
 
-    def get_instance_size_by_name(self, size_name, query_attribute=None):
-        if query_attribute is None:
-            query_attribute = self.INSTANCE_SIZE_ATTRIBUTE
-
+    def get_instance_size_by_name(self, size_name):
         for size in self.compute_session.list_sizes():
-            if size_name == getattr(size, query_attribute):
+            if size_name == getattr(size, self.INSTANCE_SIZE_ATTRIBUTE):
                 return size
+
         raise LookupError("Unknown size `{}`".format(size_name))
 
     def get_image(self, image_id):
@@ -200,7 +196,7 @@ class Cloud(object):
 @backend_for('ec2')
 class AWS(Cloud):
     TAG_KEY = 'tags'
-    INSTANCE_SIZE_ATTRIBUTE = 'id'
+    INSTANCE_SIZE_ATTRIBUTE = 'name'
     SECURITY_GROUP_IDENTIFIER = 'name'
     SECURITY_GROUP_METHOD = 'ex_get_security_groups'
 
@@ -223,8 +219,8 @@ class AWS(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
-    def security_groups_for_launch(self, security_groups_object):
-        return [group.name for group in security_groups_object]
+    def security_groups_for_launch(self, security_group_names):
+        return security_group_names
 
 
 @backend_for(ComputeProvider.OPENSTACK)
@@ -249,13 +245,20 @@ class Openstack(Cloud):
                                          ex_force_auth_version="2.0_password",
                                          ex_force_service_region=region
                                          )
+        self._size_cache = {}
+
+    def _get_size_name(self, size_id):
+        if size_id not in self._size_cache:
+            ex_size = self.compute_session.ex_get_size(size_id)
+            self._size_cache[size_id] = ex_size.name
+
+        return self._size_cache[size_id]
 
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
-        size = self.get_instance_size_by_name(instance.extra['flavorId'], "id")
+        instance.extra['gonzo_size'] = self._get_size_name(
+                instance.extra['flavorId'])
 
-        instance.extra['gonzo_size'] = getattr(size,
-                                               self.INSTANCE_SIZE_ATTRIBUTE)
         created_time = datetime.strptime(
             instance.extra['created'], "%Y-%m-%dT%H:%M:%S%fZ"
         )
@@ -263,5 +266,8 @@ class Openstack(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
 
-    def security_groups_for_launch(self, security_groups_object):
-        return security_groups_object
+    def security_groups_for_launch(self, security_group_names):
+        return [
+            self.get_security_group(name)
+            for name in security_group_names
+        ]
