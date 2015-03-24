@@ -13,11 +13,10 @@ from gonzo.clouds import get_current_cloud
 headers = [
     "name",
     "type",
-    "location",
     "status",
     "owner",
     "uptime",
-    "group_name_list",
+    "location",
 ]
 
 
@@ -45,22 +44,14 @@ def print_instance_summary(instance, use_color='auto'):
     uptime = format_uptime(instance.extra['gonzo_created_time'])
     uptime = colorize_(uptime, "blue")
 
-    try:
-        group_list = [group['group_name']
-                      for group in instance.extra['groups']]
-        group_list.sort()
-        group_name_list = ",".join(group_list)
-    except KeyError:
-        group_name_list = ""
-
     availability_zone = instance.extra['gonzo_az']
+
     result_list = [
         name,
         instance_type,
         status,
         owner,
         uptime,
-        group_name_list,
         availability_zone,
     ]
     return result_list
