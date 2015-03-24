@@ -7,6 +7,10 @@ from gonzo.scripts import list_, launch
 from gonzo.scripts.base import get_parser
 
 
+""" End to end integration test for spinning up and inspecting live instance.
+    Requires an openstack endpoint (devstack recommended) """
+
+
 @pytest.yield_fixture
 def fake_dns():
     with patch("gonzo.clouds.dns.get_dns_driver") as driver:
