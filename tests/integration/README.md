@@ -12,7 +12,7 @@ Setup vagrant instance
 ``` bash
 mkdir 1404-ubuntu
 cd 1404-ubuntu
-vagrant box add 1404-ubuntu https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box
+vagrant box add 1404-ubuntu https://github.com/kraksoft/vagrant-box-ubuntu/releases/download/14.04/ubuntu-14.04-amd64.box
 vagrant init 1404-ubuntu
 ```
 
