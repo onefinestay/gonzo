@@ -13,7 +13,7 @@ a single consistent interface::
     name                                  type        location   status         owner              uptime                           group_name_list
 
     production-web-app-001                m3.medium   RUNNING    tom            0d 0h  4m 23s      gonzo,web-app                    eu-west-1b
-    production-atlassian-jira-002         m3.medium   RUNNING    david          11d 22h 58m 12s    gonzo,atlassian-jira             eu-west-1a
+    production-web-db-002                 m3.medium   RUNNING    david          11d 22h 58m 12s    gonzo,atlassian-jira             eu-west-1a
     production-search-solr-006            m1.small    RUNNING    amit           30d 18h 41m 56s    gonzo,search-solr                eu-west-1a
 
 

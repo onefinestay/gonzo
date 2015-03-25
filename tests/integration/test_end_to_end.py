@@ -1,3 +1,5 @@
+""" See gonzo/tests/integration/README.md for vagrant-devstack setup guide """
+
 import pytest
 from mock import patch, Mock
 import time
@@ -5,10 +7,6 @@ import time
 from gonzo.clouds.compute import Openstack
 from gonzo.scripts import list_, launch
 from gonzo.scripts.base import get_parser
-
-
-""" End to end integration test for spinning up and inspecting live instance.
-    Requires an openstack endpoint (devstack recommended) """
 
 
 @pytest.yield_fixture
