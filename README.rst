@@ -10,11 +10,10 @@ a single consistent interface::
     ...
     $ gonzo list
 
-    name                                  type        location   status         owner              uptime                           group_name_list
+    name                               type        status    owner          uptime             location
 
-    production-web-app-001                m3.medium   RUNNING    tom            0d 0h  4m 23s      gonzo,web-app                    eu-west-1b
-    production-web-db-002                 m3.medium   RUNNING    david          11d 22h 58m 12s    gonzo,atlassian-jira             eu-west-1a
-    production-search-solr-006            m1.small    RUNNING    amit           30d 18h 41m 56s    gonzo,search-solr                eu-west-1a
+    production-web-app-001             m1.small    RUNNING   tom            0d 0h 1m 18s       eu-west-1b
+    production-web-db-001              m3.medium   RUNNING   amit           27d 1h 8m 13s      eu-west-1a
 
 
 Easily target instances or groups of instances with ``fab`` commands
@@ -54,11 +53,12 @@ within.
 To see a list of all running instance in the region::
 
     $ gonzo list
-    name                                  type        location   status         owner              uptime                           group_name_list
+    name                               type        status    owner          uptime             location
 
-    production-dashboard-web-006          m1.small    RUNNING    tom            25d 0h 14m 20s     gonzo,dashboard-web              eu-west-1a
-    production-dashboard-web-007          m3.medium   RUNNING    david          40d 23h 48m 25s    gonzo,dashboard-web              eu-west-1b
-    production-hq-tools-086               m3.large    STOPPED    amit           90d 4h 21m 47s     gonzo,hq-tools                   eu-west-1a
+    production-web-app-001             m1.small    RUNNING   tom            408d 0h 42m 18s    eu-west-1a
+    production-web-app-002             m3.medium   RUNNING   amit           27d 1h 8m 13s      eu-west-1b
+    production-web-db-011              m3.medium   RUNNING   amit           160d 2h 33m 18s    eu-west-1c
+
 
 
 To add a new instance to the region, specifying the server type - having defined

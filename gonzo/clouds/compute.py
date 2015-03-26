@@ -196,7 +196,7 @@ class Cloud(object):
 @backend_for('ec2')
 class AWS(Cloud):
     TAG_KEY = 'tags'
-    INSTANCE_SIZE_ATTRIBUTE = 'name'
+    INSTANCE_SIZE_ATTRIBUTE = 'id'
     SECURITY_GROUP_IDENTIFIER = 'name'
     SECURITY_GROUP_METHOD = 'ex_get_security_groups'
 
@@ -210,7 +210,7 @@ class AWS(Cloud):
             aws_access_id, aws_secret_key, region=region)
 
     def _monkeypatch_instance(self, instance):
-        instance.extra['gonzo_size'] = instance.extra['server_type']
+        instance.extra['gonzo_size'] = instance.extra['instance_type']
         instance.extra['gonzo_tags'] = instance.extra['tags']
         created_time = datetime.strptime(
             instance.extra['launch_time'], "%Y-%m-%dT%H:%M:%S.%fZ"
