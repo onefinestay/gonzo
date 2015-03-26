@@ -7,15 +7,15 @@ use, and matching authentication details.
 CLOUDS = {
     'default': {
         ### For Openstack based clouds
-        'BACKEND': 'gonzo.backends.openstack',
+        'BACKEND': 'openstack',
         ### For AWS based clouds
-        #'BACKEND': 'gonzo.backends.aws',
+        #'BACKEND': 'ec2',
 
         # Openstack authentication details
         'TENANT_NAME': 'service',
         'USERNAME': '',
         'PASSWORD': '',
-        'AUTH_URL': "http://cloud-host.example.com:5000/v2.0/",
+        'AUTH_URL': "http://cloud-host.example.com:5000/",
 
         # AWS authentication details
         #
@@ -25,8 +25,8 @@ CLOUDS = {
         'AWS_SECRET_ACCESS_KEY': '',
 
         ### Common to either clouds backend
-        # Glance or AMI image name
-        'IMAGE_NAME': 'Ubuntu 12.04 cloudimg amd64',
+        # Glance or AMI image ID
+        'IMAGE_ID': 'ami-f3bea887',
 
         # Regions to deploy to, new instances will be evenly distributed
         'REGIONS': ['RegionOne', ],
@@ -39,6 +39,7 @@ CLOUDS = {
 
         # domain to hold host information
         'DNS_ZONE': 'example.com',
+        'DNS_TYPE': 'CNAME',
 
         # Default cloud-init script to pass when creating new instances.
         # Can be overridden with --user-data.
@@ -47,25 +48,6 @@ CLOUDS = {
         'DEFAULT_USER_DATA': None,
         # Extra params to use when rendering user data template.
         'USER_DATA_PARAMS': {},
-
-        # Default CloudFormation templates to use when launching stacks.
-        # Can be overridden with --template
-        # Will be parsed as a template.
-        'ORCHESTRATION_TEMPLATE_URIS': {
-            'default': 'https://s3...',
-            'stack-name': 'https://s3...',
-        },
-        # Extra params to use when rendering CloudFormation template.
-        'ORCHESTRATION_TEMPLATE_PARAMS': {
-            'puppetmaster': 'puppetmaster.example.com',
-        },
-
-        # OpenStack only.
-        'ORCHESTRATION_URL': 'http://heat-cfn-api.example.com/v1/',
-        'ORCHESTRATION_CREDENTIALS': {
-            'aws_access_key_id': '',
-            'aws_secret_access_key': '',
-        },
     },
 }
 
