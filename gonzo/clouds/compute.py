@@ -57,14 +57,14 @@ class Cloud(object):
         raise LookupError("Instance with name: {} not found".format(
             instance_name))
 
-    def list_instances_by_type(self, environment, instance_type):
+    def list_instances_by_type(self, environment, server_type):
         all_instances = self.list_instances()
         instances_of_type = []
 
         for instance in all_instances:
             metadata = self.compute_session.ex_get_metadata_for_node(
                     instance)
-            if (metadata.get('server_type') == instance_type and
+            if (metadata.get('server_type') == server_type and
                     metadata.get('environment') == environment):
                 instances_of_type.append(instance)
 
@@ -210,7 +210,7 @@ class AWS(Cloud):
             aws_access_id, aws_secret_key, region=region)
 
     def _monkeypatch_instance(self, instance):
-        instance.extra['gonzo_size'] = instance.extra['instance_type']
+        instance.extra['gonzo_size'] = instance.extra['server_type']
         instance.extra['gonzo_tags'] = instance.extra['tags']
         created_time = datetime.strptime(
             instance.extra['launch_time'], "%Y-%m-%dT%H:%M:%S.%fZ"
