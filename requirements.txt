@@ -1,8 +1,5 @@
+apache-libcloud==0.16.0
 jinja2==2.7.1
 argcomplete==0.8.4
-boto==2.6.0
-envoy==0.0.2
 fabric==1.6
-paramiko==1.10.1
 prettytable==0.7.2
-python-novaclient==2.13.0
