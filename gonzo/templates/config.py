@@ -6,10 +6,10 @@ use, and matching authentication details.
 
 CLOUDS = {
     'default': {
-        ### For Openstack based clouds
+        # For Openstack based clouds
         'BACKEND': 'openstack',
-        ### For AWS based clouds
-        #'BACKEND': 'ec2',
+        # For AWS based clouds
+        # 'BACKEND': 'ec2',
 
         # Openstack authentication details
         'TENANT_NAME': 'service',
@@ -24,7 +24,7 @@ CLOUDS = {
         'AWS_ACCESS_KEY_ID': '',
         'AWS_SECRET_ACCESS_KEY': '',
 
-        ### Common to either clouds backend
+        # Common to either clouds backend
         # Glance or AMI image ID
         'IMAGE_ID': 'ami-f3bea887',
 

@@ -1,6 +1,5 @@
 from libcloud.dns.providers import get_driver as get_dns_driver
 from libcloud.dns.types import Provider as DNSProvider
-from libcloud.dns.types import RecordType
 
 
 class DNS(object):

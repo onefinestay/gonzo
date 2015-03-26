@@ -1,4 +1,4 @@
-from mock import Mock, patch
+from mock import Mock
 import pytest
 
 from gonzo.clouds.compute import Cloud

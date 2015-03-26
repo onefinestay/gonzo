@@ -63,7 +63,7 @@ class Cloud(object):
 
         for instance in all_instances:
             metadata = self.compute_session.ex_get_metadata_for_node(
-                    instance)
+                instance)
             if (metadata.get('server_type') == server_type and
                     metadata.get('environment') == environment):
                 instances_of_type.append(instance)
@@ -115,7 +115,7 @@ class Cloud(object):
             owner,
             environment,
             server_type
-            )
+        )
 
         # Instance Size
         size = self.get_instance_size_by_name(size)
@@ -143,7 +143,7 @@ class Cloud(object):
             ex_metadata=tags,
             ex_userdata=user_data,
             ex_keyname=key_name,
-            )
+        )
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
         return new_instance
@@ -257,7 +257,7 @@ class Openstack(Cloud):
     def _monkeypatch_instance(self, instance):
         instance.extra['gonzo_tags'] = instance.extra['metadata']
         instance.extra['gonzo_size'] = self._get_size_name(
-                instance.extra['flavorId'])
+            instance.extra['flavorId'])
 
         created_time = datetime.strptime(
             instance.extra['created'], "%Y-%m-%dT%H:%M:%S%fZ"
