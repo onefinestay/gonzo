@@ -17,7 +17,7 @@ def get_parser():
         version='%(prog)s {}'.format(gonzo.VERSION))
     parser.add_argument(
         '--log-level', action='store', help="Log level",
-        default=logging.DEBUG)
+        default=logging.INFO)
 
     subparsers = parser.add_subparsers(help='subcommand help')
 
