@@ -57,7 +57,6 @@ def launch(args):
         zone_name
     )
 
-    print full_instance_name
     # Owner
     username = os.environ.get('USER')
 
@@ -107,7 +106,10 @@ def launch(args):
         owner=username,
         key_name=cloud_config.get('PUBLIC_KEY_NAME'),
     )
-    print instance
+    print "Instance created: {}.{}".format(
+        instance.name,
+        cloud_config['DNS_ZONE']
+    )
 
     dns.create_dns_record(instance.name,
                           instance.extra['gonzo_network_address'],
