@@ -35,7 +35,7 @@ def group(*env_type_pairs):
         # we want production, and platform-app
         environment, server_type = env_type_pair.split("-", 1)
         instances = cloud.list_instances_by_type(
-            environment=environment, instance_type=server_type)
+            environment=environment, server_type=server_type)
         env.hosts.extend([get_hostname_dns(inst) for inst in instances])
 
     print env.hosts
