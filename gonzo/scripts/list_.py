@@ -4,18 +4,19 @@
 
 from functools import partial
 
-from gonzo.backends import get_current_cloud
+from libcloud.compute.types import NodeState
+
 from gonzo.scripts.utils import colorize, print_table, format_uptime
+from gonzo.clouds import get_current_cloud
 
 
 headers = [
     "name",
     "type",
-    "location",
     "status",
     "owner",
     "uptime",
-    "group_name_list",
+    "location",
 ]
 
 
@@ -25,22 +26,25 @@ def print_instance_summary(instance, use_color='auto'):
     colorize_ = partial(colorize, use_color=use_color)
 
     name = colorize_(instance.name, "yellow")
+    instance_type = instance.extra['gonzo_size']
 
-    instance_type = instance.instance_type
+    if instance.state == NodeState.RUNNING:
+        status_colour = "green"
+    else:
+        status_colour = "red"
 
-    status_colour = "green" if instance.is_running() else "red"
-    status = colorize_(instance.status, status_colour)
+    instance_status = NodeState.tostring(instance.state)
+    status = colorize_(instance_status, status_colour)
 
-    owner = instance.tags.get("owner", "--")
+    if 'owner' in instance.extra['gonzo_tags']:
+        owner = instance.extra['gonzo_tags']['owner']
+    else:
+        owner = "---"
 
-    uptime = format_uptime(instance.launch_time)
+    uptime = format_uptime(instance.extra['gonzo_created_time'])
     uptime = colorize_(uptime, "blue")
 
-    group_list = [group.name for group in instance.groups]
-    group_list.sort()
-    group_name_list = ",".join(group_list)
-
-    availability_zone = instance.availability_zone
+    availability_zone = instance.extra['gonzo_az']
 
     result_list = [
         name,
@@ -48,7 +52,6 @@ def print_instance_summary(instance, use_color='auto'):
         status,
         owner,
         uptime,
-        group_name_list,
         availability_zone,
     ]
     return result_list
@@ -60,11 +63,10 @@ def list_(args):
 
     """
 
+    # Get Config.py
     cloud = get_current_cloud()
-    instances = cloud.list_instances(only_running=args.only_running)
 
-    if args.order == 'name':
-        instances.sort(key=lambda i: i.tags.get(args.order))
+    instances = cloud.list_instances()
 
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)

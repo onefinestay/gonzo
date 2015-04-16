@@ -4,7 +4,7 @@ from mock import Mock, patch
 from gonzo.config import config_proxy as config
 
 from gonzo.helpers.document_loader import get_parsed_document
-from gonzo.scripts.instance.launch import csv_dict
+from gonzo.utils import csv_dict
 from gonzo.test_utils import assert_called_with
 
 

@@ -4,7 +4,7 @@ from fabric.api import sudo, task
 
 
 @task
-def update():
+def update(dry_run=None):
     """ Force a puppet update """
     # appending true is a hack because puppet, it seems, returns code
     # 2 if it has changed something. This, of course, is deeply wrong
@@ -20,7 +20,10 @@ def update():
         "verbose",
     ]
 
-    sudo("puppetd %s " % " --".join(puppetargs))
+    if dry_run is not None:
+            puppetargs.append("noop")
+
+    sudo("puppet agent %s " % " --".join(puppetargs))
 
 
 @task

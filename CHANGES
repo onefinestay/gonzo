@@ -1,3 +1,10 @@
+Version 0.4.0
+--------------
+
+- Rewrite cloud backend to use libcloud instead of nova and boto
+- Drop support for cloud formation
+
+
 Version 0.3.1
 --------------
 

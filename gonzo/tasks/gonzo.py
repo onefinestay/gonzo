@@ -1,38 +1,13 @@
 from __future__ import absolute_import  # otherwise we find ourself
 
-import envoy
 from fabric.api import env, task
 
-from gonzo.backends import get_current_cloud
+from gonzo.clouds import get_current_cloud
 from gonzo.config import config_proxy as config
 
 
-def resolve_int_dns(name):
-    """ turn into an DNS_ZONE hostname if resolvable """
-    hostname = "{}.{}".format(name, config.CLOUD['DNS_ZONE'])
-    hostname = str(hostname)
-    dig = envoy.run("dig {} +short".format(hostname))
-
-    if len(dig.std_out):
-        return hostname
-    else:
-        return None
-
-
-def get_hostname(inst):
-    """ return a nice hostname (DNS_ZONE) if available, or fall back
-        to internal address"""
-
-    fallback = inst.internal_address()
-    name = inst.name
-    if name is None:
-        return fallback
-
-    hostname = resolve_int_dns(name)
-    if hostname is None:
-        return fallback
-
-    return hostname
+def get_hostname_dns(inst):
+    return "{}.{}".format(inst.name, config.CLOUD['DNS_ZONE'])
 
 
 @task
@@ -44,7 +19,7 @@ def instance(*names):
     cloud = get_current_cloud()
     for name in names:
         inst = cloud.get_instance_by_name(name)
-        dns_name = get_hostname(inst)
+        dns_name = get_hostname_dns(inst)
         env.hosts.append(dns_name)
 
     print env.hosts
@@ -59,9 +34,8 @@ def group(*env_type_pairs):
         # env_type_pair is e.g. produiction-platform-app
         # we want production, and platform-app
         environment, server_type = env_type_pair.split("-", 1)
-
-        instances = cloud.get_instance_by_tags(
+        instances = cloud.list_instances_by_type(
             environment=environment, server_type=server_type)
-        env.hosts.extend([get_hostname(inst) for inst in instances])
+        env.hosts.extend([get_hostname_dns(inst) for inst in instances])
 
     print env.hosts

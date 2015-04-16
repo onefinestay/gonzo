@@ -3,14 +3,21 @@
 """
 
 from functools import partial
+import logging
 import os
 import sys
 from time import sleep
 
-from gonzo.backends import launch_instance, configure_instance
+from gonzo.helpers.document_loader import get_parsed_document
+from gonzo.clouds import get_current_cloud
+from gonzo.clouds.dns import DNS
+from gonzo.config import config_proxy
 from gonzo.exceptions import DataError
 from gonzo.scripts.utils import colorize
 from gonzo.utils import abort, csv_dict, csv_list
+
+
+logger = logging.getLogger(__name__)
 
 
 def wait_for_instance_boot(instance, use_color='auto'):
@@ -32,20 +39,82 @@ def wait_for_instance_boot(instance, use_color='auto'):
 def launch(args):
     """ Launch instances """
 
+    cloud_config = config_proxy.CLOUD
+    cloud = get_current_cloud()
+
+    # Instantiate DNS
+    dns = DNS(cloud_config['AWS_ACCESS_KEY_ID'],
+              cloud_config['AWS_SECRET_ACCESS_KEY'])
+
+    # Server Type
+    server_type = ("-").join(args.env_type.split("-")[-2:])
+
+    # Instance Full Name
+    zone_name = cloud_config['DNS_ZONE']
+
+    full_instance_name = dns.get_next_host(
+        args.env_type,
+        zone_name
+    )
+
+    # Owner
     username = os.environ.get('USER')
 
-    instance = launch_instance(args.env_type,
-                               security_groups=args.security_groups,
-                               size=args.size,
-                               user_data_uri=args.user_data_uri,
-                               user_data_params=args.user_data_params,
-                               image_name=args.image_name,
-                               extra_tags=args.extra_tags,
-                               owner=username)
-    instance.create_dns_entries_from_tag(args.dns_tag)
-    wait_for_instance_boot(instance, args.color)
-    configure_instance(instance)
-    print "Created instance {}".format(instance.name)
+    # Instance Size
+    if args.size is None:
+        sizes = config_proxy.SIZES
+        default_size = sizes['default']
+        size = sizes.get(server_type, default_size)
+    else:
+        size = args.size
+
+    # Security Group List
+    if args.security_groups is None:
+        security_groups = [server_type, 'gonzo']
+    else:
+        security_groups = args.security_groups
+
+    # Instance Base Image
+    if args.image_id is None:
+        image_id = cloud_config['IMAGE_ID']
+    else:
+        image_id = args.image_id
+
+    # User Data
+    if args.user_data_params is None:
+        user_data_params = cloud_config.get('USER_DATA_PARAMS')
+    else:
+        user_data_params = args.user_data_params
+
+    if not args.user_data_uri:
+        user_data_uri = cloud_config.get('DEFAULT_USER_DATA')
+        if user_data_uri is None:
+            user_data = {}
+        else:
+            user_data = get_parsed_document(
+                full_instance_name, user_data_uri,
+                'USER_DATA_PARAMS', user_data_params
+            )
+
+    # Launch Instance
+    instance = cloud.create_instance(
+        name=full_instance_name,
+        size=size,
+        user_data=user_data,
+        image_name=image_id,
+        security_groups=security_groups,
+        owner=username,
+        key_name=cloud_config.get('PUBLIC_KEY_NAME'),
+    )
+    print "Instance created: {}.{}".format(
+        instance.name,
+        cloud_config['DNS_ZONE']
+    )
+
+    dns.create_dns_record(instance.name,
+                          instance.extra['gonzo_network_address'],
+                          cloud_config['DNS_TYPE'],
+                          cloud_config['DNS_ZONE'])
 
 
 def main(args):
@@ -84,8 +153,8 @@ def init_parser(parser):
     parser.add_argument(
         'env_type', metavar='environment-server_type', help=env_type_pair_help)
     parser.add_argument(
-        '--image-name', dest='image_name',
-        help="Name of image to boot from")
+        '--image-id', dest='image_id',
+        help="ID of image to boot from")
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
