@@ -66,7 +66,7 @@ def list_(args):
     # Get Config.py
     cloud = get_current_cloud()
 
-    instances = cloud.list_instances()
+    instances = cloud.list_instances(name_filter=args.name_filter)
 
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
@@ -77,6 +77,9 @@ def main(args):
 
 
 def init_parser(parser):
+    parser.add_argument(
+        '--filter', dest='name_filter', nargs='?', default=None,
+        help='filter instance names')
     parser.add_argument(
         '--order', dest='order', nargs='?', default='name',
         choices=['name', 'age'], help='set instance order (default: name)')
