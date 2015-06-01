@@ -97,7 +97,8 @@ class Cloud(object):
                         return available_azs[index + 1]
 
     def create_instance(self, image_name, name, owner, user_data=None,
-                        security_groups=None, size=None, key_name=None):
+                        security_groups=None, size=None, key_name=None,
+                        volume_size=None):
         instance_name = name.split('-')
         environment = instance_name[0]
         server_type = '-'.join(instance_name[1:-1])
@@ -146,7 +147,46 @@ class Cloud(object):
         )
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
+
+        if volume_size is not None:
+            self.create_and_attach_volume(new_instance, volume_size)
+
         return new_instance
+
+    def create_and_attach_volume(self, instance, vol_size, vol_type=None,
+                                 vol_name=None):
+        created_volume = self.create_volume(
+            instance, instance.name,
+            vol_size, vol_type)
+
+        self.wait_until_volume_available(created_volume)
+
+        self.compute_session.attach_volume(
+            node=instance,
+            volume=created_volume,
+            device='/dev/xvdf'
+        )
+
+    def wait_until_volume_available(self, volume):
+        while not self.volume_is_created(volume):
+            print "Volume Being Created"
+        return True
+
+    def volume_is_created(self, volume):
+        for vol in self.compute_session.list_volumes():
+            if vol.id == volume.id:
+                if vol.extra['state'] == 'available':
+                    return True
+
+    def get_az_of_instance(self, instance):
+        instance_az = instance.extra['gonzo_az']
+
+        if len(self.list_availability_zones()) == 1:
+            return self.list_availability_zones()[0]
+
+        for az in self.list_availability_zones():
+            if az.name == instance_az:
+                return az
 
     def get_instance_size_by_name(self, size_name):
         for size in self.compute_session.list_sizes():
@@ -222,6 +262,16 @@ class AWS(Cloud):
     def security_groups_for_launch(self, security_group_names):
         return security_group_names
 
+    def create_volume(self, instance, vol_name,
+                      vol_size, vol_type='gp2'):
+        instance_az = self.get_az_of_instance(instance)
+        return self.compute_session.create_volume(
+            name=vol_name,
+            size=vol_size,
+            location=instance_az,
+            ex_volume_type=vol_type,
+        )
+
 
 @backend_for(ComputeProvider.OPENSTACK)
 class Openstack(Cloud):
@@ -271,3 +321,9 @@ class Openstack(Cloud):
             self.get_security_group(name)
             for name in security_group_names
         ]
+
+    def create_volume(self, instance, vol_name, vol_size, vol_type='gp2'):
+        return self.compute_session.create_volume(
+            name=vol_name,
+            size=vol_size,
+        )
