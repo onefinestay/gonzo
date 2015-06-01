@@ -70,7 +70,6 @@ def openstack_session(fake_get_config):
         for volume in volume_list:
             openstack.compute_session.destroy_volume(volume)
 
-
     yield openstack
 
 
