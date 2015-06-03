@@ -1,4 +1,5 @@
 import logging
+import time
 
 from datetime import datetime
 
@@ -168,8 +169,9 @@ class Cloud(object):
         )
 
     def wait_until_volume_available(self, volume):
+
         while not self.volume_is_created(volume):
-            print "Volume Being Created"
+            time.sleep(1)
         return True
 
     def volume_is_created(self, volume):
