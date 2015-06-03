@@ -109,10 +109,11 @@ def test_end_to_end(capsys, fake_dns, fake_get_config, openstack_session):
 
     # check ebs created
     time.sleep(10)
-    volume = openstack_session.compute_session.list_volumes()[0]
-    assert volume
+    volumes = openstack_session.compute_session.list_volumes()
+    assert len(volumes) == 1
 
     # check ebs attached to instance
+    volume = volumes[0]
     assert volume.extra['state'] == 'in-use'
     assert volume.extra['attachments'][0]['serverId'] == instance.id
 
