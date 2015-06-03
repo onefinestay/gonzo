@@ -179,12 +179,13 @@ class Cloud(object):
             if vol.id == volume.id:
                 if vol.extra['state'] == 'available':
                     return True
+                elif vol.extra['state'] == 'creating':
+                    return False
+
+        raise LookupError("Unknown volume `{}`".format(volume))
 
     def get_az_of_instance(self, instance):
         instance_az = instance.extra['gonzo_az']
-
-        if len(self.list_availability_zones()) == 1:
-            return self.list_availability_zones()[0]
 
         for az in self.list_availability_zones():
             if az.name == instance_az:
