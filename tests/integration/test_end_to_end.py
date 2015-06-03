@@ -53,18 +53,15 @@ def openstack_session(fake_get_config):
     openstack = Openstack(fake_get_config().CLOUDS['cloudname'], region=None)
     instance_list = openstack.compute_session.list_nodes()
 
-    print "deleting instances"
     for instance in instance_list:
         openstack.compute_session.destroy_node(instance)
 
     time.sleep(10)  # wait for instance to be deleted
 
-    print "deleting security groups"
     sec_groups = openstack.compute_session.ex_list_security_groups()
     for sec_group in sec_groups[1:]:  # Skip default group
         openstack.compute_session.ex_delete_security_group(sec_group)
 
-    print "deleting volumes"
     volume_list = openstack.compute_session.list_volumes()
     if volume_list:
         for volume in volume_list:
