@@ -181,6 +181,9 @@ class Cloud(object):
                     return True
                 elif vol.extra['state'] == 'creating':
                     return False
+                else:
+                    raise LookupError("Unknown volume state `{}`".format(
+                        vol.extra['state']))
 
         raise LookupError("Unknown volume `{}`".format(volume))
 
