@@ -105,7 +105,9 @@ def launch(args):
         security_groups=security_groups,
         owner=username,
         key_name=cloud_config.get('PUBLIC_KEY_NAME'),
+        volume_size=args.volume_size
     )
+
     print "Instance created: {}.{}".format(
         instance.name,
         cloud_config['DNS_ZONE']
@@ -150,6 +152,8 @@ records are suffixed with the current cloud's DNS_ZONE config.
 
 
 def init_parser(parser):
+    parser.add_argument(
+        '--volume-size', dest="volume_size")
     parser.add_argument(
         'env_type', metavar='environment-server_type', help=env_type_pair_help)
     parser.add_argument(

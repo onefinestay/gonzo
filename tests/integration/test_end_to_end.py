@@ -53,16 +53,20 @@ def openstack_session(fake_get_config):
     openstack = Openstack(fake_get_config().CLOUDS['cloudname'], region=None)
     instance_list = openstack.compute_session.list_nodes()
 
-    print "deleting instances"
     for instance in instance_list:
         openstack.compute_session.destroy_node(instance)
 
     time.sleep(10)  # wait for instance to be deleted
 
-    print "deleting security groups"
     sec_groups = openstack.compute_session.ex_list_security_groups()
     for sec_group in sec_groups[1:]:  # Skip default group
         openstack.compute_session.ex_delete_security_group(sec_group)
+
+    volume_list = openstack.compute_session.list_volumes()
+    if volume_list:
+        for volume in volume_list:
+            openstack.compute_session.destroy_volume(volume)
+
     yield openstack
 
 
@@ -80,13 +84,14 @@ def test_end_to_end(capsys, fake_dns, fake_get_config, openstack_session):
 
     image_list = openstack_session.compute_session.list_images()
     image_map = {image.name: image.id for image in image_list}
-    image_id = image_map['cirros-0.3.2-x86_64-uec']
+    image_id = image_map['cirros-0.3.4-x86_64-uec']
 
     # launch an instance
     instance_name = ["test", "launch", "instance"]
     args = parser.parse_args(["launch", "-".join(
-        instance_name), "--image-id={}".format(image_id)]
+        instance_name), "--image-id={}".format(image_id), '--volume-size=3']
     )
+
     launch.launch(args)
     full_instance_name = "{}-001".format("-".join(instance_name))
     instance = openstack_session.get_instance_by_name(full_instance_name)
@@ -98,6 +103,16 @@ def test_end_to_end(capsys, fake_dns, fake_get_config, openstack_session):
     assert instance.extra['gonzo_tags']['server_type'] == ("-").join(
         instance_name[-2:]
     )
+
+    # check ebs created
+    time.sleep(10)
+    volumes = openstack_session.compute_session.list_volumes()
+    assert len(volumes) == 1
+
+    # check ebs attached to instance
+    volume = volumes[0]
+    assert volume.extra['state'] == 'in-use'
+    assert volume.extra['attachments'][0]['serverId'] == instance.id
 
     # check security groups created
     assert openstack_session.get_security_group("launch-instance")
