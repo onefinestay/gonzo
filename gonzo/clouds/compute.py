@@ -36,10 +36,12 @@ class Cloud(object):
                     backend, backends.keys()))
         return backend_cls(cloud_config, region)
 
-    def list_instances(self):
+    def list_instances(self, name_filter=None):
         instances = self.compute_session.list_nodes()
         for instance in instances:
             self._monkeypatch_instance(instance)
+        if name_filter is not None:
+            return [inst for inst in instances if name_filter in inst.name]
         return instances
 
     def get_instance_by_uuid(self, instance_uuid):
