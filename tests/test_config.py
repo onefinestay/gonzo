@@ -150,7 +150,7 @@ class TestConfigProxy(object):
         config_proxy = ConfigProxy()
         config_module.return_value = types.ModuleType(name='config')
         with pytest.raises(ConfigurationError):
-            config_proxy.CLOUD
+            config_proxy.get_cloud()
 
     @patch('gonzo.config.get_config_module')
     def test_sizes(self, config_module):
