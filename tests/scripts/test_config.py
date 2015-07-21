@@ -18,13 +18,15 @@ class TestSetCloud(object):
         assert global_state.__getitem__.call_count == 0
 
     def test_set(self, config_proxy, global_state):
-        config_proxy.CLOUD = {
+        config_proxy.get_cloud.return_value = {
             'REGIONS': ['region1', 'region2'],
         }
         state = {
             'cloud': 'foo',
         }
+
         global_state.__getitem__ = state.__getitem__
+
         set_cloud('foo')
 
         calls = [
@@ -34,7 +36,7 @@ class TestSetCloud(object):
         assert_has_calls(global_state.__setitem__, calls)
 
     def test_set_no_regions(self, config_proxy, global_state):
-        config_proxy.CLOUD = {}
+        config_proxy.get_cloud.return_value = {}
         state = {
             'cloud': 'foo',
         }
@@ -43,7 +45,7 @@ class TestSetCloud(object):
             set_cloud('foo')
 
     def test_set_empty_regions(self, config_proxy, global_state):
-        config_proxy.CLOUD = {
+        config_proxy.get_cloud.return_value = {
             'REGIONS': [],
         }
         state = {
@@ -54,7 +56,7 @@ class TestSetCloud(object):
             set_cloud('foo')
 
     def test_set_regions_not_iterable(self, config_proxy, global_state):
-        config_proxy.CLOUD = {
+        config_proxy.get_cloud.return_value = {
             'REGIONS': 0,
         }
         state = {
@@ -96,13 +98,13 @@ class TestAvailableClouds(object):
 @patch('gonzo.scripts.config.config_proxy')
 class TestAvailableRegions(object):
     def test_ok(self, config_proxy):
-        config_proxy.CLOUD = {
+        config_proxy.get_cloud.return_value = {
             'REGIONS': sentinel.regions,
         }
         assert available_regions() == sentinel.regions
 
     def test_missing(self, config_proxy):
-        config_proxy.CLOUD = {}
+        config_proxy.get_cloud.return_value = {}
         assert available_regions() is None
 
 

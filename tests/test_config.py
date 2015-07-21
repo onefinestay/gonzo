@@ -8,7 +8,7 @@ from mock import ANY, Mock, patch, sentinel
 
 from gonzo.exceptions import ConfigurationError
 from gonzo.config import (get_config_module, StateDict, GlobalState,
-    LocalState, ConfigProxy)
+                          LocalState, ConfigProxy)
 from gonzo.test_utils import assert_called_once_with
 
 
@@ -173,7 +173,7 @@ class TestConfigProxy(object):
             'foo': sentinel.foo,
             'bar': sentinel.bar,
         }
-        assert config_proxy.CLOUD is sentinel.foo
+        assert config_proxy.get_cloud() is sentinel.foo
 
     @patch('gonzo.config.global_state', {'cloud': 'foo'})
     @patch('gonzo.config.get_config_module')
@@ -182,7 +182,7 @@ class TestConfigProxy(object):
         config_module.return_value.CLOUDS = {
         }
         with pytest.raises(ConfigurationError):
-            config_proxy.CLOUD
+            config_proxy.get_cloud()
 
     @patch('gonzo.config.global_state', {'region': sentinel.region})
     def test_region(self):

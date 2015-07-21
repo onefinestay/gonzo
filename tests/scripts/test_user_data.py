@@ -23,8 +23,7 @@ def test_config_specified_file_source(minimum_config_fixture):
         for key in desired_subs.keys():
             tmp_file.write("{{%s}} " % key)
         tmp_file.flush()
-
-        config.CLOUD.update({
+        config.get_cloud().update({
             'DEFAULT_USER_DATA': tmp_file.name,
             'USER_DATA_PARAMS': desired_subs
         })
@@ -56,7 +55,7 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
         'key_2': 'config_value_2',
     }
     config_ud_url = 'http://this.should.not.be.requested.com/user-data.txt'
-    config.CLOUD.update({
+    config.get_cloud().update({
         'DEFAULT_USER_DATA': config_ud_url,
         'USER_DATA_PARAMS': config_params,
     })
