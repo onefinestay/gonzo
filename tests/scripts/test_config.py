@@ -4,7 +4,8 @@ from mock import patch, call, sentinel, Mock, PropertyMock
 
 from gonzo.scripts.config import (set_cloud, available_regions,
                                   available_clouds, set_region, set_project,
-                                  print_config, main, init_parser)
+                                  print_config, main, init_parser,
+                                  config_proxy)
 from gonzo.exceptions import ConfigurationError
 from gonzo.test_utils import assert_has_calls, assert_called_once_with
 
@@ -62,6 +63,16 @@ class TestSetCloud(object):
         global_state.__getitem__ = state.__getitem__
         with pytest.raises(ConfigurationError):
             set_cloud('foo')
+
+
+@patch('gonzo.config.ConfigProxy.CLOUDS', new_callable=PropertyMock)
+class TestGetCloud(object):
+    def test_get(self, CLOUDS):
+        CLOUDS.return_value = {
+            'foo': 'bar',
+        }
+
+        assert config_proxy.get_cloud('foo') == 'bar'
 
 
 @patch('gonzo.config.ConfigProxy.CLOUDS', new_callable=PropertyMock)
