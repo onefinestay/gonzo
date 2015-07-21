@@ -64,13 +64,13 @@ def list_(args):
     """
 
     # Get Config.py
-    #import ipdb; ipdb.set_trace()
     cloud = get_current_cloud(args.cloud)
 
     instances = cloud.list_instances()
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
     return instances
+
 
 def main(args):
     list_(args)
