@@ -36,7 +36,7 @@ test_requirements, dependency_links = parse_requirments(
 setup(
     name='gonzo',
     packages=find_packages(exclude=['tests', 'tests.*']),
-    version='0.4.1',
+    version='0.4.2',
     author='onefinestay',
     author_email='engineering@onefinestay.com',
     url='https://github.com/onefinestay/gonzo',
