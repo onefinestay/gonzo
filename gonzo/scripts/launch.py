@@ -38,8 +38,7 @@ def wait_for_instance_boot(instance, use_color='auto'):
 
 def launch(args):
     """ Launch instances """
-
-    cloud_config = config_proxy.get_cloud()
+    cloud_config = config_proxy.get_cloud(args.cloud)
     cloud = get_current_cloud(args.cloud)
 
     # Instantiate DNS
