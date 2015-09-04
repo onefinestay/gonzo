@@ -135,7 +135,6 @@ class Cloud(object):
         security_groups_for_launch = self.security_groups_for_launch(
             security_groups)
 
-
         # VPC Specific
         if subnet_id is not None:
             az = self.get_next_az(environment, server_type)
@@ -237,7 +236,6 @@ class Cloud(object):
         group_list_method = getattr(self.compute_session,
                                     self.SECURITY_GROUP_METHOD)
         return group_list_method()
-
 
 
 @backend_for('ec2')
