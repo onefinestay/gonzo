@@ -135,8 +135,14 @@ class Cloud(object):
         security_groups_for_launch = self.security_groups_for_launch(
             security_groups)
 
-        # Availability Zone
-        az = self.get_next_az(environment, server_type)
+
+        # VPC Specific
+        if subnet_id is not None:
+            az = self.get_next_az(environment, server_type)
+            subnet = self.get_subnet(subnet_id)
+        else:
+            az = None
+            subnet = None
 
         # Launch Instance
         instance = self.compute_session.create_node(
