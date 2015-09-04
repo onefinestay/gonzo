@@ -1,4 +1,4 @@
-apache-libcloud==0.16.0
+apache-libcloud==0.18.0
 jinja2==2.7.1
 argcomplete==0.8.4
 fabric==1.6
