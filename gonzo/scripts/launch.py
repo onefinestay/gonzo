@@ -104,7 +104,8 @@ def launch(args):
         security_groups=security_groups,
         owner=username,
         key_name=cloud_config.get('PUBLIC_KEY_NAME'),
-        volume_size=args.volume_size
+        volume_size=args.volume_size,
+        subnet_id=args.subnet_id,
     )
 
     print "Instance created: {}.{}".format(
@@ -161,6 +162,9 @@ def init_parser(parser):
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
+    parser.add_argument(
+        '--subnet-id', dest='subnet_id',
+        help="VPC Subnet ID")
     parser.add_argument(
         '--user-data-uri', dest='user_data_uri',
         help=user_data_help)
