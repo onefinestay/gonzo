@@ -145,16 +145,23 @@ class Cloud(object):
             subnet = None
 
         # Launch Instance
-        instance = self.compute_session.create_node(
+        instance_dict = self._generate_instance_dict(
             name=name,
             image=image,
             size=size,
             location=az,
             ex_security_groups=security_groups_for_launch,
+            ex_security_group_ids=security_groups_for_launch,
             ex_metadata=tags,
             ex_userdata=user_data,
             ex_keyname=key_name,
+            ex_subnet=subnet
         )
+
+        instance = self.compute_session.create_node(
+            **instance_dict
+        )
+
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
 
