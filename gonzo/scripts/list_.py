@@ -64,12 +64,12 @@ def list_(args):
     """
 
     # Get Config.py
-    cloud = get_current_cloud()
+    cloud = get_current_cloud(args.cloud)
 
     instances = cloud.list_instances()
-
     print_table(print_instance_summary, headers, instances,
                 use_color=args.color)
+    return instances
 
 
 def main(args):

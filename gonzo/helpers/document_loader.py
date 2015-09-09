@@ -29,12 +29,12 @@ def build_params_dict(entity_name, config_params_key, additional_params=None):
     params = {
         'hostname': entity_name,
         'stackname': entity_name,
-        'domain': config.CLOUD['DNS_ZONE'],
-        'fqdn': "%s.%s" % (entity_name, config.CLOUD['DNS_ZONE']),
+        'domain': config.get_cloud()['DNS_ZONE'],
+        'fqdn': "%s.%s" % (entity_name, config.get_cloud()['DNS_ZONE']),
     }
 
-    if config_params_key in config.CLOUD:
-        params.update(config.CLOUD[config_params_key])
+    if config_params_key in config.get_cloud():
+        params.update(config.get_cloud()[config_params_key])
 
     if additional_params is not None:
         params.update(additional_params)

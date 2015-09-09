@@ -15,7 +15,7 @@ def set_cloud(cloud):
     global_state['cloud'] = cloud
 
     # set the default region
-    cloud_config = config_proxy.CLOUD
+    cloud_config = config_proxy.get_cloud()
     try:
         supported_regions = cloud_config['REGIONS']
     except KeyError:
@@ -43,7 +43,7 @@ def available_clouds():
 def available_regions():
     """ list of configured clouds for argparse suggestions """
     try:
-        cloud_config = config_proxy.CLOUD
+        cloud_config = config_proxy.get_cloud()
         return cloud_config['REGIONS']
     except (ConfigurationError, KeyError):
         return None  # so argparse shows metavar, not empty list

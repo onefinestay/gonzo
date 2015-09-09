@@ -16,6 +16,8 @@ def get_parser():
         '--version', action='version',
         version='%(prog)s {}'.format(gonzo.VERSION))
     parser.add_argument(
+        '--cloud', default=None, help="specify cloud")
+    parser.add_argument(
         '--log-level', action='store', help="Log level",
         default=logging.WARN)
 

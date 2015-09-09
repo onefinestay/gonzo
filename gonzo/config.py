@@ -113,10 +113,11 @@ class ConfigProxy(object):
 
     ###
     # Subset of the above, depending on current state
+    #
 
-    @property
-    def CLOUD(self):
-        cloud = global_state['cloud']
+    def get_cloud(self, cloud=None):
+        if cloud is None:
+            cloud = global_state['cloud']
         clouds = self.CLOUDS
         try:
             return clouds[cloud]
@@ -129,7 +130,7 @@ class ConfigProxy(object):
 
     def get_cloud_config_value(self, config_key, override=None):
         if override is None:
-            return self.CLOUD.get(config_key)
+            return self.get_cloud().get(config_key)
         return override
 
     def get_namespaced_cloud_config_value(self,
@@ -143,7 +144,7 @@ class ConfigProxy(object):
             return override
 
         # No override supplied, so check config.
-        namespaced_dict = self.CLOUD[config_key]
+        namespaced_dict = self.get_cloud()[config_key]
         if not namespaced_dict:
             return None
 
