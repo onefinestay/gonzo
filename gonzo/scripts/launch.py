@@ -122,7 +122,6 @@ def launch(args):
         else:
             dns_value = instance.private_ips[0]
 
-    print dns_record_type
     dns.create_dns_record(instance.name,
                           dns_value,
                           dns_record_type,
