@@ -143,7 +143,7 @@ class ConfigProxy(object):
         if override is not None:
             return override
 
-        # No override supplied, so check configself.
+        # No override supplied, so check config.
         namespaced_dict = self.get_cloud()[config_key]
         if not namespaced_dict:
             return None
