@@ -113,9 +113,19 @@ def launch(args):
         cloud_config['DNS_ZONE']
     )
 
+    dns_record_type = 'A'
+    dns_value = instance.extra['gonzo_network_address']
+
+    if args.subnet_id:
+        if instance.extra.get('gonzo_network_address'):
+            dns_record_type = 'CNAME'
+        else:
+            dns_value = instance.private_ips[0]
+
+    print dns_record_type
     dns.create_dns_record(instance.name,
-                          instance.extra['gonzo_network_address'],
-                          cloud_config['DNS_TYPE'],
+                          dns_value,
+                          dns_record_type,
                           cloud_config['DNS_ZONE'])
 
 
