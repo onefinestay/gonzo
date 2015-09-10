@@ -1,3 +1,10 @@
+Version 0.5.0
+-------------
+
+- Launch AWS instances into a VPC subnet
+- VPC support for security groups
+- DNS creation based on instance type
+
 Version 0.4.2
 -------------
 
