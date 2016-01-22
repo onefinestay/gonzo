@@ -264,13 +264,13 @@ class AWS(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
-    def security_groups_for_launch(self, security_group_names):
-        vpc_id = security_group_names[0].extra['vpc_id']
+    def security_groups_for_launch(self, security_groups):
+        vpc_id = security_groups[0].extra['vpc_id']
 
         identifier = 'id' if vpc_id else 'name'
 
         return [
-            getattr(group, identifier) for group in security_group_names
+            getattr(group, identifier) for group in security_groups
         ]
 
     def create_volume(self, instance, vol_name,
@@ -385,8 +385,8 @@ class Openstack(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
 
-    def security_groups_for_launch(self, security_group_names):
-        return security_group_names
+    def security_groups_for_launch(self, security_group):
+        return security_group
 
     def create_volume(self, instance, vol_name, vol_size, vol_type='gp2'):
         return self.compute_session.create_volume(
