@@ -305,7 +305,7 @@ class AWS(Cloud):
         for subnet in self.compute_session.ex_list_subnets():
             if subnet.id == subnet_id:
                 return subnet
-        raise LookupError("Subnet containting subnet: {} not found".format(
+        raise LookupError("Subnet with ID {} not found".format(
             subnet_id))
 
     def get_security_group(self, group_name, subnet_id=None):
