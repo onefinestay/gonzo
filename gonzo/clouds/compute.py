@@ -267,10 +267,7 @@ class AWS(Cloud):
     def security_groups_for_launch(self, security_group_names):
         vpc_id = security_group_names[0].extra['vpc_id']
 
-        if vpc_id:
-            identifier = 'id'
-        else:
-            identifier = 'name'
+        identifier = 'id' if vpc_id else 'name'
 
         return [
             getattr(group, identifier) for group in security_group_names
@@ -287,14 +284,14 @@ class AWS(Cloud):
         )
 
     def create_if_not_exist_security_group(self, group_name, subnet_id=None):
-        if subnet_id is not None:
+        if subnet_id:
             subnet = self.compute_session.ex_list_subnets([subnet_id])[0]
             subnet_vpc = subnet.extra['vpc_id']
         else:
             subnet_vpc = None
 
+        desc = "Rules for {}".format(group_name)
         try:
-            desc = "Rules for {}".format(group_name)
             self.compute_session.ex_create_security_group(
                 group_name,
                 desc,
@@ -331,7 +328,6 @@ class AWS(Cloud):
             raise LookupError("VPC for subnet not found")
 
     def _generate_instance_dict(self, **kwargs):
-
         vpc_exclude = ['ex_security_groups', 'location']
         classic_exclude = ['ex_subnet', 'ex_security_group_ids']
 
