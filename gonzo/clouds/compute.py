@@ -99,7 +99,7 @@ class Cloud(object):
 
     def create_instance(self, image_name, name, owner, user_data=None,
                         security_groups=None, size=None, key_name=None,
-                        volume_size=None):
+                        volume_size=None, subnet_id=None):
         instance_name = name.split('-')
         environment = instance_name[0]
         server_type = '-'.join(instance_name[1:-1])
@@ -126,26 +126,41 @@ class Cloud(object):
         if security_groups is None:
             security_groups = []
 
-        for security_group in security_groups:
-            self.create_if_not_exist_security_group(security_group)
+        for index, security_group in enumerate(security_groups):
+            self.create_if_not_exist_security_group(security_group, subnet_id)
+            security_groups[index] = self.get_security_group(
+                security_group, subnet_id
+            )
 
         security_groups_for_launch = self.security_groups_for_launch(
             security_groups)
 
-        # Availability Zone
-        az = self.get_next_az(environment, server_type)
+        # VPC / Availability Zone
+        az = None
+        subnet = None
+
+        if subnet_id:
+            az = self.get_next_az(environment, server_type)
+            subnet = self.get_subnet(subnet_id)
 
         # Launch Instance
-        instance = self.compute_session.create_node(
+        instance_dict = self._generate_instance_dict(
             name=name,
             image=image,
             size=size,
             location=az,
             ex_security_groups=security_groups_for_launch,
+            ex_security_group_ids=security_groups_for_launch,
             ex_metadata=tags,
             ex_userdata=user_data,
             ex_keyname=key_name,
+            ex_subnet=subnet
         )
+
+        instance = self.compute_session.create_node(
+            **instance_dict
+        )
+
         self.compute_session.wait_until_running([instance])
         new_instance = self.get_instance_by_uuid(instance.uuid)
 
@@ -217,22 +232,6 @@ class Cloud(object):
         instance_metadata['server_type'] = server_type
         return instance_metadata
 
-    def create_if_not_exist_security_group(self, group_name):
-
-        try:
-            desc = "Rules for {}".format(group_name)
-            self.compute_session.ex_create_security_group(group_name, desc)
-
-        except Exception as exc:  # libcloud doesn't raise anything better
-            if not ("exists" in str(exc)):
-                raise
-
-    def get_security_group(self, group_name):
-
-        for group in self.list_security_groups():
-            if group_name == getattr(group, self.SECURITY_GROUP_IDENTIFIER):
-                return group
-
     def list_security_groups(self):
         group_list_method = getattr(self.compute_session,
                                     self.SECURITY_GROUP_METHOD)
@@ -265,8 +264,14 @@ class AWS(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability']
         instance.extra['gonzo_network_address'] = instance.extra['dns_name']
 
-    def security_groups_for_launch(self, security_group_names):
-        return security_group_names
+    def security_groups_for_launch(self, security_groups):
+        vpc_id = security_groups[0].extra['vpc_id']
+
+        identifier = 'id' if vpc_id else 'name'
+
+        return [
+            getattr(group, identifier) for group in security_groups
+        ]
 
     def create_volume(self, instance, vol_name,
                       vol_size, vol_type='gp2'):
@@ -277,6 +282,64 @@ class AWS(Cloud):
             location=instance_az,
             ex_volume_type=vol_type,
         )
+
+    def create_if_not_exist_security_group(self, group_name, subnet_id=None):
+        if subnet_id:
+            subnet = self.compute_session.ex_list_subnets([subnet_id])[0]
+            subnet_vpc = subnet.extra['vpc_id']
+        else:
+            subnet_vpc = None
+
+        desc = "Rules for {}".format(group_name)
+        try:
+            self.compute_session.ex_create_security_group(
+                group_name,
+                desc,
+                subnet_vpc,
+            )
+        except Exception as exc:  # libcloud doesn't raise anything better
+            if not ("exists" in str(exc)):
+                raise
+
+    def get_subnet(self, subnet_id):
+        for subnet in self.compute_session.ex_list_subnets():
+            if subnet.id == subnet_id:
+                return subnet
+        raise LookupError("Subnet with ID {} not found".format(
+            subnet_id))
+
+    def get_security_group(self, group_name, subnet_id=None):
+        filters = None
+        if subnet_id:
+            filters = {'vpc-id': self.get_vpc_for_subnet(subnet_id)}
+
+        sec_groups = self.compute_session.ex_get_security_groups(
+            filters=filters)
+
+        for sec_group in sec_groups:
+            if sec_group.name == group_name:
+                return sec_group
+
+    def get_vpc_for_subnet(self, subnet_id):
+        try:
+            subnet = self.compute_session.ex_list_subnets([subnet_id])
+            return subnet[0].extra['vpc_id']
+        except IndexError:
+            raise LookupError("VPC for subnet not found")
+
+    def _generate_instance_dict(self, **kwargs):
+        vpc_exclude = ['ex_security_groups', 'location']
+        classic_exclude = ['ex_subnet', 'ex_security_group_ids']
+
+        instance_dict = kwargs
+        if instance_dict['ex_subnet']:
+            for exclude in vpc_exclude:
+                instance_dict.pop(exclude, None)
+        else:
+            for exclude in classic_exclude:
+                instance_dict.pop(exclude, None)
+
+        return instance_dict
 
 
 @backend_for(ComputeProvider.OPENSTACK)
@@ -322,14 +385,39 @@ class Openstack(Cloud):
         instance.extra['gonzo_az'] = instance.extra['availability_zone']
         instance.extra['gonzo_network_address'] = instance.private_ips[0]
 
-    def security_groups_for_launch(self, security_group_names):
-        return [
-            self.get_security_group(name)
-            for name in security_group_names
-        ]
+    def security_groups_for_launch(self, security_group):
+        return security_group
 
     def create_volume(self, instance, vol_name, vol_size, vol_type='gp2'):
         return self.compute_session.create_volume(
             name=vol_name,
             size=vol_size,
         )
+
+    def create_if_not_exist_security_group(self, group_name, subnet_id=None):
+        try:
+            desc = "Rules for {}".format(group_name)
+            self.compute_session.ex_create_security_group(group_name, desc)
+
+        except Exception as exc:  # libcloud doesn't raise anything better
+            if not ("exists" in str(exc)):
+                raise
+
+    def get_security_group(self, group_name, subnet_id=None):
+        if subnet_id:
+            raise Exception("VPC not supported for Openstack")
+
+        for group in self.list_security_groups():
+            if group_name == getattr(group, self.SECURITY_GROUP_IDENTIFIER):
+                return group
+
+    def _generate_instance_dict(self, **kwargs):
+
+        vpc_exclude = ['ex_security_groups', 'location']
+
+        instance_dict = kwargs
+        if instance_dict['ex_subnet']:
+            for exclude in vpc_exclude:
+                instance_dict.pop(exclude, None)
+
+        return instance_dict

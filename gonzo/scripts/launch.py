@@ -104,7 +104,8 @@ def launch(args):
         security_groups=security_groups,
         owner=username,
         key_name=cloud_config.get('PUBLIC_KEY_NAME'),
-        volume_size=args.volume_size
+        volume_size=args.volume_size,
+        subnet_id=args.subnet_id,
     )
 
     print "Instance created: {}.{}".format(
@@ -112,9 +113,18 @@ def launch(args):
         cloud_config['DNS_ZONE']
     )
 
+    dns_record_type = 'A'
+    dns_value = instance.extra['gonzo_network_address']
+
+    if args.subnet_id:
+        if instance.extra.get('gonzo_network_address'):
+            dns_record_type = 'CNAME'
+        else:
+            dns_value = instance.private_ips[0]
+
     dns.create_dns_record(instance.name,
-                          instance.extra['gonzo_network_address'],
-                          cloud_config['DNS_TYPE'],
+                          dns_value,
+                          dns_record_type,
                           cloud_config['DNS_ZONE'])
 
 
@@ -161,6 +171,9 @@ def init_parser(parser):
     parser.add_argument(
         '--size', dest='size',  # choices=config.CLOUD['SIZES'],
         help="Override instance size")
+    parser.add_argument(
+        '--subnet-id', dest='subnet_id',
+        help="VPC Subnet ID")
     parser.add_argument(
         '--user-data-uri', dest='user_data_uri',
         help=user_data_help)
