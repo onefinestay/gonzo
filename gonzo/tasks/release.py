@@ -5,6 +5,7 @@ import os
 from fabric.api import task, env, sudo, put, run, local, settings
 from fabric.context_managers import prefix as fab_prefix, hide
 from fabric.contrib.files import exists
+from fabric.utils import abort
 
 from gonzo.config import PROJECT_ROOT, local_state
 from gonzo.utils import last_index
@@ -351,8 +352,15 @@ def purge_release(release):
 
 
 @task
-def rollback():
-    """ Roll back to the most recent active release in the history file.
+def rollback(release=None):
+    """ Either roll back to the most recent active release in the history file
+        or to the specified release.
+
+        Specifying a ``release`` SHA will roll back to the given release
+        provided it is in the history list and purge all subsequent releases so
+        that it is the most current. Providing a partial SHA or other ref will
+        use ``git rev-parse`` to expand the full SHA so that it can be looked
+        up in the history list.
 
         This is used for quick recovery in case of bugs discovered shortly
         after activating a new release.
@@ -361,16 +369,22 @@ def rollback():
         code should be restarted following this command.
     """
 
-    current_release = get_current()
+    if release:
+        # Attempt to roll back to the specified release
+        release = rev_parse(release)
+        if release not in list_releases():
+            abort('release ({}) not found in release list'.format(release))
 
-    previous_release = get_previous_release(current_release)
+    else:
+        current_release = get_current()
+        release = get_previous_release(current_release)
 
-    if not previous_release:
-        raise RuntimeError("No release to roll back to")
+        if not release:
+            abort("No release to roll back to")
 
     # sadly, there's not way to make this atomic
-    set_current(previous_release)
-    rollback_history(previous_release)
+    set_current(release)
+    rollback_history(release)
 
 
 @task
