@@ -39,7 +39,7 @@ def print_table(row_definer, headers, objects, show_header=True,
     for object in objects:
         tableoutput.add_row(row_definer(object, use_color))
 
-    print tableoutput.get_string(print_empty=True)
+    print(tableoutput.get_string(print_empty=True))
 
 
 def format_uptime(start_time):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import  # otherwise we find tasks.gonzo
-
 import os
 
 from fabric.api import task, env, sudo, put, run, local, settings
@@ -193,8 +191,8 @@ def show_history(full=False):
     else:
         start = -3
 
-    print '\n'.join(history[start:])
-    print get_current()
+    print('\n'.join(history[start:]))
+    print(get_current())
 
 
 @task

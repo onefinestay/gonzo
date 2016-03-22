@@ -1,5 +1,3 @@
-from __future__ import absolute_import  # otherwise we find ourself
-
 from fabric.api import env, task
 
 from gonzo.clouds import get_current_cloud
@@ -22,7 +20,7 @@ def instance(*names):
         dns_name = get_hostname_dns(inst)
         env.hosts.append(dns_name)
 
-    print env.hosts
+    print(env.hosts)
 
 
 @task
@@ -38,4 +36,4 @@ def group(*env_type_pairs):
             environment=environment, server_type=server_type)
         env.hosts.extend([get_hostname_dns(inst) for inst in instances])
 
-    print env.hosts
+    print(env.hosts)

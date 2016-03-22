@@ -2,7 +2,6 @@
 """ Set the account and region for subsequent gonzo commands
 """
 
-from __future__ import print_function
 
 from gonzo.config import local_state, global_state, config_proxy
 from gonzo.exceptions import ConfigurationError
@@ -35,7 +34,7 @@ def available_clouds():
         for argparse suggestions """
     try:
         clouds = config_proxy.CLOUDS
-        return clouds.keys()
+        return list(clouds.keys())
     except (ConfigurationError, AttributeError):
         return None  # so argparse shows metavar, not empty list
 

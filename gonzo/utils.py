@@ -20,7 +20,7 @@ def last_index(list_, value):
 
 def abort(message=None):
     if message is not None:
-        print >> sys.stderr, message
+        print(message, file=sys.stderr)
 
     sys.exit(1)
 

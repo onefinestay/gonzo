@@ -1,4 +1,4 @@
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, NoSectionError, NoOptionError
 import imp
 import os
 import subprocess

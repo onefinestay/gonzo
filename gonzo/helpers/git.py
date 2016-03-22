@@ -24,5 +24,5 @@ def diff_branch(target_branch):
             target_branch)
         upstream_counts = local(rev_list, capture=True)
 
-    upstream_ahead, local_ahead = map(int, upstream_counts.split('\t'))
+    upstream_ahead, local_ahead = list(map(int, upstream_counts.split('\t')))
     return upstream_ahead, local_ahead

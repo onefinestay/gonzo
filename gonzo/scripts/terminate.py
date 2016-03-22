@@ -4,7 +4,7 @@
 
 
 def terminate(args):
-    print "Terminating", args  # TODO: add terminate
+    print("Terminating", args)  # TODO: add terminate
 
 
 def main(args):

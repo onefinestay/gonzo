@@ -33,7 +33,7 @@ class Cloud(object):
         except KeyError:
             raise LookupError(
                 "Unknown backend `{}`. Please choose one of {}".format(
-                    backend, backends.keys()))
+                    backend, list(backends.keys())))
         return backend_cls(cloud_config, region)
 
     def list_instances(self):

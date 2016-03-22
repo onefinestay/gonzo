@@ -24,7 +24,7 @@ def wait_for_instance_boot(instance, use_color='auto'):
     colorize_ = partial(colorize, use_color=use_color)
     stdout = sys.stdout
 
-    print colorize_('Created instance', 'yellow'), instance.id
+    print((colorize_('Created instance', 'yellow'), instance.id))
     n = 0
     sleep(1)
     while not instance.is_running():
@@ -107,10 +107,10 @@ def launch(args):
         volume_size=args.volume_size
     )
 
-    print "Instance created: {}.{}".format(
+    print(("Instance created: {}.{}".format(
         instance.name,
         cloud_config['DNS_ZONE']
-    )
+    )))
 
     dns.create_dns_record(instance.name,
                           instance.extra['gonzo_network_address'],

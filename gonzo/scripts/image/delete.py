@@ -21,7 +21,7 @@ def main(args):
     try:
         image_delete(args)
     except NoSuchResourceError as ex:
-        print ex.message
+        print(ex.message)
     except MultipleResourcesError as ex:
         abort(ex.message)
 

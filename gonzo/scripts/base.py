@@ -47,7 +47,7 @@ def main():
     try:
         args.main(args)
     except ConfigurationError as ex:
-        print "Configuration error: {}".format(ex)
+        print(("Configuration error: {}".format(ex)))
 
 if __name__ == '__main__':
     main()
