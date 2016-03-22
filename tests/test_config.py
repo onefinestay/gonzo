@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from StringIO import StringIO
+from io import StringIO
 import subprocess
 import types
 

@@ -1,7 +1,7 @@
 from fabric.api import env, task
 
-from gonzo.clouds import get_current_cloud
-from gonzo.config import config_proxy as config
+from .gonzo.clouds import get_current_cloud
+from .gonzo.config import config_proxy as config
 
 
 def get_hostname_dns(inst):

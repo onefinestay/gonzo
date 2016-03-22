@@ -44,8 +44,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'gonzo'
-copyright = u'2013, onefinestay'
+project = 'gonzo'
+copyright = '2013, onefinestay'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -190,8 +190,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'gonzo.tex', u'gonzo Documentation',
-   u'onefinestay', 'manual'),
+  ('index', 'gonzo.tex', 'gonzo Documentation',
+   'onefinestay', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -220,8 +220,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'gonzo', u'gonzo Documentation',
-     [u'onefinestay'], 1)
+    ('index', 'gonzo', 'gonzo Documentation',
+     ['onefinestay'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -234,8 +234,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'gonzo', u'gonzo Documentation',
-   u'onefinestay', 'gonzo', 'One line description of project.',
+  ('index', 'gonzo', 'gonzo Documentation',
+   'onefinestay', 'gonzo', 'One line description of project.',
    'Miscellaneous'),
 ]
 

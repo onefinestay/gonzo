@@ -6,7 +6,7 @@ from gonzo.clouds.compute import Cloud
 
 def make_fake_instance(**kwargs):
     instance = Mock(extra={})
-    for key, value in kwargs.items():
+    for key, value in list(kwargs.items()):
         instance.extra[key] = value
     return instance
 

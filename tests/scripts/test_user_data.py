@@ -20,7 +20,7 @@ def test_config_specified_file_source(minimum_config_fixture):
     hostname = 'staging-test-host-001'
 
     with NamedTemporaryFile() as tmp_file:
-        for key in desired_subs.keys():
+        for key in list(desired_subs.keys()):
             tmp_file.write("{{%s}} " % key)
         tmp_file.flush()
         config.get_cloud().update({
@@ -33,7 +33,7 @@ def test_config_specified_file_source(minimum_config_fixture):
                                         config_params_key='USER_DATA_PARAMS',
                                         additional_params=None)
 
-    for value in desired_subs.values():
+    for value in list(desired_subs.values()):
         assert value in user_data
 
 
@@ -65,7 +65,7 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
     uri = config.get_cloud_config_value('DEFAULT_USER_DATA', override=cli_uri)
 
     ud_contents = ""
-    for key in desired_subs.keys():
+    for key in list(desired_subs.keys()):
         ud_contents += "{{%s}} " % key
     req.return_value = Mock(text=ud_contents, status_code=200)
 
@@ -74,5 +74,5 @@ def test_arg_specified_url_source(req, minimum_config_fixture):
                                     additional_params=cli_params)
 
     assert_called_with(req, uri)
-    for value in desired_subs.values():
+    for value in list(desired_subs.values()):
         assert value in user_data

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!usr/bin/env python
 """ Delete instance images
 """
 from gonzo.exceptions import MultipleResourcesError, NoSuchResourceError

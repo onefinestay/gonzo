@@ -4,8 +4,8 @@ from fabric.api import task, env, sudo, put, run, local, settings
 from fabric.context_managers import prefix as fab_prefix, hide
 from fabric.contrib.files import exists
 
-from gonzo.config import PROJECT_ROOT, local_state
-from gonzo.utils import last_index
+from .gonzo.config import PROJECT_ROOT, local_state
+from .gonzo.utils import last_index
 
 DEFAULT_ARCHIVE_DIR = "./release_cache"
 USER = 'www-data'  # TODO: make configurable
