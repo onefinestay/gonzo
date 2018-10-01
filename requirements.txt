@@ -1,5 +1,5 @@
 apache-libcloud==0.16.0
-jinja2==2.7.1
+jinja2>=2.7,<3
 argcomplete==0.8.4
 fabric==1.6
 prettytable==0.7.2
