@@ -3,4 +3,4 @@ jinja2==2.7.1
 argcomplete==0.8.4
 fabric==1.6
 prettytable==0.7.2
-requests==2.4.3
+requests==2.20.0
